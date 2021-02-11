@@ -21,7 +21,7 @@ debounce = datetime.timedelta(seconds=1)
 @click.option("--watch", is_flag=True)
 def launch(dirs, watch):
 	def install_all():
-		print(dirs)
+		log.msg("init", dir_count=len(dirs))
 		for d in dirs:
 			install(d)
 
@@ -34,14 +34,14 @@ def launch(dirs, watch):
 			path = os.path.join(*segments[:3])
 			to_process[path] = datetime.datetime.now()
 
-		my_event_handler = PatternMatchingEventHandler(
+		handler = PatternMatchingEventHandler(
 			patterns="*", ignore_patterns="", ignore_directories=False, case_sensitive=True
 		)
-		my_event_handler.on_any_event = handle_change
+		handler.on_any_event = handle_change
 
 		my_observer = Observer()
 		for d in dirs:
-			my_observer.schedule(my_event_handler, path=d, recursive=True)
+			my_observer.schedule(handler, path=d, recursive=True)
 
 		my_observer.start()
 		log.msg("observation", op="start", dir_count=len(dirs))
@@ -71,14 +71,17 @@ def install(directory):
 	r = subprocess.run(
 		f"ansible-galaxy collection build {directory} --output-path build/{directory} --force",
 		shell=True,
+		stdout=subprocess.PIPE,
+		stderr=subprocess.PIPE,
 	)
-	print(r.stdout)
-	print(r.stdout)
+	log.msg("installing", op="build", stdout=r.stdout, stderr=r.stderr)
 	r = subprocess.run(
-		f"ansible-galaxy collection install --force build/{directory}/*", shell=True
+		f"ansible-galaxy collection install --force build/{directory}/*",
+		shell=True,
+		stdout=subprocess.PIPE,
+		stderr=subprocess.PIPE,
 	)
-	print(r.stdout)
-	print(r.stdout)
+	log.msg("installing", op="install", stdout=r.stdout, stderr=r.stderr)
 
 
 if __name__ == "__main__":
