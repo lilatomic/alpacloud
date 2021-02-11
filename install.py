@@ -13,13 +13,16 @@ from watchdog.events import PatternMatchingEventHandler
 
 log = get_logger()
 
-debounce = datetime.timedelta(seconds=1)
-
 
 @click.command()
 @click.argument("dirs", nargs=-1)
 @click.option("--watch", is_flag=True)
-def launch(dirs, watch):
+@click.option(
+	"--debounce", default=1000, help="time to wait for last modification, in ms"
+)
+def launch(dirs, watch, debounce):
+	debounce = datetime.timedelta(milliseconds=debounce)
+
 	def install_all():
 		log.msg("init", dir_count=len(dirs))
 		for d in dirs:
