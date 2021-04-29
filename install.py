@@ -19,7 +19,7 @@ from watchdog.events import PatternMatchingEventHandler
 log = get_logger()
 
 
-Collection = namedtuple("Collection", ["namespace", "name", "galaxy"])
+Collection = namedtuple("Collection", ["namespace", "name", "version", "galaxy"])
 
 
 @click.command()
@@ -104,13 +104,16 @@ def install(path: str, collection: Collection):
 	log.msg("installing", collection=path)
 
 	output_dir = os.path.join("build", collection.namespace, collection.name)
+	built_collection_name = (
+		f"{collection.namespace}-{collection.name}-{collection.version}.tar.gz"
+	)
 
 	cmd = f"ansible-galaxy collection build --output-path {output_dir} --force {path}"
 	log.msg("trace", cmd=cmd)
 	r = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,)
 	log.msg("installing", op="build", stdout=r.stdout, stderr=r.stderr)
 	r = subprocess.run(
-		f"ansible-galaxy collection install --force {output_dir}/*",
+		f"ansible-galaxy collection install --force {output_dir}/{built_collection_name}",
 		shell=True,
 		stdout=subprocess.PIPE,
 		stderr=subprocess.PIPE,
