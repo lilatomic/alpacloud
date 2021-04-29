@@ -2,13 +2,12 @@
 
 from collections import namedtuple
 from functools import reduce
-import collections
 import os
 import subprocess
 import datetime
 import time
+from typing import Dict
 import yaml
-from typing import List, Tuple
 from structlog import get_logger
 
 import click
@@ -81,7 +80,8 @@ def launch(roots, watch, debounce):
 		install_all()
 
 
-def find_collections(root) -> List[Collection]:
+def find_collections(root) -> Dict[str, Collection]:
+	"""Recursively traverses a directory and adds any directories with a galaxy.yml"""
 	s = {}
 	for path, _dirs, files in os.walk(root):
 		if "galaxy.yml" in files:
@@ -94,6 +94,7 @@ def find_collections(root) -> List[Collection]:
 
 
 def install(path: str, collection: Collection):
+	"""Builds and installs an Ansible Collection"""
 	log.msg("installing", collection=path)
 
 	output_dir = os.path.join("build", collection.namespace, collection.name)
@@ -109,22 +110,22 @@ def install(path: str, collection: Collection):
 			stderr=subprocess.PIPE,
 			check=True
 		)
-	log.msg("installing", op="build", stdout=r.stdout, stderr=r.stderr)
+		log.msg("installing", op="build", stdout=r.stdout, stderr=r.stderr)
 	except subprocess.CalledProcessError:
 		log.exception("installing", op="build", exc_info=True)
 		raise
 	try:
-	r = subprocess.run(
-		f"ansible-galaxy collection install --force {output_dir}/{built_collection_name}",
-		shell=True,
-		stdout=subprocess.PIPE,
-		stderr=subprocess.PIPE,
+		r = subprocess.run(
+			f"ansible-galaxy collection install --force {output_dir}/{built_collection_name}",
+			shell=True,
+			stdout=subprocess.PIPE,
+			stderr=subprocess.PIPE,
 			check=True
-	)
-	log.msg("installing", op="install", stdout=r.stdout, stderr=r.stderr)
+		)
+		log.msg("installing", op="install", stdout=r.stdout, stderr=r.stderr)
 	except subprocess.CalledProcessError:
 		log.exception("installing", op="build", exc_info=True)
 		raise
 
 if __name__ == "__main__":
-	launch()
+	launch() # pylint: disable=E1120
