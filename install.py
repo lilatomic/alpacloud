@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
 
+from collections import namedtuple
+from functools import reduce
+import collections
 import os
 import subprocess
 import datetime
 import time
+import yaml
+from typing import List, Tuple
 from structlog import get_logger
 
 import click
@@ -12,6 +17,9 @@ from watchdog.events import PatternMatchingEventHandler
 
 
 log = get_logger()
+
+
+Collection = namedtuple("Collection", ["galaxy"])
 
 
 @click.command()
@@ -23,13 +31,13 @@ log = get_logger()
 def launch(roots, watch, debounce):
 	debounce = datetime.timedelta(milliseconds=debounce)
 
-	collections = flat_map(find_collections, roots)
+	collections = reduce(lambda a, b: a.update(b), map(find_collections, roots))
 	log.msg("collections found", collections=collections)
 
 	def install_all():
 		log.msg("init", dir_count=len(collections))
-		for c in collections:
-			install(c)
+		for c in collections.items():
+			install(*c)
 
 	if watch:
 
@@ -37,10 +45,17 @@ def launch(roots, watch, debounce):
 
 		def handle_change(event):
 			event_path = event.src_path
-			collection = next((x for x in collections if event_path.startswith(x)))
+			# collection = next((x for x in collections if event_path.startswith(x[0])))
+			path, collection = next(
+				(
+					(path, collection)
+					for path, collection in collections.items()
+					if event_path.startswith(path)
+				)
+			)
 
-			log.msg("change event", trigger=event.src_path, collection_path=collection)
-			to_process[collection] = datetime.datetime.now()
+			log.msg("change event", trigger=event.src_path, collection_path=path)
+			to_process[path] = datetime.datetime.now()
 
 		handler = PatternMatchingEventHandler(
 			patterns="*", ignore_patterns="", ignore_directories=False, case_sensitive=True
@@ -48,7 +63,7 @@ def launch(roots, watch, debounce):
 		handler.on_any_event = handle_change
 
 		my_observer = Observer()
-		for d in collections:
+		for d in collections.keys():
 			my_observer.schedule(handler, path=d, recursive=True)
 
 		my_observer.start()
@@ -60,7 +75,7 @@ def launch(roots, watch, debounce):
 				to_remove = []
 				for k, v in to_process.copy().items():
 					if now > v + debounce:
-						install(k)
+						install(k, collections[k])
 						to_remove.append(k)
 				for k in to_remove:
 					del to_process[k]
@@ -73,25 +88,26 @@ def launch(roots, watch, debounce):
 		install_all()
 
 
-def find_collections(root):
-	s = set()
+def find_collections(root) -> List[Collection]:
+	s = {}
 	for path, _dirs, files in os.walk(root):
 		if "galaxy.yml" in files:
-			s.add(path)
+			with open(os.path.join(path, "galaxy.yml")) as f:
+				galaxy = yaml.safe_load(f.read())
+			s[path] = Collection(galaxy)
 	return s
 
 
-def install(directory):
-	log.msg("installing", collection=directory)
+def install(path: str, collection: Collection):
+	log.msg("installing", collection=path)
 
-	output_dir = f"build/{directory}"
-
-	r = subprocess.run(
-		f"ansible-galaxy collection build {directory} --output-path {output_dir} --force",
-		shell=True,
-		stdout=subprocess.PIPE,
-		stderr=subprocess.PIPE,
+	output_dir = os.path.join(
+		"build", collection.galaxy["namespace"], collection.galaxy["name"]
 	)
+
+	cmd = f"ansible-galaxy collection build --output-path {output_dir} --force {path}"
+	log.msg("trace", cmd=cmd)
+	r = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,)
 	log.msg("installing", op="build", stdout=r.stdout, stderr=r.stderr)
 	r = subprocess.run(
 		f"ansible-galaxy collection install --force {output_dir}/*",
@@ -100,13 +116,6 @@ def install(directory):
 		stderr=subprocess.PIPE,
 	)
 	log.msg("installing", op="install", stdout=r.stdout, stderr=r.stderr)
-
-
-def flat_map(f, xs):
-	ys = []
-	for x in xs:
-		ys.extend(f(x))
-	return ys
 
 
 if __name__ == "__main__":
