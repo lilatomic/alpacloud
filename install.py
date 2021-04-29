@@ -19,7 +19,7 @@ from watchdog.events import PatternMatchingEventHandler
 log = get_logger()
 
 
-Collection = namedtuple("Collection", ["galaxy"])
+Collection = namedtuple("Collection", ["namespace", "name", "galaxy"])
 
 
 @click.command()
@@ -67,7 +67,7 @@ def launch(roots, watch, debounce):
 			my_observer.schedule(handler, path=d, recursive=True)
 
 		my_observer.start()
-		log.msg("observation", op="start", dir_count=len(roots))
+		log.msg("observation", op="start", dir_count=len(collections))
 		try:
 			while True:
 				time.sleep(1)
@@ -94,16 +94,16 @@ def find_collections(root) -> List[Collection]:
 		if "galaxy.yml" in files:
 			with open(os.path.join(path, "galaxy.yml")) as f:
 				galaxy = yaml.safe_load(f.read())
-			s[path] = Collection(galaxy)
+			s[path] = Collection(
+				*(galaxy[k] for k in Collection._fields if k != "galaxy"), galaxy=galaxy
+			)
 	return s
 
 
 def install(path: str, collection: Collection):
 	log.msg("installing", collection=path)
 
-	output_dir = os.path.join(
-		"build", collection.galaxy["namespace"], collection.galaxy["name"]
-	)
+	output_dir = os.path.join("build", collection.namespace, collection.name)
 
 	cmd = f"ansible-galaxy collection build --output-path {output_dir} --force {path}"
 	log.msg("trace", cmd=cmd)
