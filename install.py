@@ -45,14 +45,7 @@ def launch(roots, watch, debounce):
 
 		def handle_change(event):
 			event_path = event.src_path
-			# collection = next((x for x in collections if event_path.startswith(x[0])))
-			path, collection = next(
-				(
-					(path, collection)
-					for path, collection in collections.items()
-					if event_path.startswith(path)
-				)
-			)
+			path = next((path for path in collections.keys() if event_path.startswith(path)))
 
 			log.msg("change event", trigger=event.src_path, collection_path=path)
 			to_process[path] = datetime.datetime.now()
