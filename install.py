@@ -108,18 +108,30 @@ def install(path: str, collection: Collection):
 		f"{collection.namespace}-{collection.name}-{collection.version}.tar.gz"
 	)
 
-	cmd = f"ansible-galaxy collection build --output-path {output_dir} --force {path}"
-	log.msg("trace", cmd=cmd)
-	r = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,)
+	try:
+		r = subprocess.run(
+			f"ansible-galaxy collection build --output-path {output_dir} --force {path}",
+			shell=True,
+			stdout=subprocess.PIPE,
+			stderr=subprocess.PIPE,
+			check=True
+		)
 	log.msg("installing", op="build", stdout=r.stdout, stderr=r.stderr)
+	except subprocess.CalledProcessError:
+		log.exception("installing", op="build", exc_info=True)
+		raise
+	try:
 	r = subprocess.run(
 		f"ansible-galaxy collection install --force {output_dir}/{built_collection_name}",
 		shell=True,
 		stdout=subprocess.PIPE,
 		stderr=subprocess.PIPE,
+			check=True
 	)
 	log.msg("installing", op="install", stdout=r.stdout, stderr=r.stderr)
-
+	except subprocess.CalledProcessError:
+		log.exception("installing", op="build", exc_info=True)
+		raise
 
 if __name__ == "__main__":
 	launch()
