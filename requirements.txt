@@ -1,2 +1,4 @@
 ansible~=2.10.5
 click~=7.1.2
+structlog~=21.1.0
+watchdog~=2.0.2
