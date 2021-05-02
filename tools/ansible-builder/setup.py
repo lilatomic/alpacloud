@@ -1,8 +1,13 @@
 from setuptools import setup
 
+with open("readme.md", "r", encoding="utf-8") as fh:
+	long_description = fh.read()
+
 setup(
 	name="alpacloud-ansible-builder",
 	version="0.1.0",
+	author="lilatomic",
+
 	py_modules=["alpacloud_ansible_builder"],
 	install_requires=[
 		"ansible~=2.10.5",
@@ -14,4 +19,12 @@ setup(
 	[console_scripts]
 	alpacloud-ansible-builder=alpacloud_ansible_builder:launch
 	""",
+	description="This tool automatically builds and installs Ansible Collections",
+	long_description=long_description,
+	long_description_content_type="text/markdown",
+	url="https://github.com/lilatomic/alpacloud",
+	project_urls={
+		"Bug Tracker": "https://github.com/lilatomic/alpacloud/issues"
+	},
+
 )

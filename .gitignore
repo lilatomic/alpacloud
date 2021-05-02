@@ -1,3 +1,16 @@
+# python
 .venv/
+# python-build
+*.egg-info
+
+# ansible
 build/
+
+# secrets
 **/secrets.yml
+key.pem
+inventory.ini
+
+# dev
+.idea/
+t.*
