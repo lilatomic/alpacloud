@@ -5,12 +5,11 @@ with open("readme.md", "r", encoding="utf-8") as fh:
 
 setup(
 	name="alpacloud-ansible-builder",
-	version="0.1.0",
+	version="0.1.1",
 	author="lilatomic",
 
 	py_modules=["alpacloud_ansible_builder"],
 	install_requires=[
-		"ansible~=2.10.5",
 		"click~=7.1.2",
 		"structlog~=21.1.0",
 		"watchdog~=2.0.2",
