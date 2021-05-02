@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 from collections import namedtuple
 from functools import reduce
 import os
@@ -108,7 +106,7 @@ def install(path: str, collection: Collection):
 			shell=True,
 			stdout=subprocess.PIPE,
 			stderr=subprocess.PIPE,
-			check=True
+			check=True,
 		)
 		log.msg("installing", op="build", stdout=r.stdout, stderr=r.stderr)
 	except subprocess.CalledProcessError:
@@ -120,12 +118,9 @@ def install(path: str, collection: Collection):
 			shell=True,
 			stdout=subprocess.PIPE,
 			stderr=subprocess.PIPE,
-			check=True
+			check=True,
 		)
 		log.msg("installing", op="install", stdout=r.stdout, stderr=r.stderr)
 	except subprocess.CalledProcessError:
 		log.exception("installing", op="build", exc_info=True)
 		raise
-
-if __name__ == "__main__":
-	launch() # pylint: disable=E1120
