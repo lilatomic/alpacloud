@@ -5,7 +5,7 @@ with open("readme.md", "r", encoding="utf-8") as fh:
 
 setup(
 	name="alpacloud-ansible-builder",
-	version="0.1.1",
+	version="0.1.2",
 	author="lilatomic",
 
 	py_modules=["alpacloud_ansible_builder"],
@@ -25,5 +25,4 @@ setup(
 	project_urls={
 		"Bug Tracker": "https://github.com/lilatomic/alpacloud/issues"
 	},
-
 )
