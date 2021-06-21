@@ -4,7 +4,7 @@ import os
 import subprocess
 import datetime
 import time
-from typing import Dict
+from typing import Dict, Iterator
 import yaml
 from structlog import get_logger
 
@@ -28,7 +28,7 @@ Collection = namedtuple("Collection", ["namespace", "name", "version", "galaxy"]
 def launch(roots, watch, debounce):
 	debounce = datetime.timedelta(milliseconds=debounce)
 
-	collections = reduce(lambda a, b: a.update(b), map(find_collections, roots))
+	collections = collect_mappings(map(find_collections, roots))
 	log.msg("collections found", collections=collections)
 
 	def install_all():
@@ -76,6 +76,10 @@ def launch(roots, watch, debounce):
 			my_observer.join()
 	else:
 		install_all()
+
+
+def collect_mappings(mappings: Iterator[Dict[str, Collection]]) -> Dict[str, Collection]:
+	return reduce(lambda a, b: {**a, **b}, mappings)
 
 
 def find_collections(root) -> Dict[str, Collection]:

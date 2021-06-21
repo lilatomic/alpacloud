@@ -5,7 +5,7 @@ with open("readme.md", "r", encoding="utf-8") as fh:
 
 setup(
 	name="alpacloud",
-	version="0.1.0",
+	version="0.1.1",
 	author="lilatomic",
 
 	description="Metapackage for all my alpacloud tools",
@@ -15,7 +15,7 @@ setup(
 	url="https://github.com/lilatomic/alpacloud",
 
 	install_requires=[
-		"alpacloud-ansible-builder~=0.1.0"
+		"alpacloud-ansible-builder~=0.1.2"
 	],
 	keywords=[
 		"metapackage"
