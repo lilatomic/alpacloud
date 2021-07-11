@@ -1,0 +1,19 @@
+namespace: lilatomic
+name: api
+version: 0.1.0
+readme: README.md
+authors:
+- Daniel Goldman <danielgoldman4@gmail.com>
+description: A collection for better handling of API connections
+license:
+- Round-Robin-2.0.0 or later
+tags: [httpapi]
+dependencies: {}
+repository: https://github.com/lilatomic/alpacloud
+
+## The URL to any online docs
+#documentation: http://docs.example.com
+homepage: https://github.com/lilatomic/alpacloud
+issues: https://github.com/lilatomic/alpacloud/issues
+build_ignore: ["license.md"]
+
