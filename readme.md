@@ -5,3 +5,7 @@ Alpacloud is my little cloud. This repo contains the tools that I use for buildi
 ## Tools
 
 - alpacloud-ansible-builder : a tool to automatically build and install Ansible Collections
+
+## Collections
+
+- lilatomic.api : api helpers, like a better way of making HTTP Requests
