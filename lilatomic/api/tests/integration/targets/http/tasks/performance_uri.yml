@@ -1,0 +1,11 @@
+- name: "ansible.builtin.uri"
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: "ansible.builtin.uri"
+      uri:
+        url: "https://httpbingo.org/"
+        return_content: true
+      loop: "{{ range(0, 32) | list }}"

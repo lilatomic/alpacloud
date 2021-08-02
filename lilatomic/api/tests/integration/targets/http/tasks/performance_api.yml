@@ -1,0 +1,13 @@
+- name: "lilatomic.api.http"
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: "lilatomic.api.http"
+      lilatomic.api.http:
+        connection:
+          base: "https://httpbingo.org/"
+        path: /
+        log_request: true
+      loop: "{{ range(0, 32) | list }}"
