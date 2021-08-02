@@ -1,0 +1,44 @@
+- name: post
+  lilatomic.api.http:
+    connection: httpbin
+    method: POST
+    path: /post
+    data:
+      1: 1
+      2: 2
+  vars:
+    lilatomic_api_http:
+      httpbin:
+        base: "https://httpbingo.org/"
+
+- name: GET with logging of the request
+  lilatomic.api.http:
+    connection:
+      base: "https://httpbingo.org/"
+    path: /
+    log_request: true
+
+- name: GET with Bearer auth
+  lilatomic.api.http:
+    connection: "{{ authed_connection }}"
+    path: /bearer
+    log_request: true
+    log_auth: true
+  vars:
+    authed_connection:
+      base: "https://httpbin.org"
+      auth:
+        method: bearer
+        token: hihello
+
+- name: Use Kwargs for disallowing redirects
+  lilatomic.api.http:
+    connection: httpbin
+    path: redirect-to?url=get
+    kwargs:
+      allow_redirects: false
+    status_code: [302]
+  vars:
+    lilatomic_api_http:
+      httpbin:
+        base: "https://httpbingo.org/"

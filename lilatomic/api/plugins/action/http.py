@@ -1,4 +1,4 @@
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Union
 from urllib.parse import urljoin
 
 import requests
@@ -41,12 +41,19 @@ class ConnectionInfo(object):
 			return None
 
 
+def resolve_connection_info(task_vars, info: Union[Dict, str]):
+	if isinstance(info, str):  # info is a connection name
+		d = task_vars[NS][info]
+	else:  # info is connection properties
+		d = info
+	return ConnectionInfo(**d)
+
+
 class ActionModule(ActionBase):
 	def run(self, tmp=None, task_vars=None):
 		super().run(tmp=tmp, task_vars=task_vars)
 
-		connection_name = self.arg("connection")
-		connection_info = ConnectionInfo(**task_vars[NS][connection_name])
+		connection_info = resolve_connection_info(task_vars, self.arg("connection"))
 		task_kwargs = self.arg_or("kwargs", {})
 
 		method = self.arg_or("method", "GET")

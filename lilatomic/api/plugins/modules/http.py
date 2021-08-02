@@ -12,9 +12,9 @@ description:
 version_added: "0.1.0"
 options:
   connection:
-    description: the name of the connection to use
+    description: The ConnectionInfo to use, or the name of the connection to use
     required: true
-    type: string
+    type: Union[ConnectionInfo, string]
   method:
     description: the HTTP method to use
     required: true
@@ -80,27 +80,23 @@ EXAMPLES = """
 
 - name: GET with logging of the request
   lilatomic.api.http:
-    connection: fishbike
+    connection:
+      base: "https://httpbingo.org/"
     path: /
     log_request: true
-  vars:
-    lilatomic_api_http:
-      httpbin:
-        base: "https://httpbingo.org/"
 
 - name: GET with Bearer auth
   lilatomic.api.http:
-    connection: httpbin_bearer
+    connection: "{{ authed_connection }}"
     path: /bearer
     log_request: true
     log_auth: true
   vars:
-    lilatomic_api_http:
-      httpbin_bearer:
-        base: "https://httpbin.org"
-        auth:
-          method: bearer
-          token: hihello
+    authed_connection:
+      base: "https://httpbin.org"
+      auth:
+        method: bearer
+        token: hihello
 
 - name: Use Kwargs for disallowing redirects
   lilatomic.api.http:
