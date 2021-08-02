@@ -4,12 +4,14 @@
 
 DOCUMENTATION = """
 ---
-module: lilatomic.api.http
+module: http
 short_description: A nice and friendly HTTP API
 description:
   - An easy way to use the [requests](https://docs.python-requests.org/en/master/) library to make HTTP requests
   - Define connections and re-use them across tasks
 version_added: "0.1.0"
+author:
+  - Daniel Goldman <danielgoldman4@gmail.com>
 options:
   connection:
     description: The ConnectionInfo to use, or the name of the connection to use
