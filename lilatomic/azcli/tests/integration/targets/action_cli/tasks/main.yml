@@ -1,0 +1,10 @@
+- name: show subscription
+  lilatomic.azcli.cli:
+    cmd: account show
+  register: account_show
+
+- name: set subscription
+  lilatomic.azcli.cli:
+    cmd: account set
+    args:
+      s: "{{ account_show['id'] }}"
