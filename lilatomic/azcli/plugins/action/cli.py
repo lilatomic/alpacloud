@@ -42,6 +42,7 @@ class ActionModule(ActionBase):
 
 	def run(self, tmp=None, task_vars=None):
 		super().run(tmp=tmp, task_vars=task_vars)
+		ret = {}
 
 		args = AzCliParams(**self._task.args)
 
@@ -49,11 +50,20 @@ class ActionModule(ActionBase):
 
 		out_buffer = io.StringIO("")
 
-		cli.invoke(args=args.as_cmd(), out_file=out_buffer)
-		out_buffer.seek(0)
-		out = out_buffer.read()
+		try:
+			exit_code = cli.invoke(args=args.as_cmd(), out_file=out_buffer)
+		except SystemExit as e:
+			if e.code == 2:
+				exit_code = 2
+				ret["failed"] = True
+			else:
+				raise
+		if exit_code != 0:
+			ret["failed"] = True
 
-		if len(out) > 0:
-			return json.loads(out)
-		else:
-			return {}
+		out_buffer.seek(0)
+		cli_output = out_buffer.read()
+		if len(cli_output) > 0:
+			ret.update(json.loads(cli_output))
+
+		return ret

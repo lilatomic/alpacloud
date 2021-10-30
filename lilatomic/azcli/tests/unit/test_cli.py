@@ -23,5 +23,5 @@ def test__AzCliParams__as_cmd():
 
 	assert isinstance(cmd, list)
 
-	expected = ["command", "verb", "k1", "v1", "k2", "v2", "--output", "json"]
+	expected = ["command", "verb", "--k1", "v1", "--k2", "v2", "--output", "json"]
 	assert cmd == expected
