@@ -85,6 +85,7 @@ class ActionModule(ActionBase):
 
 	@staticmethod
 	def _repr_or_pass(x):
+		"""force item to be JSON serialiasable by invoking repr or returning"""
 		if hasattr(x, "__repr__"):
 			return x.__repr__()
 		else:
