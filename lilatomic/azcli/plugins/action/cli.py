@@ -1,12 +1,12 @@
-import json
+from dataclasses import dataclass, field
 
 import io
-from dataclasses import dataclass, fields, field
-
 import itertools
+import json
 from ansible.plugins.action import ActionBase
 from azure.cli.core import get_default_cli, AzCli
-from typing import List, Dict, TypeVar, Type, Tuple
+from knack.util import CommandResultItem
+from typing import Dict, TypeVar
 
 A = TypeVar('A')
 
@@ -38,6 +38,7 @@ class AzCliParams:
 		else:
 			return '--' + arg
 
+
 class ActionModule(ActionBase):
 
 	def run(self, tmp=None, task_vars=None):
@@ -60,6 +61,9 @@ class ActionModule(ActionBase):
 				raise
 		if exit_code != 0:
 			ret["failed"] = True
+		ret["cli_result"] = self._serialise_command_result_item(cli.result)
+		if cli.result.error:
+			ret["error"] = str(cli.result.error)
 
 		out_buffer.seek(0)
 		cli_output = out_buffer.read()
@@ -67,3 +71,21 @@ class ActionModule(ActionBase):
 			ret.update(json.loads(cli_output))
 
 		return ret
+
+	@staticmethod
+	def _serialise_command_result_item(i: CommandResultItem):
+		error = ActionModule._repr_or_pass(i.error)
+		raw_result = ActionModule._repr_or_pass(i.raw_result)
+		return {
+			'result': i.result,
+			'exit_code': i.exit_code,
+			'error': error,
+			'raw_result': raw_result
+			}
+
+	@staticmethod
+	def _repr_or_pass(x):
+		if hasattr(x, "__repr__"):
+			return x.__repr__()
+		else:
+			return x
