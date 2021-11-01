@@ -1,4 +1,4 @@
-from typing import List
+import json
 
 import pytest
 
@@ -18,11 +18,11 @@ def _assert_arg_has_value(cmd, arg, value, normalise=True):
 
 def test__AzCliParams__as_cmd():
 	p = AzCliParams(
-			cmd="command verb",
-			args={
-				'k1': 'v1',
-				'k2': 'v2'
-				}
+		cmd="command verb",
+		args={
+			'k1': 'v1',
+			'k2': 'v2'
+			}
 		)
 
 	cmd = p.as_cmd()
@@ -49,6 +49,7 @@ def test__AzCliParams__output():
 
 	_assert_arg_has_value(cmd, "output", "yaml")
 
+
 @pytest.mark.parametrize(
 	'argname, expected', [
 		('s', '-s'),
@@ -63,3 +64,18 @@ def test__AzClidParams__format_args(argname, expected):
 	cmd = p.as_cmd()
 
 	_assert_arg_has_value(cmd, expected, 'value', normalise=False)
+
+
+@pytest.mark.parametrize(
+	"cli_output,output_format,expected",
+	[
+		(json.dumps({}), "json", {}),
+		(json.dumps({'a': 1}), "json", {'a': 1}),
+		(json.dumps(['a', 'b']), "json", {0: 'a', 1: 'b'}),
+		(json.dumps(1), "json", {'output': 1}),
+		('', "json", {}),
+		("some\noutput", "table", {'output': "some\noutput"})
+		]
+	)
+def test__parse_output(cli_output, output_format, expected):
+	assert expected == ActionModule.parse_output(cli_output, output_format)

@@ -67,8 +67,8 @@ class ActionModule(ActionBase):
 
 		out_buffer.seek(0)
 		cli_output = out_buffer.read()
-		if len(cli_output) > 0:
-			ret.update(json.loads(cli_output))
+
+		ret.update(self.parse_output(cli_output, output_format=args.output))
 
 		return ret
 
@@ -90,3 +90,19 @@ class ActionModule(ActionBase):
 			return x.__repr__()
 		else:
 			return x
+
+	@staticmethod
+	def parse_output(cli_output, output_format):
+		ret = {}
+		if len(cli_output) > 0:
+			if output_format == "json":
+				parsed_cli_output = json.loads(cli_output)
+				if isinstance(parsed_cli_output, dict):
+					ret.update(parsed_cli_output)
+				elif isinstance(parsed_cli_output, list):
+					ret.update(enumerate(parsed_cli_output))
+				else:
+					ret["output"] = parsed_cli_output
+			else:
+				ret["output"] = cli_output
+		return ret
