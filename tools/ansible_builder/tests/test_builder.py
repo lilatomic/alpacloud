@@ -1,4 +1,4 @@
-from alpacloud_ansible_builder import collect_mappings
+from tools.ansible_builder.alpacloud_ansible_builder import collect_mappings
 
 
 def test_find_multiple_collections():
