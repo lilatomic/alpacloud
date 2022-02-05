@@ -10,9 +10,10 @@ setup(
 
 	py_modules=["alpacloud_ansible_builder"],
 	install_requires=[
-		"click~=7.1.2",
-		"structlog~=21.1.0",
-		"watchdog~=2.0.2",
+		"click>=7,<9",
+		"structlog~=21.1",
+		"watchdog~=2.0",
+		"pyyaml~=6.0",
 	],
 	entry_points="""
 	[console_scripts]
