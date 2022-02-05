@@ -1,5 +1,8 @@
 [FORMAT]
 indent-string=\t
+max-line-length=240
 
 [MESSAGES CONTROL]
-disable=C0103
+disable=C0103,C0330,R1705
+# C0103, C0330 : warnign on hanging indents are wrong for people who use different tab widths
+# R1705 : sometimes I use "else" for clarity, not just because it's strictly necessary
