@@ -1,2 +1,3 @@
-python_library()
 python_requirements()
+
+python_sources()
