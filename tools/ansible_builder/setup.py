@@ -26,4 +26,7 @@ setup(
 	project_urls={
 		"Bug Tracker": "https://github.com/lilatomic/alpacloud/issues"
 	},
+	package_data={
+		"": ["*.md"]
+	}
 )
