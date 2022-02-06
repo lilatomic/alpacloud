@@ -46,7 +46,8 @@ jobs:
           ./pants package ::
       - name: Validate packages
         run: |
-          pip3 install dist/*
+          ls dist
+          pip3 install dist/alpacloud-ansible-builder-0.1.3.tar.gz
       - name: Upload pants log
         uses: actions/upload-artifact@v2
         with:
