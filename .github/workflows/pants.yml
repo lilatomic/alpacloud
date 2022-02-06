@@ -35,10 +35,12 @@ jobs:
         run: ./pants tailor --check update-build-files --check
       - name: Lint and typecheck
         run: |
-          ./pants lint typecheck ::
+          ./pants lint check ::
+        if: success() || failure()
       - name: Test
         run: |
           ./pants test ::
+        if: success() || failure()
       - name: Package
         run: |
           ./pants package ::
