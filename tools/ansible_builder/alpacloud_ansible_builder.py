@@ -92,8 +92,13 @@ def find_collections(root) -> Dict[str, Collection]:
 		if "galaxy.yml" in files:
 			with open(os.path.join(path, "galaxy.yml"), encoding="utf-8") as f:
 				galaxy = yaml.safe_load(f.read())
+
+			galaxy_fields = {
+				k: galaxy[k] for k in Collection._fields if k != "galaxy"
+			}
+
 			s[path] = Collection(
-				*(galaxy[k] for k in Collection._fields if k != "galaxy"), galaxy=galaxy
+				**galaxy_fields, galaxy=galaxy
 			)
 	return s
 
