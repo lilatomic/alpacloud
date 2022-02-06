@@ -1,3 +1,4 @@
+"""Tests for alpacloud-ansible-builder"""
 from tools.ansible_builder.alpacloud_ansible_builder import collect_mappings
 
 
