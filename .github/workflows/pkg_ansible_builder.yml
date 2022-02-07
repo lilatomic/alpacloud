@@ -1,0 +1,18 @@
+name: Package ansible_builder
+
+on:
+  push:
+    branches:
+      - prod
+    paths:
+      - tools/ansible_builder/*
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    if: "startsWith(github.event.head_commit.message, '[RELEASE]')"
+
+    steps:
+      - name: Run a one-line script
+        run: echo Hello, world!
