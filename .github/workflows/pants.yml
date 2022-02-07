@@ -47,7 +47,8 @@ jobs:
       - name: Validate packages
         run: |
           ls dist
-          pip3 install dist/alpacloud-ansible-builder-0.1.3.tar.gz
+          pip3 install dist/alpacloud-ansible-builder-*.tar.gz
+          alpacloud-ansible-builder --help
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
