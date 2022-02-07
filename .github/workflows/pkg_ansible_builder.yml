@@ -2,16 +2,13 @@ name: Package ansible_builder
 
 on:
   push:
-    branches:
-      - prod
-    paths:
-      - tools/ansible_builder/*
+    tags:
+      - ansible-builder/*
   workflow_dispatch:
 
 jobs:
   release:
     runs-on: ubuntu-latest
-    if: "startsWith(github.event.head_commit.message, '[RELEASE]')"
 
     steps:
       - uses: actions/checkout@v2
@@ -25,7 +22,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install bump2version setuptools wheel twine
-
       - name: Bootstrap Pants
         run: |
           ./pants --version
