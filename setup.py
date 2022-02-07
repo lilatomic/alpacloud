@@ -1,3 +1,4 @@
+"""Setup Alpacloud metapackage"""
 from setuptools import setup
 
 with open("readme.md", "r", encoding="utf-8") as fh:

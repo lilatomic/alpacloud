@@ -1,36 +1,64 @@
-# This is a basic workflow to help you get started with Actions
-
 name: CI
 
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the prod branch
-  push:
-    branches: [ prod ]
   pull_request:
-    branches: [ prod ]
-
-  # Allows you to run this workflow manually from the Actions tab
+    branches: [main]
   workflow_dispatch:
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
   build:
-    # The type of runner that the job will run on
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.platform }}
+    strategy:
+      matrix:
+        platform: [ubuntu-latest]
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
-
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
-
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
+      - uses: actions/cache@v2
+        id: cache
+        with:
+          path: |
+            ~/.cache/pants/setup
+            ~/.cache/pants/lmdb_store
+            ~/.cache/pants/named_caches
+          key: ${{ runner.os }}-
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Bootstrap Pants
         run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+          ./pants --version
+
+      - name: Check BUILD files
+        run: ./pants tailor --check update-build-files --check
+      - name: Lint and typecheck
+        run: |
+          ./pants lint check ::
+        if: success() || failure()
+      - name: Test
+        run: |
+          ./pants test ::
+        if: success() || failure()
+      - name: Package
+        run: |
+          ./pants package ::
+      - name: Validate packages
+        run: |
+          ls dist
+          pip3 install dist/alpacloud-ansible-builder-*.tar.gz
+          alpacloud-ansible-builder --help
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          files: dist/coverage/python/coverage.xml
+          fail_ci_if_error: true
+          verbose: true
+      - name: Upload pants log
+        uses: actions/upload-artifact@v2
+        with:
+          name: pants-log
+          path: .pants.d/pants.log
+        if: always() # We want the log even on failures.

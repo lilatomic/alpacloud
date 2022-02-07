@@ -1,6 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+"""Execute HTTP requests in Ansible"""
+
 
 DOCUMENTATION = """
 ---

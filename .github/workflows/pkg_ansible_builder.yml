@@ -2,17 +2,34 @@ name: Package ansible_builder
 
 on:
   push:
-    branches:
-      - prod
-    paths:
-      - tools/ansible_builder/*
+    tags:
+      - ansible-builder/*
   workflow_dispatch:
 
 jobs:
   release:
     runs-on: ubuntu-latest
-    if: "startsWith(github.event.head_commit.message, '[RELEASE]')"
 
     steps:
-      - name: Run a one-line script
-        run: echo Hello, world!
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.x"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install bump2version setuptools wheel twine
+      - name: Bootstrap Pants
+        run: |
+          ./pants --version
+
+      - name: Build and publish
+        env:
+          TWINE_USERNAME: ${{ secrets.PYPI_USER }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASS }}
+        run: |
+          ./pants package tools/ansible_builder/:
+          twine upload --repository testpypi dist/*

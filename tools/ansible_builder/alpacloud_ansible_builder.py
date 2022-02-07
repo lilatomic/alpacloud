@@ -1,3 +1,4 @@
+"""Install Ansible Collections automatically"""
 from collections import namedtuple
 from functools import reduce
 import os
@@ -26,6 +27,7 @@ Collection = namedtuple("Collection", ["namespace", "name", "version", "galaxy"]
 	"--debounce", default=1000, help="time to wait for last modification, in ms"
 )
 def launch(roots, watch, debounce):
+	"""Install Ansible Collections automatically"""
 	debounce = datetime.timedelta(milliseconds=debounce)
 
 	collections = collect_mappings(map(find_collections, roots))
@@ -79,6 +81,7 @@ def launch(roots, watch, debounce):
 
 
 def collect_mappings(mappings: Iterator[Dict[str, Collection]]) -> Dict[str, Collection]:
+	"""Flatten mappings"""
 	return reduce(lambda a, b: {**a, **b}, mappings)
 
 
@@ -87,10 +90,15 @@ def find_collections(root) -> Dict[str, Collection]:
 	s = {}
 	for path, _dirs, files in os.walk(root):
 		if "galaxy.yml" in files:
-			with open(os.path.join(path, "galaxy.yml")) as f:
+			with open(os.path.join(path, "galaxy.yml"), encoding="utf-8") as f:
 				galaxy = yaml.safe_load(f.read())
+
+			galaxy_fields = {
+				k: galaxy[k] for k in Collection._fields if k != "galaxy"
+			}
+
 			s[path] = Collection(
-				*(galaxy[k] for k in Collection._fields if k != "galaxy"), galaxy=galaxy
+				**galaxy_fields, galaxy=galaxy
 			)
 	return s
 
