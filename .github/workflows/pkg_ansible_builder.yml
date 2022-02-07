@@ -32,4 +32,4 @@ jobs:
           TWINE_PASSWORD: ${{ secrets.PYPI_PASS }}
         run: |
           ./pants package tools/ansible_builder/:
-          twine upload --repository testpypi dist/*
+          twine upload dist/*
