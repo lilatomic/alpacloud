@@ -7,6 +7,13 @@ backend_packages = [
 	"pants.backend.python.typecheck.mypy"
 ]
 
+[source]
+root_patterns = [
+	"/",
+	"lilatomic/azcli",
+	"lilatomic/api",
+]
+
 [pylint]
 config = ".pylintrc"
 [flake8]
