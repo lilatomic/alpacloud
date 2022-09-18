@@ -1,7 +1,6 @@
 import json
 
 import pytest
-
 from plugins.action.cli import ActionModule, AzCliParams
 
 
@@ -22,8 +21,8 @@ def test__AzCliParams__as_cmd():
 		args={
 			'k1': 'v1',
 			'k2': 'v2'
-			}
-		)
+		}
+	)
 
 	cmd = p.as_cmd()
 
@@ -56,8 +55,8 @@ def test__AzCliParams__output():
 		('-s', '-s'),
 		('long', '--long'),
 		('--long', '--long')
-		]
-	)
+	]
+)
 def test__AzClidParams__format_args(argname, expected):
 	p = AzCliParams("command", args={argname: 'value'})
 
@@ -75,7 +74,7 @@ def test__AzClidParams__format_args(argname, expected):
 		(json.dumps(1), "json", {'output': 1}),
 		('', "json", {}),
 		("some\noutput", "table", {'output': "some\noutput"})
-		]
-	)
+	]
+)
 def test__parse_output(cli_output, output_format, expected):
 	assert expected == ActionModule.parse_output(cli_output, output_format)

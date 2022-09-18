@@ -7,7 +7,7 @@ DOCUMENTATION = """
 module: cli
 short_description: Run azure-cli tasks from Ansible
 description:
-  - An easy way to use the [azure cli](https://docs.microsoft.com/en-us/cli/azure/) 
+  - An easy way to use the [azure cli](https://docs.microsoft.com/en-us/cli/azure/)
 version_added: "0.1.0"
 author:
   - Daniel Goldman <danielgoldman4@gmail.com>

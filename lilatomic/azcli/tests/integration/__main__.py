@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import os.path
 import subprocess
-from pathlib import Path
 import shutil
 from tempfile import TemporaryDirectory
 
@@ -25,6 +24,7 @@ def integration_test():
 	output(result.stderr)
 	if result.returncode != 0:
 		exit(result.returncode)
+
 
 if __name__ == "__main__":
 	integration_test()

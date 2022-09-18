@@ -1,12 +1,12 @@
-from dataclasses import dataclass, field
-
 import io
 import itertools
 import json
+from dataclasses import dataclass, field
+from typing import Dict, TypeVar
+
 from ansible.plugins.action import ActionBase
 from azure.cli.core import get_default_cli, AzCli
 from knack.util import CommandResultItem
-from typing import Dict, TypeVar
 
 A = TypeVar('A')
 
@@ -27,7 +27,7 @@ class AzCliParams:
 			command,
 			arg_statements,
 			['--output', self.output],
-			))
+		))
 
 	@staticmethod
 	def _cli_format_arg(arg: str):
@@ -81,7 +81,7 @@ class ActionModule(ActionBase):
 			'exit_code': i.exit_code,
 			'error': error,
 			'raw_result': raw_result
-			}
+		}
 
 	@staticmethod
 	def _repr_or_pass(x):
