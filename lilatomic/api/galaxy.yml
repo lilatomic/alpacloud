@@ -19,4 +19,4 @@ repository: https://github.com/lilatomic/alpacloud
 #documentation: http://docs.example.com
 homepage: https://github.com/lilatomic/alpacloud
 issues: https://github.com/lilatomic/alpacloud/issues
-build_ignore: ["license.md"]
+build_ignore: ["license.md", "**/BUILD"]
