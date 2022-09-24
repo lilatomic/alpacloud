@@ -16,6 +16,7 @@ root_patterns = [
 
 [pylint]
 config = ".pylintrc"
+
 [flake8]
 config = ".flake8"
 
@@ -26,5 +27,7 @@ use_coverage = true
 report = ["xml", "html"]
 
 [mypy]
+lockfile = "cicd/mypy.lock"
+
+extra_requirements.add = ["pytest"]
 extra_type_stubs = ["types-PyYAML", "types-requests"]
-config = "mypy.ini"

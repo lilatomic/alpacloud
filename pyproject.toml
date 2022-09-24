@@ -6,5 +6,19 @@ requires = [
 ]
 build-backend = "setuptools.build_meta"
 
-[mypy-watchdog.*]
-ignore_missing_imports = True
+[tool.mypy]
+#namespace_packages = true
+#explicit_package_bases = true
+#mypy_path = "lilatomic/azcli:lilatomic/api:tools/"
+
+pretty = true
+
+[[tool.mypy.overrides]]
+module = [
+    "watchdog",
+    "setuptools",
+    "ansible.plugins.action",
+    "azure.cli.*",
+    "knack.*",
+]
+ignore_missing_imports = true
