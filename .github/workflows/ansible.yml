@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [prod]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.platform }}
+    strategy:
+      matrix:
+        platform: [ubuntu-latest]
+        collection: ["lilatomic/azcli", "lilatomic/api"]
+#        python-version: ["3.8", "3.9", "3.10"]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run ansible-test sanity
+        uses: ansible-community/ansible-test-gh-action@release/v1
+        with:
+          ansible-core-version: "stable-2.13"
+          testing-type: sanity
+          collection-root: ${{ matrix.collection }}
