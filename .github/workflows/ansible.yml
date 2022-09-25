@@ -31,7 +31,7 @@ jobs:
           ansible-core-version: "stable-2.13"
           testing-type: sanity
           collection-root: ${{ matrix.collection }}
-          pre-test-cmd: "ls -la ansible_collections/ && ls -la ansible_collections/${{ matrix.collection }}/ && pip install -r ansible_collections/${{ matrix.collection }}/requirements.txt"
+          pre-test-cmd: "pwd && ls -la . && ls -la ansible_collections/ && ls -la ansible_collections/${{ matrix.collection }}/ && pip install -r ansible_collections/${{ matrix.collection }}/requirements.txt"
         if: success() || failure()
       - run: |
           rm -r ansible_collections/${{ matrix.collection }}
