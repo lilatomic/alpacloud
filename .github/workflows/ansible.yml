@@ -26,14 +26,17 @@ jobs:
           rm **/BUILD
 
       - name: Run ansible-test sanity
-        uses: ansible-community/ansible-test-gh-action@release/v1
-        with:
-          ansible-core-version: "stable-2.13"
-          testing-type: sanity
-          collection-root: ${{ matrix.collection }}
-        if: success() || failure()
-      - run: |
-          rm -r ansible_collections/${{ matrix.collection }}
+        run: |
+          mkdir -p /tmp/ansible_collections/${{ matrix.collection }}
+          cp -r ${{ matrix.collection }}/* /tmp/ansible_collections/${{ matrix.collection }}/
+          
+          pushd /tmp/ansible_collections/${{ matrix.collection }}
+          ansible-test sanity --requirements \
+            --skip-test import \
+            --skip-test pslint \
+            --skip-test pep8 \
+            --skip-test metaclass-boilerplate \
+            --skip-test future-import-boilerplate
         if: success() || failure()
 
       - name: Run ansible-test units
