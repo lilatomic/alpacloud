@@ -16,9 +16,31 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -r ${{ matrix.collection }}/requirements.txt
+
       - name: Run ansible-test sanity
         uses: ansible-community/ansible-test-gh-action@release/v1
         with:
           ansible-core-version: "stable-2.13"
           testing-type: sanity
           collection-root: ${{ matrix.collection }}
+        if: success() || failure()
+
+      - name: Run ansible-test units
+        uses: ansible-community/ansible-test-gh-action@release/v1
+        with:
+          ansible-core-version: "stable-2.13"
+          testing-type: units
+          collection-root: ${{ matrix.collection }}
+        if: success() || failure()
+
+      - name: Run ansible-test integration
+        uses: ansible-community/ansible-test-gh-action@release/v1
+        with:
+          ansible-core-version: "stable-2.13"
+          testing-type: integration
+          collection-root: ${{ matrix.collection }}
+        if: success() || failure()
