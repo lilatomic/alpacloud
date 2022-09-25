@@ -2,7 +2,7 @@ name: CI
 
 on:
   pull_request:
-    branches: [prod]
+    branches: [ prod ]
   workflow_dispatch:
 
 jobs:
@@ -28,6 +28,9 @@ jobs:
           testing-type: sanity
           collection-root: ${{ matrix.collection }}
         if: success() || failure()
+      - run: |
+          rm -r ansible_collections/${{ matrix.collection }}
+        if: success() || failure()
 
       - name: Run ansible-test units
         uses: ansible-community/ansible-test-gh-action@release/v1
@@ -36,6 +39,9 @@ jobs:
           testing-type: units
           collection-root: ${{ matrix.collection }}
         if: success() || failure()
+      - run: |
+          rm -r ansible_collections/${{ matrix.collection }}
+        if: success() || failure()
 
       - name: Run ansible-test integration
         uses: ansible-community/ansible-test-gh-action@release/v1
@@ -43,4 +49,7 @@ jobs:
           ansible-core-version: "stable-2.13"
           testing-type: integration
           collection-root: ${{ matrix.collection }}
+        if: success() || failure()
+      - run: |
+          rm -r ansible_collections/${{ matrix.collection }}
         if: success() || failure()
