@@ -31,7 +31,7 @@ jobs:
           ansible-core-version: "stable-2.13"
           testing-type: sanity
           collection-root: ${{ matrix.collection }}
-          pre-test-cmd: "pip install -r ${{ matrix.collection }}/requirements.txt"
+          pre-test-cmd: "pip install -r ansible_collections/${{ matrix.collection }}/requirements.txt"
         if: success() || failure()
       - run: |
           rm -r ansible_collections/${{ matrix.collection }}
@@ -43,7 +43,7 @@ jobs:
           ansible-core-version: "stable-2.13"
           testing-type: units
           collection-root: ${{ matrix.collection }}
-          pre-test-cmd: "pip install -r ${{ matrix.collection }}/requirements.txt"
+          pre-test-cmd: "pip install -r ansible_collections/${{ matrix.collection }}/requirements.txt"
         if: success() || failure()
       - run: |
           rm -r ansible_collections/${{ matrix.collection }}
@@ -55,7 +55,7 @@ jobs:
           ansible-core-version: "stable-2.13"
           testing-type: integration
           collection-root: ${{ matrix.collection }}
-          pre-test-cmd: "pip install -r ${{ matrix.collection }}/requirements.txt"
+          pre-test-cmd: "pip install -r ansible_collections/${{ matrix.collection }}/requirements.txt"
         if: success() || failure()
       - run: |
           rm -r ansible_collections/${{ matrix.collection }}
