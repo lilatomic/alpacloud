@@ -1,7 +1,7 @@
 import json
 
 import pytest
-from plugins.action.cli import ActionModule, AzCliParams
+from lilatomic.azcli.plugins.action.cli import ActionModule, AzCliParams
 
 
 def _assert_arg_has_value(cmd, arg, value, normalise=True):

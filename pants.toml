@@ -29,5 +29,5 @@ report = ["xml", "html"]
 [mypy]
 lockfile = "cicd/mypy.lock"
 
-extra_requirements.add = ["pytest"]
+#extra_requirements.add = ["pytest"]
 extra_type_stubs = ["types-PyYAML", "types-requests"]
