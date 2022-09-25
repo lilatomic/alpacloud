@@ -2,10 +2,15 @@
 from typing import Dict, Optional, List, Union
 from urllib.parse import urljoin
 
-import requests
 from ansible.plugins.action import ActionBase
-from requests import Response
-from requests.auth import HTTPBasicAuth, AuthBase
+from ansible.errors import AnsibleError
+
+try:
+	import requests
+	from requests import Response
+	from requests.auth import HTTPBasicAuth, AuthBase
+except ImportError as import_guard:
+	raise AnsibleError() from import_guard
 
 NS = "lilatomic_api_http"
 AUTHORIZATION_HEADER = "Authorization"
