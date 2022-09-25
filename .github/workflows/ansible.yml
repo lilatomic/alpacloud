@@ -22,7 +22,7 @@ jobs:
           pip install -r ${{ matrix.collection }}/requirements.txt
       - name: Clean BUILD files
         run: |
-          rm **/BUILD      
+          rm **/BUILD
 
       - name: Run ansible-test sanity
         uses: ansible-community/ansible-test-gh-action@release/v1
@@ -30,6 +30,7 @@ jobs:
           ansible-core-version: "stable-2.13"
           testing-type: sanity
           collection-root: ${{ matrix.collection }}
+          pre-test-cmd: "pip install -r ${{ matrix.collection }}/requirements.txt"
         if: success() || failure()
       - run: |
           rm -r ansible_collections/${{ matrix.collection }}
@@ -41,6 +42,7 @@ jobs:
           ansible-core-version: "stable-2.13"
           testing-type: units
           collection-root: ${{ matrix.collection }}
+          pre-test-cmd: "pip install -r ${{ matrix.collection }}/requirements.txt"
         if: success() || failure()
       - run: |
           rm -r ansible_collections/${{ matrix.collection }}
@@ -52,6 +54,7 @@ jobs:
           ansible-core-version: "stable-2.13"
           testing-type: integration
           collection-root: ${{ matrix.collection }}
+          pre-test-cmd: "pip install -r ${{ matrix.collection }}/requirements.txt"
         if: success() || failure()
       - run: |
           rm -r ansible_collections/${{ matrix.collection }}
