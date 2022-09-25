@@ -1,6 +1,7 @@
 import json
 
 import pytest
+
 from lilatomic.azcli.plugins.action.cli import ActionModule, AzCliParams
 
 

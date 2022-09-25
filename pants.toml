@@ -10,8 +10,6 @@ backend_packages = [
 [source]
 root_patterns = [
 	"/",
-	"lilatomic/azcli",
-	"lilatomic/api",
 ]
 
 [pylint]
