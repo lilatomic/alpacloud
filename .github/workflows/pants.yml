@@ -1,8 +1,8 @@
-name: CI
+name: Pants
 
 on:
   pull_request:
-    branches: [main]
+    branches: [prod]
   workflow_dispatch:
 
 jobs:
@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         platform: [ubuntu-latest]
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        python-version: ["3.8", "3.9", "3.10"]
 
     steps:
       - uses: actions/checkout@v2
@@ -32,7 +32,7 @@ jobs:
           ./pants --version
 
       - name: Check BUILD files
-        run: ./pants tailor --check update-build-files --check
+        run: ./pants tailor --check update-build-files --check ::
       - name: Lint and typecheck
         run: |
           ./pants lint check ::

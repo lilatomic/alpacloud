@@ -169,3 +169,6 @@ t.*
 /dist/
 /.pids
 /.pants.workdir.file_lock*
+
+# rever
+rever/

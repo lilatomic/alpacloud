@@ -1,5 +1,5 @@
 [GLOBAL]
-pants_version = "2.9.0"
+pants_version = "2.13.0"
 backend_packages = [
 	"pants.backend.python",
 	"pants.backend.python.lint.flake8",
@@ -7,8 +7,14 @@ backend_packages = [
 	"pants.backend.python.typecheck.mypy"
 ]
 
+[source]
+root_patterns = [
+	"/",
+]
+
 [pylint]
 config = ".pylintrc"
+
 [flake8]
 config = ".flake8"
 
@@ -19,5 +25,7 @@ use_coverage = true
 report = ["xml", "html"]
 
 [mypy]
+lockfile = "cicd/mypy.lock"
+
+#extra_requirements.add = ["pytest"]
 extra_type_stubs = ["types-PyYAML", "types-requests"]
-config = "mypy.ini"

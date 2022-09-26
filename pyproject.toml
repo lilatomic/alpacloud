@@ -6,5 +6,15 @@ requires = [
 ]
 build-backend = "setuptools.build_meta"
 
-[mypy-watchdog.*]
-ignore_missing_imports = True
+[tool.mypy]
+pretty = true
+
+[[tool.mypy.overrides]]
+module = [
+    "watchdog.*",
+    "setuptools",
+    "ansible.plugins.action",
+    "azure.cli.*",
+    "knack.*",
+]
+ignore_missing_imports = true

@@ -1,0 +1,41 @@
+- name: command without arguments
+  lilatomic.azcli.cli:
+    cmd: account show
+  register: account_show
+
+- name: command with arguments
+  lilatomic.azcli.cli:
+    cmd: account set
+    args:
+      s: "{{ account_show['id'] }}"
+
+- name: command with duplicated arguments
+  lilatomic.azcli.cli:
+    cmd: account set
+    args:
+      s: "{{ account_show['id'] }}"
+      subscription: "{{ account_show['id'] }}"
+
+- name: nonexistant command is marked failed but continues
+  lilatomic.azcli.cli:
+    cmd: does not exist
+  register: nonexistant_command
+  ignore_errors: true
+
+- name: assert nonexistant command is failed
+  assert:
+    that:
+      - nonexistant_command is failed
+
+- name: failed command is marked failed but continues
+  lilatomic.azcli.cli:
+    cmd: account set
+    args:
+      s: "not a valid subscription"
+  register: failed_command
+  ignore_errors: true
+
+- name: assert failed_command is failed
+  assert:
+    that:
+      - failed_command is failed

@@ -2,10 +2,16 @@
 from typing import Dict, Optional, List, Union
 from urllib.parse import urljoin
 
-import requests
 from ansible.plugins.action import ActionBase
-from requests import Response
-from requests.auth import HTTPBasicAuth, AuthBase
+from ansible.errors import AnsibleError
+
+try:
+	import requests
+	from requests import Response
+	from requests.auth import HTTPBasicAuth, AuthBase
+	import_error = None
+except ImportError as import_guard:
+	import_error = import_guard
 
 NS = "lilatomic_api_http"
 AUTHORIZATION_HEADER = "Authorization"
@@ -60,6 +66,9 @@ class ActionModule(ActionBase):
 	def run(self, tmp=None, task_vars=None):
 		"""Run Ansible module"""
 		super().run(tmp=tmp, task_vars=task_vars)
+
+		if import_error:
+			raise AnsibleError("Install dependencies") from import_error
 
 		connection_info = resolve_connection_info(task_vars, self.arg("connection"))
 		task_kwargs = self.arg_or("kwargs", {})

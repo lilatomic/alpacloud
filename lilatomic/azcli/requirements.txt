@@ -1,0 +1,2 @@
+ansible-core>=2.10
+azure-cli>2.34<3.0

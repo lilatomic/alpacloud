@@ -1,2 +1,5 @@
-python_requirements()
-python_sources(dependencies=[":ansible-core"])
+python_sources()
+
+python_requirements(
+    name="reqs",
+)
