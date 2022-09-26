@@ -7,6 +7,7 @@ backend_packages = [
 	"pants.backend.python.typecheck.mypy"
 ]
 
+use_deprecated_directory_cli_args_semantics = false # remove 2.14
 [source]
 root_patterns = [
 	"/",
