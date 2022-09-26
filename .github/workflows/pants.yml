@@ -1,8 +1,7 @@
 name: Pants
 
 on:
-  pull_request:
-    branches: [prod]
+  push:
   workflow_dispatch:
 
 jobs:
