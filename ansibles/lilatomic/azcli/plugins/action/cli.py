@@ -1,3 +1,4 @@
+"""Action plugin for invoking the Azure CLI"""
 import io
 import itertools
 import json
@@ -13,11 +14,14 @@ A = TypeVar("A")
 
 @dataclass
 class AzCliParams:
+	"""Params used to invoke `az`"""
+
 	cmd: str
 	args: Dict[str, str] = field(default_factory=dict)
 	output: str = "json"
 
 	def as_cmd(self):
+		"""Render as command args"""
 		command = self.cmd.split(" ")
 		arg_statements = []
 		for k, v in self.args.items():
@@ -44,7 +48,10 @@ class AzCliParams:
 
 
 class ActionModule(ActionBase):
+	"""Ansible Action Module to invoke the Azure CLI"""
+
 	def run(self, tmp=None, task_vars=None):
+		"""Entrypoint"""
 		super().run(tmp=tmp, task_vars=task_vars)
 		ret = {}
 
@@ -96,6 +103,7 @@ class ActionModule(ActionBase):
 
 	@staticmethod
 	def parse_output(cli_output, output_format):
+		"""Parse the output of the Azure CLI module"""
 		ret = {}
 		if len(cli_output) > 0:
 			if output_format == "json":
