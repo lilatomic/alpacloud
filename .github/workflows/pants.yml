@@ -13,8 +13,8 @@ jobs:
         python-version: ["3.8", "3.9", "3.10"]
 
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/cache@v2
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
         id: cache
         with:
           path: |
@@ -27,7 +27,7 @@ jobs:
         with:
           python-version: 3.8
       - name: Setup Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
       - name: Bootstrap Pants
@@ -54,13 +54,13 @@ jobs:
           alpacloud-ansible-builder --help
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
         with:
           files: dist/coverage/python/coverage.xml
           fail_ci_if_error: true
           verbose: true
       - name: Upload pants log
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: pants-log
           path: .pants.d/pants.log
