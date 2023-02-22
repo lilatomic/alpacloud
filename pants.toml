@@ -17,6 +17,15 @@ root_patterns = [
 	"/tools",
 ]
 
+[python]
+enable_resolves = true
+default_resolve = "tools"
+
+[python.resolves]
+"tools" = "cicd/tools.lock"
+"ansible.lilatomic.azcli" = "cicd/ansible.lilatomic.azcli.lock"
+"ansible.lilatomic.api" = "cicd/ansible.lilatomic.api.lock"
+
 [pylint]
 config = ".pylintrc"
 
