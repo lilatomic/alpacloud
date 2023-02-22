@@ -17,13 +17,7 @@ def _assert_arg_has_value(cmd, arg, value, normalise=True):
 
 
 def test__AzCliParams__as_cmd():
-	p = AzCliParams(
-		cmd="command verb",
-		args={
-			'k1': 'v1',
-			'k2': 'v2'
-		}
-	)
+	p = AzCliParams(cmd="command verb", args={"k1": "v1", "k2": "v2"})
 
 	cmd = p.as_cmd()
 
@@ -51,31 +45,27 @@ def test__AzCliParams__output():
 
 
 @pytest.mark.parametrize(
-	'argname, expected', [
-		('s', '-s'),
-		('-s', '-s'),
-		('long', '--long'),
-		('--long', '--long')
-	]
+	"argname, expected",
+	[("s", "-s"), ("-s", "-s"), ("long", "--long"), ("--long", "--long")],
 )
 def test__AzClidParams__format_args(argname, expected):
-	p = AzCliParams("command", args={argname: 'value'})
+	p = AzCliParams("command", args={argname: "value"})
 
 	cmd = p.as_cmd()
 
-	_assert_arg_has_value(cmd, expected, 'value', normalise=False)
+	_assert_arg_has_value(cmd, expected, "value", normalise=False)
 
 
 @pytest.mark.parametrize(
 	"cli_output,output_format,expected",
 	[
 		(json.dumps({}), "json", {}),
-		(json.dumps({'a': 1}), "json", {'a': 1}),
-		(json.dumps(['a', 'b']), "json", {0: 'a', 1: 'b'}),
-		(json.dumps(1), "json", {'output': 1}),
-		('', "json", {}),
-		("some\noutput", "table", {'output': "some\noutput"})
-	]
+		(json.dumps({"a": 1}), "json", {"a": 1}),
+		(json.dumps(["a", "b"]), "json", {0: "a", 1: "b"}),
+		(json.dumps(1), "json", {"output": 1}),
+		("", "json", {}),
+		("some\noutput", "table", {"output": "some\noutput"}),
+	],
 )
 def test__parse_output(cli_output, output_format, expected):
 	assert expected == ActionModule.parse_output(cli_output, output_format)

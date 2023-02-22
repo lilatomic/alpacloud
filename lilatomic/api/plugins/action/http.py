@@ -1,14 +1,15 @@
 """Execute HTTP requests in Ansible"""
-from typing import Dict, Optional, List, Union
+from typing import Dict, List, Optional, Union
 from urllib.parse import urljoin
 
-from ansible.plugins.action import ActionBase
 from ansible.errors import AnsibleError
+from ansible.plugins.action import ActionBase
 
 try:
 	import requests
 	from requests import Response
-	from requests.auth import HTTPBasicAuth, AuthBase
+	from requests.auth import AuthBase, HTTPBasicAuth
+
 	import_error = None
 except ImportError as import_guard:
 	import_error = import_guard
@@ -20,6 +21,7 @@ DEFAULT_TIMEOUT = 15
 
 class HTTPBearerAuth(AuthBase):
 	"""HTTP Bearer authentication"""
+
 	def __init__(self, token, header=AUTHORIZATION_HEADER, value_format="Bearer {}"):
 		self.token = token
 		self.header = header
@@ -32,6 +34,7 @@ class HTTPBearerAuth(AuthBase):
 
 class ConnectionInfo:
 	"""Information for an HTTP connection"""
+
 	def __init__(self, base, auth=None, kwargs=None):
 		self.base = base
 		self.auth = self.make_auth(auth)
@@ -79,13 +82,17 @@ class ActionModule(ActionBase):
 
 		headers = self.arg_or("headers")
 
-		request_kwargs = recursive_merge(recursive_merge(connection_info.kwargs, task_kwargs), {"headers": headers})
+		request_kwargs = recursive_merge(
+			recursive_merge(connection_info.kwargs, task_kwargs), {"headers": headers}
+		)
 
-		request_kwargs["timeout"] = self.arg_or("timeout", request_kwargs.get("timeout", DEFAULT_TIMEOUT))
+		request_kwargs["timeout"] = self.arg_or(
+			"timeout", request_kwargs.get("timeout", DEFAULT_TIMEOUT)
+		)
 
 		r = requests.request(
 			method,
-			urljoin(connection_info.base + '/', self.arg("path").strip("/")),
+			urljoin(connection_info.base + "/", self.arg("path").strip("/")),
 			auth=connection_info.auth,
 			data=data,
 			json=json,
@@ -103,26 +110,30 @@ class ActionModule(ActionBase):
 		out["msg"] = r.text
 
 		# parameters for ansible.legacy.uri module
-		out.update({
-			"content": r.content,
-			"content_length": r.headers.get("Content-Length", None),
-			"content_type": r.headers.get("Content-Type", None),
-			"cookies": dict(r.cookies),
-			"date": r.headers.get("Date", None),
-			"elapsed": r.elapsed.seconds,
-			"redirected": r.is_redirect,
-			"server": r.headers.get("Server", None),
-			"status": r.status_code,
-			"url": r.url,
-		})
+		out.update(
+			{
+				"content": r.content,
+				"content_length": r.headers.get("Content-Length", None),
+				"content_type": r.headers.get("Content-Type", None),
+				"cookies": dict(r.cookies),
+				"date": r.headers.get("Date", None),
+				"elapsed": r.elapsed.seconds,
+				"redirected": r.is_redirect,
+				"server": r.headers.get("Server", None),
+				"status": r.status_code,
+				"url": r.url,
+			}
+		)
 
 		# other parameters
-		out.update({
-			"encoding": r.encoding,
-			"headers": r.headers,
-			"reason": r.reason,
-			"status_code": r.status_code,
-		})
+		out.update(
+			{
+				"encoding": r.encoding,
+				"headers": r.headers,
+				"reason": r.reason,
+				"status_code": r.status_code,
+			}
+		)
 
 		# request parameters, for debugging
 		if self.arg_or("log_request"):
@@ -130,17 +141,21 @@ class ActionModule(ActionBase):
 			headers = req.headers.copy()
 			if not self.arg_or("log_auth"):
 				if AUTHORIZATION_HEADER in headers:
-					headers[AUTHORIZATION_HEADER] = "*" * len(headers[AUTHORIZATION_HEADER])
+					headers[AUTHORIZATION_HEADER] = "*" * len(
+						headers[AUTHORIZATION_HEADER]
+					)
 
-			out.update({
-				"request": {
-					"body": req.body,
-					"headers": headers,
-					"method": req.method,
-					"path_url": req.path_url,
-					"url": req.url,
+			out.update(
+				{
+					"request": {
+						"body": req.body,
+						"headers": headers,
+						"method": req.method,
+						"path_url": req.path_url,
+						"url": req.url,
+					}
 				}
-			})
+			)
 
 		return out
 
@@ -172,7 +187,7 @@ class ActionModule(ActionBase):
 
 
 def recursive_merge(a: Dict, b: Dict, path=None) -> Dict:
-	""" Recursively merges dictionaries
+	"""Recursively merges dictionaries
 	Mostly taken from user `andrew cooke` on [stackoverflow](https://stackoverflow.com/a/7205107)
 	"""
 	path = path or []

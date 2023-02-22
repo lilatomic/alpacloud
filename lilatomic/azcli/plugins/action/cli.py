@@ -5,10 +5,10 @@ from dataclasses import dataclass, field
 from typing import Dict, TypeVar
 
 from ansible.plugins.action import ActionBase
-from azure.cli.core import get_default_cli, AzCli
+from azure.cli.core import AzCli, get_default_cli
 from knack.util import CommandResultItem
 
-A = TypeVar('A')
+A = TypeVar("A")
 
 
 @dataclass
@@ -18,29 +18,32 @@ class AzCliParams:
 	output: str = "json"
 
 	def as_cmd(self):
-		command = self.cmd.split(' ')
+		command = self.cmd.split(" ")
 		arg_statements = []
 		for k, v in self.args.items():
 			arg_statements.append(self._cli_format_arg(k))
 			arg_statements.append(v)
-		return list(itertools.chain(
-			command,
-			arg_statements,
-			['--output', self.output],
-		))
+		return list(
+			itertools.chain(
+				command,
+				arg_statements,
+				["--output", self.output],
+			)
+		)
 
 	@staticmethod
 	def _cli_format_arg(arg: str):
-		if arg.startswith('--') or arg.startswith('-'):  # dashes have been specified by the user
+		if arg.startswith("--") or arg.startswith(
+			"-"
+		):  # dashes have been specified by the user
 			return arg
 		elif len(arg) == 1:  # single letters get 1 dash
-			return '-' + arg
+			return "-" + arg
 		else:
-			return '--' + arg
+			return "--" + arg
 
 
 class ActionModule(ActionBase):
-
 	def run(self, tmp=None, task_vars=None):
 		super().run(tmp=tmp, task_vars=task_vars)
 		ret = {}
@@ -77,10 +80,10 @@ class ActionModule(ActionBase):
 		error = ActionModule._repr_or_pass(i.error)
 		raw_result = ActionModule._repr_or_pass(i.raw_result)
 		return {
-			'result': i.result,
-			'exit_code': i.exit_code,
-			'error': error,
-			'raw_result': raw_result
+			"result": i.result,
+			"exit_code": i.exit_code,
+			"error": error,
+			"raw_result": raw_result,
 		}
 
 	@staticmethod

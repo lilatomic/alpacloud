@@ -1,3 +1,3 @@
 python_requirements(
-    name="reqs",
+	name="reqs",
 )

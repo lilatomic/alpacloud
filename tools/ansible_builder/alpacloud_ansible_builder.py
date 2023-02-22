@@ -1,18 +1,17 @@
 """Install Ansible Collections automatically"""
-from collections import namedtuple
-from functools import reduce
+import datetime
 import os
 import subprocess
-import datetime
 import time
+from collections import namedtuple
+from functools import reduce
 from typing import Dict, Iterator
-import yaml
-from structlog import get_logger
 
 import click
-from watchdog.observers import Observer
+import yaml
+from structlog import get_logger
 from watchdog.events import PatternMatchingEventHandler
-
+from watchdog.observers import Observer
 
 log = get_logger()
 
@@ -44,13 +43,18 @@ def launch(roots, watch, debounce):
 
 		def handle_change(event):
 			event_path = event.src_path
-			path = next((path for path in collections.keys() if event_path.startswith(path)))
+			path = next(
+				(path for path in collections.keys() if event_path.startswith(path))
+			)
 
 			log.msg("change event", trigger=event.src_path, collection_path=path)
 			to_process[path] = datetime.datetime.now()
 
 		handler = PatternMatchingEventHandler(
-			patterns="*", ignore_patterns="", ignore_directories=False, case_sensitive=True
+			patterns="*",
+			ignore_patterns="",
+			ignore_directories=False,
+			case_sensitive=True,
 		)
 		handler.on_any_event = handle_change
 
@@ -80,7 +84,9 @@ def launch(roots, watch, debounce):
 		install_all()
 
 
-def collect_mappings(mappings: Iterator[Dict[str, Collection]]) -> Dict[str, Collection]:
+def collect_mappings(
+	mappings: Iterator[Dict[str, Collection]]
+) -> Dict[str, Collection]:
 	"""Flatten mappings"""
 	return reduce(lambda a, b: {**a, **b}, mappings)
 
@@ -93,13 +99,9 @@ def find_collections(root) -> Dict[str, Collection]:
 			with open(os.path.join(path, "galaxy.yml"), encoding="utf-8") as f:
 				galaxy = yaml.safe_load(f.read())
 
-			galaxy_fields = {
-				k: galaxy[k] for k in Collection._fields if k != "galaxy"
-			}
+			galaxy_fields = {k: galaxy[k] for k in Collection._fields if k != "galaxy"}
 
-			s[path] = Collection(
-				**galaxy_fields, galaxy=galaxy
-			)
+			s[path] = Collection(**galaxy_fields, galaxy=galaxy)
 	return s
 
 
