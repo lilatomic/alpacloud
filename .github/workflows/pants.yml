@@ -22,6 +22,10 @@ jobs:
             ~/.cache/pants/lmdb_store
             ~/.cache/pants/named_caches
           key: ${{ runner.os }}-
+      - name: Setup Python for Pants
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.8
       - name: Setup Python ${{ matrix.python-version }}
         uses: actions/setup-python@v1
         with:
