@@ -51,6 +51,7 @@ jobs:
       - name: Run ansible-test integration
         uses: ansible-community/ansible-test-gh-action@release/v1
         with:
+          pre-test-cmd: pip3 install -r requirements.txt
           ansible-core-version: "stable-2.13"
           testing-type: integration
           collection-root: ansibles/${{ matrix.collection }}
