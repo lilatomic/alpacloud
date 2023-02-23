@@ -26,7 +26,8 @@ class AzCliParams:
 		arg_statements = []
 		for k, v in self.args.items():
 			arg_statements.append(self._cli_format_arg(k))
-			arg_statements.append(v)
+			if v:
+				arg_statements.append(v)
 		return list(
 			itertools.chain(
 				command,
