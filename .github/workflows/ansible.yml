@@ -56,6 +56,3 @@ jobs:
           testing-type: integration
           collection-root: ansible_collections/${{ matrix.collection }}
         if: success() || failure()
-      - run: |
-          rm -r ansible_collections/${{ matrix.collection }}
-        if: success() || failure()
