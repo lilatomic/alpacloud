@@ -1,5 +1,5 @@
 [GLOBAL]
-pants_version = "2.14.1"
+pants_version = "2.15.0rc6"
 backend_packages = [
 	"pants.backend.python",
 	"pants.backend.experimental.python",
@@ -48,7 +48,7 @@ report = ["xml", "html"]
 [mypy]
 lockfile = "cicd/mypy.lock"
 
-#extra_requirements.add = ["pytest"]
+extra_requirements.add = ["pytest"]
 extra_type_stubs = ["types-PyYAML", "types-requests"]
 
 [anonymous-telemetry]

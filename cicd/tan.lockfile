@@ -89,7 +89,7 @@
             "zipp>=0.5"
           ],
           "requires_python": ">=3.7",
-          "version": "6"
+          "version": "6.0.0"
         },
         {
           "artifacts": [
@@ -107,7 +107,7 @@
           "project_name": "mypy-extensions",
           "requires_dists": [],
           "requires_python": ">=3.5",
-          "version": "1"
+          "version": "1.0.0"
         },
         {
           "artifacts": [
@@ -125,7 +125,7 @@
           "project_name": "pathspec",
           "requires_dists": [],
           "requires_python": ">=3.7",
-          "version": "0.11"
+          "version": "0.11.0"
         },
         {
           "artifacts": [
@@ -154,7 +154,7 @@
             "typing-extensions>=4.4; python_version < \"3.8\""
           ],
           "requires_python": ">=3.7",
-          "version": "3"
+          "version": "3.0.0"
         },
         {
           "artifacts": [
@@ -310,7 +310,7 @@
           "project_name": "typing-extensions",
           "requires_dists": [],
           "requires_python": ">=3.7",
-          "version": "4.5"
+          "version": "4.5.0"
         },
         {
           "artifacts": [
@@ -347,14 +347,14 @@
             "sphinx>=3.5; extra == \"docs\""
           ],
           "requires_python": ">=3.7",
-          "version": "3.14"
+          "version": "3.14.0"
         }
       ],
       "platform_tag": null
     }
   ],
   "path_mappings": {},
-  "pex_version": "2.1.108",
+  "pex_version": "2.1.111",
   "pip_version": "20.3.4-patched",
   "prefer_older_binary": false,
   "requirements": [

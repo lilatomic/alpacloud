@@ -1,4 +1,7 @@
-python_sources(sources=["plugins/**/*.py"])
+python_sources(
+	sources=["plugins/**/*.py"],
+	resolve="ansible.lilatomic.azcli",
+)
 
 python_tests(
 	name="tests",
