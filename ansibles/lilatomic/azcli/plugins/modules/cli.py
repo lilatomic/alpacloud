@@ -10,7 +10,7 @@ description:
   - An easy way to use the [azure cli](https://docs.microsoft.com/en-us/cli/azure/)
 version_added: "0.1.0"
 author:
-  - Daniel Goldman <danielgoldman4@gmail.com>
+  - Daniel Goldman (@lilatomic)
 options:
   cmd:
     description: The az-cli command to run

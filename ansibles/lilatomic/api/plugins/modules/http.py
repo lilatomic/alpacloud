@@ -13,7 +13,7 @@ description:
   - Define connections and re-use them across tasks
 version_added: "0.1.0"
 author:
-  - Daniel Goldman <danielgoldman4@gmail.com>
+  - Daniel Goldman (@lilatomic)
 options:
   connection:
     description: The ConnectionInfo to use, or the name of the connection to use

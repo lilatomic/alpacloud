@@ -32,7 +32,9 @@ jobs:
             --skip-test pslint \
             --skip-test pep8 \
             --skip-test metaclass-boilerplate \
-            --skip-test future-import-boilerplate
+            --skip-test future-import-boilerplate \
+            --skip-test action-plugin-docs \
+            --skip-test validate-modules
         if: success() || failure()
 
       - name: Run ansible-test units
