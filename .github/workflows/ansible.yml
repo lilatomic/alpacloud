@@ -1,7 +1,7 @@
 name: Ansible
 
 on:
-  push:
+#  push:
   workflow_dispatch:
 
 jobs:
