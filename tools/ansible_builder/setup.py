@@ -8,7 +8,6 @@ setup(
 	name="alpacloud-ansible-builder",
 	version="0.1.3",
 	author="lilatomic",
-
 	py_modules=["alpacloud_ansible_builder"],
 	install_requires=[
 		"click>=7,<9",
@@ -24,10 +23,6 @@ setup(
 	long_description=long_description,
 	long_description_content_type="text/markdown",
 	url="https://github.com/lilatomic/alpacloud",
-	project_urls={
-		"Bug Tracker": "https://github.com/lilatomic/alpacloud/issues"
-	},
-	package_data={
-		"": ["*.md"]
-	}
+	project_urls={"Bug Tracker": "https://github.com/lilatomic/alpacloud/issues"},
+	package_data={"": ["*.md"]},
 )

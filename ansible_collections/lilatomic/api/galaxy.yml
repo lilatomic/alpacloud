@@ -1,0 +1,22 @@
+namespace: lilatomic
+name: api
+version: 0.1.1
+readme: README.md
+authors:
+  - Daniel Goldman (@lilatomic)
+description: A collection for better handling of API connections
+
+# Ansible Galaxy complained that this one isn't in the SPDX
+# so you can also choose the SSPL if you like reading
+license:
+  #  - Round-Robin-2.0.0
+  - SSPL-1.0
+tags: [httpapi]
+dependencies: {}
+repository: https://github.com/lilatomic/alpacloud
+
+## The URL to any online docs
+#documentation: http://docs.example.com
+homepage: https://github.com/lilatomic/alpacloud
+issues: https://github.com/lilatomic/alpacloud/issues
+build_ignore: ["license.md", "**/BUILD"]

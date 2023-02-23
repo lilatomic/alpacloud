@@ -1,5 +1,5 @@
 python_tests(
-	name="tests0",
+	name="tests",
 )
 
 python_sources()

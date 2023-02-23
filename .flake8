@@ -1,3 +1,6 @@
 [flake8]
-ignore = W191
+ignore = W191,W503,E203
 max-line-length = 240
+
+per-file-ignores=
+	tools/multitest/test_things.py: F841
