@@ -1,7 +1,0 @@
-- name: Run IT
-  hosts: localhost
-  gather_facts: false
-
-  tasks:
-    - name: action_cli
-      include_tasks: "targets/action_cli/tasks/main.yml"
