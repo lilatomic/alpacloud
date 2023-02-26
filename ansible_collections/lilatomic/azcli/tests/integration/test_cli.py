@@ -4,9 +4,10 @@ import io
 import json
 import logging
 import os
+import subprocess
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, List
+from typing import List, Optional
 
 
 class AnsibleTaskResult(Enum):
@@ -36,10 +37,14 @@ output_file = "ansible_output.json"
 
 
 def run_ansible_playbook(playbook_path: str) -> List[AnsibleTaskOutput]:
+	"""Run an Ansible playbook and capture output"""
 	os.environ["ANSIBLE_STDOUT_CALLBACK"] = "oneline"
+	os.environ["ANSIBLE_COLLECTIONS_PATHS"] = ":".join(["."])
 	os.environ[
 		"ANSIBLE_LOG_PATH"
 	] = output_file  # forces logging, even though it doesn't actually go here
+
+	subprocess.run(["ansible-galaxy", "collection", "list"])
 
 	# need to import here, after setting environemnt variables,
 	# because Ansible doesn't really do the dependency-injection thing
@@ -62,8 +67,11 @@ def run_ansible_playbook(playbook_path: str) -> List[AnsibleTaskOutput]:
 	results = list(filter(None, map(AnsibleTaskOutput.parse_ansible_output, lines)))
 	return results
 
+
 def test_integration__cli():
-	results = run_ansible_playbook("ansible_collections/lilatomic/azcli/tests/integration/targets/action_cli/tasks/main.yml")
+	results = run_ansible_playbook(
+		"ansible_collections/lilatomic/azcli/tests/integration/targets/action_cli/tasks/main.yml"
+	)
 	assert results
 	assert [r.result for r in results] == [
 		AnsibleTaskResult.SUCCESS,

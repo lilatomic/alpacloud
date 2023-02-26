@@ -9,7 +9,7 @@ python_tests(
 	name="tests",
 	sources=["tests/**/test_*.py"],
 	resolve="ansible.lilatomic.azcli",
-	dependencies=[":ansible_playbooks", ":reqs"],
+	dependencies=[":ansible_playbooks", ":reqs", ":azcli"],
 )
 
 python_requirements(
