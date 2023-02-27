@@ -66,6 +66,7 @@ jobs:
           files: dist/coverage/python/coverage.xml
           fail_ci_if_error: true
           verbose: true
+        if: always()
       - name: Upload pants log
         uses: actions/upload-artifact@v3
         with:
