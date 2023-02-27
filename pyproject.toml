@@ -13,9 +13,7 @@ pretty = true
 module = [
     "watchdog.*",
     "setuptools",
-    "ansible.plugins.action",
-    "ansible.errors",
-    "azure.cli.*",
+    "ansible.*",
     "knack.*",
 ]
 ignore_missing_imports = true
