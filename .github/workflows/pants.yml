@@ -40,10 +40,17 @@ jobs:
         run: |
           ./pants lint check ::
         if: success() || failure()
+
       - name: Test
         run: |
-          ./pants test ::
+          ./pants --tag="-integration" test ::
         if: success() || failure()
+      - name: Integration Test
+        run: |
+          az login --service-principal --tenant ${{ secrets.AZCLI_TENANT_ID }} -u ${{ secrets.AZCLI_USERNAME }} -p ${{ secrets.AZCLI_PASSWORD }}
+          ./pants --tag="integration" test ::
+        if: success() || failure()
+
       - name: Package
         run: |
           ./pants package ::
