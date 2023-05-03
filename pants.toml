@@ -1,5 +1,5 @@
 [GLOBAL]
-pants_version = "2.15.0rc6"
+pants_version = "2.16.0rc1"
 backend_packages = [
 	"pants.backend.python",
 	"pants.backend.experimental.python",
@@ -20,6 +20,7 @@ root_patterns = [
 [python]
 enable_resolves = true
 default_resolve = "tools"
+interpreter_constraints = ["CPython<4,>=3.9"]
 
 [python.resolves]
 "tools" = "cicd/tools.lock"
