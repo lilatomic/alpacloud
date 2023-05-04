@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import List, Optional, Dict
 
-from ansible.plugins.inventory import BaseInventoryPlugin
+from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
 from llamazure.azgraph.azgraph import Graph
 from llamazure.azgraph.models import Res
 from pydantic import BaseModel, Extra
@@ -75,7 +75,7 @@ class InventoryModule(BaseInventoryPlugin):
 		rendered_filters = list(filter(None, [f.to_kusto() for f in filters]))
 
 		predicate_str = " or ".join(rendered_filters)
-		query = f"Resources | where {predicate_str}"
+		query = f"Resources | where type=~\"Microsoft.Compute/virtualMachines\" | where {predicate_str}"
 
 		return query
 
