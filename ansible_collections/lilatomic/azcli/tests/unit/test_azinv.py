@@ -14,7 +14,11 @@ class TestFilterParse:
 			{
 				"sub0": "*",
 				"sub1": None,
-				"sub2": {"rg0": "*", "rg1": None, "rg2": ["vm0", "vm1"]},
+				"sub2": {
+					"rg0": "*",
+					"rg1": None,
+					"rg2": [{"name": "vm0"}, {"name": "vm1"}],
+				},
 			}
 		)
 		assert r == [

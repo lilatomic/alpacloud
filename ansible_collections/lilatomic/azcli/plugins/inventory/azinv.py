@@ -1,26 +1,17 @@
-from dataclasses import dataclass, field
-from typing import List, Optional
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import List, Optional, Dict
 
 from ansible.plugins.inventory import BaseInventoryPlugin
 from llamazure.azgraph.azgraph import Graph
+from llamazure.azgraph.models import Res
+from pydantic import BaseModel, Extra
 
 
 @dataclass
-class Subscription:
-	uuid: str
-	rgs: field(default_factory=list)
-
-
-@dataclass
-class ResourceGroup:
+class VMReq:
 	name: str
-	vms: field(default_factory=list)
-
-
-@dataclass
-class VM:
-	name: str
-	info: field(default_factory=dict)
 
 
 @dataclass
@@ -53,14 +44,12 @@ class InventoryModule(BaseInventoryPlugin):
 		raw_subs = self.get_option("subscriptions")
 
 		filters = self.parse_subscriptions_to_filters(raw_subs)
-		rendered_filters = list(filter(None, [f.to_kusto() for f in filters]))
-
-		predicate_str = " or ".join(rendered_filters)
-		query = f"Resources | where {predicate_str}"
+		query = self.render_filters(filters)
 
 		credential = "???"
 		graph = Graph.from_credential(credential)
-		graph.q(query)
+		graph_result = graph.q(query)
+
 
 	@staticmethod
 	def parse_subscriptions_to_filters(raw_subs) -> List[Optional[Filter]]:
@@ -74,7 +63,48 @@ class InventoryModule(BaseInventoryPlugin):
 					if rg_targets is None or rg_targets == "*":
 						filters.append(Filter(sub_name, rg_name))
 					else:
-						for vm_name in rg_targets:
-							filters.append(Filter(sub_name, rg_name, vm_name))
+						for raw_vm in rg_targets:
+							vm = VMReq(**raw_vm)
+							filters.append(Filter(sub_name, rg_name, vm.name))
 
 		return filters
+
+	@staticmethod
+	def render_filters(filters: List[Filter]) -> str:
+		"""Turn filters into the query string"""
+		rendered_filters = list(filter(None, [f.to_kusto() for f in filters]))
+
+		predicate_str = " or ".join(rendered_filters)
+		query = f"Resources | where {predicate_str}"
+
+		return query
+
+	@staticmethod
+	def graph_response_to_VMs(raw: Res) -> List[AzureVM]:
+		"""Deserialise the graph request"""
+		return [AzureVM(**e) for e in raw.data]
+
+
+class AzureVM(BaseModel, extra=Extra.allow):
+	id: str
+	name: str
+	resourceGroup: str
+	subscriptionId: str
+
+	location: str
+	properties: Dict
+	tags: Dict[str, str] = {}
+	zones: Optional[List[str]] = None
+
+	class Properties(BaseModel, extra=Extra.allow):
+		hardwareProfile: dict
+		networkProfile: AzureVM.NetworkProfile
+		osProfile: Dict
+		extended: dict = {}
+
+	class NetworkProfile(BaseModel, extra=Extra.allow):
+		networkInterfaces: List[AzureVM.NetworkInterface]
+
+	class NetworkInterface(BaseModel, extra=Extra.allow):
+		id: str
+		properties: Dict = {}

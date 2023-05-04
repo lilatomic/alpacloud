@@ -1,3 +1,4 @@
 ansible-core>=2.10
 azure-cli>2.34<3.0
 llamazure.azgraph~=0.0.1
+pydantic~=1.10.0
