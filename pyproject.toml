@@ -6,6 +6,20 @@ requires = [
 ]
 build-backend = "setuptools.build_meta"
 
+
+[tool.ruff]
+line-length=180
+target-version = "py310"
+
+[tool.ruff.lint]
+fixable = ["ALL"]
+extend-select = ["I", "W", "E"]
+preview = true
+ignore = ["W191"]
+
+[tool.ruff.format]
+indent-style="tab"
+
 [tool.mypy]
 pretty = true
 
@@ -17,3 +31,9 @@ module = [
     "knack.*",
 ]
 ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+markers = [
+    "integration: integration tests",
+    "admin: tests that need some amount of admin",
+]

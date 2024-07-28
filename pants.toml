@@ -1,14 +1,17 @@
 [GLOBAL]
-pants_version = "2.15.0rc6"
+pants_version = "2.23.0dev2"
 backend_packages = [
 	"pants.backend.python",
 	"pants.backend.experimental.python",
-	"pants.backend.python.lint.black",
+	"pants.backend.experimental.python.lint.ruff.format",
+	"pants.backend.experimental.python.lint.ruff.check",
 	"pants.backend.python.lint.isort",
 	"pants.backend.python.lint.flake8",
 	"pants.backend.python.lint.pylint",
 	"pants.backend.python.typecheck.mypy",
-	"pants.backend.build_files.fmt.black",
+	"pants.backend.build_files.fmt.ruff",
+	"pants.backend.docker",
+	"pants.backend.docker.lint.hadolint",
 ]
 
 [source]
@@ -20,8 +23,10 @@ root_patterns = [
 [python]
 enable_resolves = true
 default_resolve = "tools"
+interpreter_constraints = [">=3.10"]
 
 [python.resolves]
+"mypy" = "cicd/mypy.lock"
 "tools" = "cicd/tools.lock"
 "ansible.lilatomic.azcli" = "cicd/ansible.lilatomic.azcli.lock"
 "ansible.lilatomic.api" = "cicd/ansible.lilatomic.api.lock"
@@ -32,13 +37,6 @@ config = ".pylintrc"
 [flake8]
 config = ".flake8"
 
-[black]
-args = ["--use-tabs"]
-console_script = "tan"
-version = "tan==21.14"
-lockfile = "cicd/tan.lockfile"
-extra_requirements = ["click!=8.1.*", "typing-extensions>=3.10.0.0"]
-
 [test]
 use_coverage = true
 
@@ -46,10 +44,7 @@ use_coverage = true
 report = ["xml", "html"]
 
 [mypy]
-lockfile = "cicd/mypy.lock"
-
-extra_requirements.add = ["pytest"]
-extra_type_stubs = ["types-PyYAML", "types-requests"]
+install_from_resolve = "mypy"
 
 [anonymous-telemetry]
 enabled = true
