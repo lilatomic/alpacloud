@@ -1,4 +1,5 @@
 """Execute HTTP DELETE request in Ansible"""
+
 from .http import ActionModule as Http
 
 

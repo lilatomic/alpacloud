@@ -1,4 +1,5 @@
 """Execute HTTP requests in Ansible"""
+
 from typing import Dict, List, Optional, Union
 from urllib.parse import urljoin
 
@@ -82,13 +83,9 @@ class ActionModule(ActionBase):
 
 		headers = self.arg_or("headers")
 
-		request_kwargs = recursive_merge(
-			recursive_merge(connection_info.kwargs, task_kwargs), {"headers": headers}
-		)
+		request_kwargs = recursive_merge(recursive_merge(connection_info.kwargs, task_kwargs), {"headers": headers})
 
-		request_kwargs["timeout"] = self.arg_or(
-			"timeout", request_kwargs.get("timeout", DEFAULT_TIMEOUT)
-		)
+		request_kwargs["timeout"] = self.arg_or("timeout", request_kwargs.get("timeout", DEFAULT_TIMEOUT))
 
 		r = requests.request(
 			method,
@@ -96,7 +93,7 @@ class ActionModule(ActionBase):
 			auth=connection_info.auth,
 			data=data,
 			json=json,
-			**request_kwargs
+			**request_kwargs,
 		)
 
 		out = {}
@@ -141,9 +138,7 @@ class ActionModule(ActionBase):
 			headers = req.headers.copy()
 			if not self.arg_or("log_auth"):
 				if AUTHORIZATION_HEADER in headers:
-					headers[AUTHORIZATION_HEADER] = "*" * len(
-						headers[AUTHORIZATION_HEADER]
-					)
+					headers[AUTHORIZATION_HEADER] = "*" * len(headers[AUTHORIZATION_HEADER])
 
 			out.update(
 				{

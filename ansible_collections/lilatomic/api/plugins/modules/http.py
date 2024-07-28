@@ -3,7 +3,6 @@
 
 """Execute HTTP requests in Ansible"""
 
-
 DOCUMENTATION = """
 ---
 module: http
