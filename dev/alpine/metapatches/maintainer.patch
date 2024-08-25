@@ -1,0 +1,14 @@
+diff --git a/dev/alpine/main/python39/APKBUILD b/dev/alpine/main/python39/APKBUILD
+index 6898a9e..010de68 100644
+--- a/dev/alpine/main/python39/APKBUILD
++++ b/dev/alpine/main/python39/APKBUILD
+@@ -1,5 +1,7 @@
+-# Maintainer: Natanael Copa 
+-# Contributor: Sheila Aman 
++# Contributor: Daniel Goldman <danielgoldman4@gmail.com>
++# Maintainer: Daniel Goldman <danielgoldman4@gmail.com>
++# Original Maintainer: Natanael Copa
++# Original Contributor: Sheila Aman
+ 
+ pkgname=python39
+ # the python3-tkinter's pkgver needs to be synchronized with this.
