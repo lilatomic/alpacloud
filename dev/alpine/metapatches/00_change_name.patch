@@ -3,8 +3,8 @@ index 82a0505..f4f4f20 100644
 --- a/dev/alpine/main/python39/APKBUILD
 +++ b/dev/alpine/main/python39/APKBUILD
 @@ -1,7 +1,7 @@
- # Maintainer: Natanael Copa 
- # Contributor: Sheila Aman 
+ # Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+ # Contributor: Sheila Aman <sheila@vulpine.house>
  
 -pkgname=python3
 +pkgname=python39
