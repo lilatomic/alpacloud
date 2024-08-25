@@ -1,0 +1,12 @@
+diff --git a/dev/alpine/main/python39/APKBUILD b/dev/alpine/main/python39/APKBUILD
+index f4f4f20..6898a9e 100644
+--- a/dev/alpine/main/python39/APKBUILD
++++ b/dev/alpine/main/python39/APKBUILD
+@@ -87,7 +87,6 @@ build() {
+ 		--enable-ipv6 \
+ 		--enable-loadable-sqlite-extensions \
+ 		--enable-optimizations \
+-		--enable-shared \
+ 		--with-lto \
+ 		--with-computed-gotos \
+ 		--with-dbmliborder=gdbm:ndbm \
