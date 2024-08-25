@@ -1,7 +1,7 @@
 # Maintainer: Natanael Copa 
 # Contributor: Sheila Aman 
 
-pkgname=python3
+pkgname=python39
 # the python3-tkinter's pkgver needs to be synchronized with this.
 pkgver=3.9.18
 _bluez_ver=5.55
