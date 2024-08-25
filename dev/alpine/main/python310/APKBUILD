@@ -1,0 +1,244 @@
+# Maintainer: Natanael Copa 
+# Contributor: Sheila Aman 
+pkgname=python3
+# the python3-tkinter's pkgver needs to be synchronized with this.
+pkgver=3.10.14
+_bluez_ver=5.65
+_basever="${pkgver%.*}"
+pkgrel=1
+pkgdesc="A high-level scripting language"
+url="https://www.python.org/"
+arch="all"
+license="PSF-2.0"
+subpackages="
+	$pkgname-dbg
+	$pkgname-dev
+	$pkgname-doc
+	$pkgname-tests::noarch
+	$pkgname-gdbm
+	"
+depends="libexpat>=2.6.0"
+makedepends="
+	!gettext-dev
+	autoconf
+	autoconf-archive
+	automake
+	bzip2-dev
+	expat-dev
+	gdbm-dev>=1.18.1-r0
+	libffi-dev
+	libtool
+	linux-headers
+	mpdecimal-dev
+	musl-libintl
+	ncurses-dev
+	openssl-dev>3
+	readline-dev
+	sqlite-dev
+	tcl-dev
+	xz-dev
+	zlib-dev
+	"
+source="https://www.python.org/ftp/python/$pkgver/Python-$pkgver.tar.xz
+	https://www.kernel.org/pub/linux/bluetooth/bluez-$_bluez_ver.tar.xz
+	fix-xattrs-glibc.patch
+	musl-find_library.patch
+	custom-bluetooth-h-path.patch
+	arm-alignment.patch
+	"
+options="net" # Required for tests
+builddir="$srcdir/Python-$pkgver"
+
+# secfixes:
+#   3.10.14-r0:
+#     - CVE-2024-0450
+#     - CVE-2023-6597
+#   3.10.13-r0:
+#     - CVE-2023-40217
+#   3.10.9-r0:
+#     - CVE-2022-37454
+#     - CVE-2022-42919
+#     - CVE-2022-45061
+#   3.10.5-r0:
+#     - CVE-2015-20107
+#   3.9.5-r0:
+#     - CVE-2021-29921
+#   3.9.4-r0:
+#     - CVE-2021-3426
+#   3.8.8-r0:
+#     - CVE-2021-23336
+#   3.8.7-r2:
+#     - CVE-2021-3177
+#   3.8.5-r0:
+#     - CVE-2019-20907
+#   3.8.4-r0:
+#     - CVE-2020-14422
+#   3.8.2-r0:
+#     - CVE-2020-8315
+#     - CVE-2020-8492
+#   3.7.5-r0:
+#     - CVE-2019-16056
+#     - CVE-2019-16935
+#   3.6.8-r1:
+#     - CVE-2019-5010
+
+# was briefly present, and is in 3.16
+provides="pythonispython3=$pkgver-r$pkgrel"
+
+prepare() {
+	default_prepare
+
+	# force system libs
+	rm -r Modules/expat \
+		Modules/_ctypes/darwin* \
+		Modules/_ctypes/libffi*
+
+	mv "$srcdir"/bluez-$_bluez_ver/lib "$srcdir"/bluez-$_bluez_ver/bluetooth
+
+	autoreconf -fi
+
+	sed "s|@bluetoothdir@|\"$srcdir/bluez-$_bluez_ver\"|g" -i setup.py
+}
+
+build() {
+	# we want -O2 here for more speed for such a large interpreter.
+	export CFLAGS="$CFLAGS -O2"
+	export CXXFLAGS="$CXXFLAGS -O2"
+	export CPPFLAGS="$CPPFLAGS -O2"
+
+	# Include bluez headers. Python only needs bluetooth/bluetoot.h and doesn't
+	# link against bluez. Depending on bluez-dev introduces a circular dep:
+	# Python -> bluez -> glib -> meson -> python
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--enable-ipv6 \
+		--enable-loadable-sqlite-extensions \
+		--enable-optimizations \
+		--enable-shared \
+		--with-lto \
+		--with-computed-gotos \
+		--with-dbmliborder=gdbm:ndbm \
+		--with-system-expat \
+		--with-system-ffi \
+		--with-system-libmpdec \
+		--without-ensurepip \
+		--with-bluetoothdir="$srcdir/bluez-$_bluez_ver"
+
+	# set thread stack size to 1MB so we don't segfault before we hit
+	# sys.getrecursionlimit()
+	# s390x needs more stack space due to its calling convention
+	# ppc64le reaches recursionlimit before segfault
+	local stacksize=0x100000
+	case "$CARCH" in
+		s390x) stacksize=0x200000;;
+		ppc64le) stacksize=0x200000;;
+	esac
+	make EXTRA_CFLAGS="$CFLAGS -DTHREAD_STACK_SIZE=$stacksize"
+}
+
+check() {
+	# test that we reach recursionlimit before we segfault
+	cat > test-stacksize.py <<-EOF
+	import threading
+	import sys
+
+	def fun(i):
+	  try:
+	    fun(i+1)
+	  except:
+	    sys.exit(0)
+
+	t = threading.Thread(target=fun, args=[1])
+	t.start()
+EOF
+	LD_LIBRARY_PATH=$PWD ./python test-stacksize.py
+
+	local fail
+
+	# musl related
+	fail="test__locale test_locale test_strptime test_re"	# various musl locale deficiencies
+	fail="$fail test_c_locale_coercion"
+	fail="$fail test_datetime"				# hangs if 'tzdata' installed
+	fail="$fail test_os"					# fpathconf, ttyname errno values
+	fail="$fail test_posix"					# sched_[gs]etscheduler not impl
+	fail="$fail test_shutil"				# lchmod, requires real unzip
+
+	# FIXME: failures needing investigation
+	fail="$fail test_faulthandler test_gdb"			# hangs(?)
+	fail="$fail test_tokenize test_tools"			# SLOW (~60s)
+	fail="$fail test_capi"					# test.test_capi.EmbeddingTests
+	fail="$fail test_threadsignals"				# test_{,r}lock_acquire_interruption
+	fail="$fail test_time"					# strftime/strptime %Z related
+	fail="$fail test_cmath test_math"			# hang(?) on x86
+	fail="$fail test_hash test_plistlib"			# fail on armhf
+	fail="$fail test_ctypes"				# fail on aarch64 (ctypes.test.test_win32.Structures)
+	fail="$fail test_cmd_line_script"			# fails on x86_64
+	fail="$fail test_multiprocessing_main_handling"		# fails on x86_64
+	fail="$fail test_runpy"					# fails on x86_64
+	fail="$fail test_threading"				# hangs on all arches (except x86_64?)
+	fail="$fail test_selectors"				# AssertionError: 'Python' not found in '' (python3.9)
+	fail="$fail test_nntplib"
+	fail="$fail test_asyncio"				# hangs; routinely problematic (e.g. bpo-39101, bpo-41891, bpo-42183)
+	fail="$fail test_distutils"				# tests a deprecated module, fails with py3-docutils installed
+
+	# kernel related
+	fail="$fail test_fcntl"					# wants DNOTIFY, we don't have it
+
+	case "$CARCH" in
+	ppc64le)
+		fail="$fail test_buffer"
+		;;
+	esac
+
+	make quicktest TESTOPTS="-j${JOBS:-$(nproc)} --exclude $fail"
+}
+
+package() {
+	make -j1 DESTDIR="$pkgdir" EXTRA_CFLAGS="$CFLAGS" install maninstall
+	install -Dm644 LICENSE "$pkgdir"/usr/share/licenses/$pkgname/LICENSE
+	# those are provided by python3-tkinter
+	rm -r "$pkgdir"/usr/bin/idle* "$pkgdir"/usr/lib/python*/idlelib \
+		"$pkgdir"/usr/lib/python*/tkinter
+
+	ln -s python3 "$pkgdir"/usr/bin/python
+	ln -s python3-config "$pkgdir"/usr/bin/python-config
+}
+
+dev() {
+	default_dev
+
+	# pyconfig.h is needed runtime so we move it back
+	mkdir -p "$pkgdir"/usr/include/python$_basever
+	mv "$subpkgdir"/usr/include/python$_basever/pyconfig.h \
+		"$pkgdir"/usr/include/python$_basever/
+}
+
+tests() {
+	pkgdesc="The test modules from the main python package"
+
+	cd "$pkgdir"/usr/lib/python$_basever
+	local i; for i in */test */tests; do
+		mkdir -p "$subpkgdir"/usr/lib/python$_basever/"$i"
+		mv "$i"/* "$subpkgdir"/usr/lib/python$_basever/"$i"
+		rm -rf "$i"
+	done
+	mv "$pkgdir"/usr/lib/python$_basever/test \
+		"$subpkgdir"/usr/lib/python$_basever/
+}
+
+gdbm() {
+	pkgdesc="Python backend for GNU gdbm"
+
+	amove usr/lib/python3*/lib-dynload/_gdbm.cpython*
+}
+
+sha512sums="
+adee638aeca898743da4b8245c0fa1e9b94b516f22e716e60c99038f0bb3dcbf726317aa86656404be1719b5a7c58eb09533720ebc0badbb04bd9a534dd48fef  Python-3.10.14.tar.xz
+c20c09a1a75053c77d73b3ce15ac7fd321eb6df5ca1646d57c6848b87c0c9957908bc17dd928da4ef2aacfc8667877cbc7511c1ba43db839bfa9bf1fb8269907  bluez-5.65.tar.xz
+fe123dd871f7a3fa868c499a957b94f1d815a1e1de964aaff1116c579defd4d9d1e9b7eb418cf114b169b97426ed603bf4b1e61b45ec483df06abe988c6a30ee  fix-xattrs-glibc.patch
+ab8eaa2858d5109049b1f9f553198d40e0ef8d78211ad6455f7b491af525bffb16738fed60fc84e960c4889568d25753b9e4a1494834fea48291b33f07000ec2  musl-find_library.patch
+14b00953cdb5fe757b38dbf759d7203c3504b46e330494ec195db92290640ec640fb29cc4456208a25dadc028ebaf211b0df71f458a3b76023fdafb4f91ff46a  custom-bluetooth-h-path.patch
+a84483246e413650a904c34c18f5e4f4168c39067d069f48557c330de6eb3db19fd96a4d453d742db3dcb7c7f962722903f62823c752ff90510c89830435ffc0  arm-alignment.patch
+"
