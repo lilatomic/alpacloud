@@ -1,4 +1,4 @@
-Author: Dave Jones 
+Author: Dave Jones <dave.jones@canonical.com>
 Description: Use aligned access for _sha3 module on ARM.
 --- a/Modules/_sha3/sha3module.c
 +++ b/Modules/_sha3/sha3module.c

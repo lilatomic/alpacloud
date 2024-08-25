@@ -1,5 +1,5 @@
 From 82bf05d215dfcc2ef779395bf79b5fc23d5b9555 Mon Sep 17 00:00:00 2001
-From: Natanael Copa 
+From: Natanael Copa <ncopa@alpinelinux.org>
 Date: Wed, 10 Feb 2021 18:36:04 +0100
 Subject: [PATCH 1/4] bpo-43112: detect musl as a separate SOABI
 
@@ -53,7 +53,7 @@ index 0000000000000..8da82f85b4908
 \ No newline at end of file
 
 From e45d9f5889a49bb66d67d7a79df364fe9e1accd1 Mon Sep 17 00:00:00 2001
-From: Natanael Copa 
+From: Natanael Copa <ncopa@alpinelinux.org>
 Date: Wed, 10 Feb 2021 20:04:11 +0100
 Subject: [PATCH 3/4] regenerate configure
 

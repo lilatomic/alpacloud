@@ -11,12 +11,15 @@ class AlpineRepo:
 	version: str
 	base_url: str = "https://git.alpinelinux.org/"
 
-	def get(self, url):
-		soup = BeautifulSoup(requests.get(self.base_url + url, params={"h": self.version}).text, features="html.parser")
+	def get(self, url) -> requests.Response:
+		return requests.get(self.base_url + url, params={"h": self.version})
+
+	def get_page(self, url):
+		soup = BeautifulSoup(self.get(url).text, features="html.parser")
 		return soup
 
 	def listdir(self, dir) -> dict[str, str]:
-		page = self.get(dir)
+		page = self.get_page(dir)
 
 		rows = iter(page.find("table", {"summary": "tree listing"}).find_all("tr"))
 		header = next(rows)  # escape header
@@ -28,11 +31,11 @@ class AlpineRepo:
 
 		return dir_items
 
-	def get_file(self, file_link) -> str:
+	def get_file(self, file_link) -> bytes:
 		plain_file_link = file_link.replace("aports/tree", "aports/plain")
-		return self.get(plain_file_link).text
+		return self.get(plain_file_link).content
 
-	def vendor_pkg(self, package):
+	def vendor_pkg(self, package) -> dict[str, bytes]:
 		files = self.listdir("aports/tree/main/" + package)
 
 		contents = {}
@@ -55,7 +58,7 @@ def run(package, version, dst):
 	base_path.mkdir(exist_ok=True, parents=True)
 	for name, content in files.items():
 		dst = base_path / name
-		with open(dst, "w") as f:
+		with open(dst, "wb") as f:
 			f.write(content)
 
 

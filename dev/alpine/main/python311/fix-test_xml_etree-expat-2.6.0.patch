@@ -9,7 +9,7 @@ Feeding the parser by too small chunks defers parsing to prevent
 CVE-2023-52425. Future versions of Expat may be more reactive.
 (cherry picked from commit 4a08e7b3431cd32a0daf22a33421cd3035343dc4)
 
-Co-authored-by: Serhiy Storchaka 
+Co-authored-by: Serhiy Storchaka <storchaka@gmail.com>
 ---
  Lib/test/test_xml_etree.py                    | 58 ++++++++++++-------
  ...-02-08-14-21-28.gh-issue-115133.ycl4ko.rst |  2 +
@@ -29,7 +29,7 @@ index 267982a8233c92..fa03f381fac92a 100644
  import textwrap
  import types
 @@ -120,6 +121,10 @@
- 
+ </foo>
  """
  
 +fails_with_expat_2_6_0 = (unittest.expectedFailure
@@ -48,35 +48,41 @@ index 267982a8233c92..fa03f381fac92a 100644
 -            with self.subTest(chunk_size=chunk_size):
 -                parser = ET.XMLPullParser()
 -                self.assert_event_tags(parser, [])
--                self._feed(parser, "\n", chunk_size)
+-                self._feed(parser, "<!-- comment -->\n", chunk_size)
 -                self.assert_event_tags(parser, [])
 -                self._feed(parser,
--                           "\n  text\n", chunk_size)
+-                           "<root>\n  <element key='value'>text</element",
+-                           chunk_size)
+-                self.assert_event_tags(parser, [])
+-                self._feed(parser, ">\n", chunk_size)
 -                self.assert_event_tags(parser, [('end', 'element')])
--                self._feed(parser, "texttail\n", chunk_size)
--                self._feed(parser, "\n", chunk_size)
+-                self._feed(parser, "<element>text</element>tail\n", chunk_size)
+-                self._feed(parser, "<empty-element/>\n", chunk_size)
 -                self.assert_event_tags(parser, [
 -                    ('end', 'element'),
 -                    ('end', 'empty-element'),
 -                    ])
--                self._feed(parser, "\n", chunk_size)
+-                self._feed(parser, "</root>\n", chunk_size)
 -                self.assert_event_tags(parser, [('end', 'root')])
 -                self.assertIsNone(parser.close())
 +    def test_simple_xml(self, chunk_size=None):
 +        parser = ET.XMLPullParser()
 +        self.assert_event_tags(parser, [])
-+        self._feed(parser, "\n", chunk_size)
++        self._feed(parser, "<!-- comment -->\n", chunk_size)
 +        self.assert_event_tags(parser, [])
 +        self._feed(parser,
-+                   "\n  text\n", chunk_size)
++                   "<root>\n  <element key='value'>text</element",
++                   chunk_size)
++        self.assert_event_tags(parser, [])
++        self._feed(parser, ">\n", chunk_size)
 +        self.assert_event_tags(parser, [('end', 'element')])
-+        self._feed(parser, "texttail\n", chunk_size)
-+        self._feed(parser, "\n", chunk_size)
++        self._feed(parser, "<element>text</element>tail\n", chunk_size)
++        self._feed(parser, "<empty-element/>\n", chunk_size)
 +        self.assert_event_tags(parser, [
 +            ('end', 'element'),
 +            ('end', 'empty-element'),
 +            ])
-+        self._feed(parser, "\n", chunk_size)
++        self._feed(parser, "</root>\n", chunk_size)
 +        self.assert_event_tags(parser, [('end', 'root')])
 +        self.assertIsNone(parser.close())
 +
