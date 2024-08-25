@@ -18,6 +18,7 @@ backend_packages = [
 root_patterns = [
 	"/ansible_collections",
 	"/tools",
+	"/",
 ]
 
 [python]
