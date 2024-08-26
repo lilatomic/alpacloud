@@ -126,7 +126,6 @@ build() {
 		--enable-ipv6 \
 		--enable-loadable-sqlite-extensions \
 		--enable-optimizations \
-		--enable-shared \
 		--with-lto \
 		--with-computed-gotos \
 		--with-dbmliborder=gdbm:ndbm \
