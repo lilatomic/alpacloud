@@ -22,14 +22,3 @@ index 5effb38..ab75d4c 100644
  ab8eaa2858d5109049b1f9f553198d40e0ef8d78211ad6455f7b491af525bffb16738fed60fc84e960c4889568d25753b9e4a1494834fea48291b33f07000ec2  musl-find_library.patch
 diff --git a/dev/alpine/main/python312/APKBUILD b/dev/alpine/main/python312/APKBUILD
 index d5fe3c9..b10881a 100644
---- a/dev/alpine/main/python312/APKBUILD
-+++ b/dev/alpine/main/python312/APKBUILD
-@@ -2,7 +2,7 @@
- # Contributor: Sheila Aman 
- pkgname=python3
- # the python3-tkinter's pkgver needs to be synchronized with this.
--pkgver=3.12.3
-+pkgver=3.12.5
- _basever="${pkgver%.*}"
- pkgrel=2
- pkgdesc="High-level scripting language"
