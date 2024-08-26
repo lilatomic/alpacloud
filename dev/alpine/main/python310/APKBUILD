@@ -203,9 +203,6 @@ package() {
 	# those are provided by python3-tkinter
 	rm -r "$pkgdir"/usr/bin/idle* "$pkgdir"/usr/lib/python*/idlelib \
 		"$pkgdir"/usr/lib/python*/tkinter
-
-	ln -s python3 "$pkgdir"/usr/bin/python
-	ln -s python3-config "$pkgdir"/usr/bin/python-config
 }
 
 dev() {

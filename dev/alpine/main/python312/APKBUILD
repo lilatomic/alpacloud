@@ -82,9 +82,6 @@ builddir="$srcdir/Python-$pkgver"
 #   3.6.8-r1:
 #     - CVE-2019-5010
 
-# was briefly present, and is in 3.16
-provides="pythonispython3=$pkgver-r$pkgrel"
-
 prepare() {
 	default_prepare
 
@@ -186,9 +183,6 @@ package() {
 	# those are provided by python3-tkinter
 	rm -r "$pkgdir"/usr/bin/idle* "$pkgdir"/usr/lib/python*/idlelib \
 		"$pkgdir"/usr/lib/python*/tkinter
-
-	ln -s python3 "$pkgdir"/usr/bin/python
-	ln -s python3-config "$pkgdir"/usr/bin/python-config
 }
 
 dev() {

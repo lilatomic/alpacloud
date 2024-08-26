@@ -46,3 +46,65 @@ index 7d89af4..59722d0 100644
  		--with-lto \
  		--with-computed-gotos \
  		--with-dbmliborder=gdbm:ndbm \
+diff --git a/dev/alpine/main/python310/APKBUILD b/dev/alpine/main/python310/APKBUILD
+index 09549f5..dbf8af4 100644
+--- a/dev/alpine/main/python310/APKBUILD
++++ b/dev/alpine/main/python310/APKBUILD
+@@ -222,9 +222,6 @@ package() {
+ 	# those are provided by python3-tkinter
+ 	rm -r "$pkgdir"/usr/bin/idle* "$pkgdir"/usr/lib/python*/idlelib \
+ 		"$pkgdir"/usr/lib/python*/tkinter
+-
+-	ln -s python3 "$pkgdir"/usr/bin/python
+-	ln -s python3-config "$pkgdir"/usr/bin/python-config
+ }
+ 
+ dev() {
+diff --git a/dev/alpine/main/python311/APKBUILD b/dev/alpine/main/python311/APKBUILD
+index 99dd2cc..6e99095 100644
+--- a/dev/alpine/main/python311/APKBUILD
++++ b/dev/alpine/main/python311/APKBUILD
+@@ -101,9 +101,6 @@ builddir="$srcdir/Python-$pkgver"
+ #   3.6.8-r1:
+ #     - CVE-2019-5010
+ 
+-# was briefly present, and is in 3.16
+-provides="pythonispython3=$pkgver-r$pkgrel"
+-
+ prepare() {
+ 	default_prepare
+ 
+@@ -223,9 +220,6 @@ package() {
+ 	# those are provided by python3-tkinter
+ 	rm -r "$pkgdir"/usr/bin/idle* "$pkgdir"/usr/lib/python*/idlelib \
+ 		"$pkgdir"/usr/lib/python*/tkinter
+-
+-	ln -s python3 "$pkgdir"/usr/bin/python
+-	ln -s python3-config "$pkgdir"/usr/bin/python-config
+ }
+ 
+ dev() {
+diff --git a/dev/alpine/main/python312/APKBUILD b/dev/alpine/main/python312/APKBUILD
+index 83941ae..0d89337 100644
+--- a/dev/alpine/main/python312/APKBUILD
++++ b/dev/alpine/main/python312/APKBUILD
+@@ -101,9 +101,6 @@ builddir="$srcdir/Python-$pkgver"
+ #   3.6.8-r1:
+ #     - CVE-2019-5010
+ 
+-# was briefly present, and is in 3.16
+-provides="pythonispython3=$pkgver-r$pkgrel"
+-
+ prepare() {
+ 	default_prepare
+ 
+@@ -205,9 +202,6 @@ package() {
+ 	# those are provided by python3-tkinter
+ 	rm -r "$pkgdir"/usr/bin/idle* "$pkgdir"/usr/lib/python*/idlelib \
+ 		"$pkgdir"/usr/lib/python*/tkinter
+-
+-	ln -s python3 "$pkgdir"/usr/bin/python
+-	ln -s python3-config "$pkgdir"/usr/bin/python-config
+ }
+ 
+ dev() {
