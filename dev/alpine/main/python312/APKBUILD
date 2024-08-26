@@ -2,7 +2,7 @@
 # Contributor: Sheila Aman 
 pkgname=python3
 # the python3-tkinter's pkgver needs to be synchronized with this.
-pkgver=3.12.3
+pkgver=3.12.5
 _basever="${pkgver%.*}"
 pkgrel=2
 pkgdesc="High-level scripting language"
