@@ -82,6 +82,9 @@ builddir="$srcdir/Python-$pkgver"
 #   3.6.8-r1:
 #     - CVE-2019-5010
 
+# was briefly present, and is in 3.16
+provides="pythonispython3=$pkgver-r$pkgrel"
+
 prepare() {
 	default_prepare
 

@@ -1,5 +1,5 @@
 diff --git a/dev/alpine/main/python39/APKBUILD b/dev/alpine/main/python39/APKBUILD
-index 010de68..42e20e0 100644
+index 7c3a43c..bc1299e 100644
 --- a/dev/alpine/main/python39/APKBUILD
 +++ b/dev/alpine/main/python39/APKBUILD
 @@ -14,9 +14,26 @@ url="https://www.python.org/"
