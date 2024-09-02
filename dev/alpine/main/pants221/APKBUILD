@@ -53,7 +53,7 @@ check() {
 package() {
 	mkdir -p "$pkgdir/usr/bin/"
 
-	ln -s "$srcdir"/pants-release_$pkgver/dist/src.python.pants/pants-pex.pex "$pkgdir"/usr/bin/pants_"$_basever"
+	mv "$srcdir"/pants-release_$pkgver/dist/src.python.pants/pants-pex.pex "$pkgdir"/usr/bin/pants_"$_basever"
 }
 
 sha512sums="
