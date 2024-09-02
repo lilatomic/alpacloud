@@ -190,7 +190,7 @@ EOF
 }
 
 package() {
-	make -j `nproc` DESTDIR="$pkgdir" EXTRA_CFLAGS="$CFLAGS" install maninstall
+	make -j `nproc` DESTDIR="$pkgdir" EXTRA_CFLAGS="$CFLAGS" altinstall maninstall
 	install -Dm644 LICENSE "$pkgdir"/usr/share/licenses/$pkgname/LICENSE
 	# those are provided by python3-tkinter
 	rm -r "$pkgdir"/usr/bin/idle* "$pkgdir"/usr/lib/python*/idlelib \

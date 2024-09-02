@@ -88,9 +88,6 @@ builddir="$srcdir/Python-$pkgver"
 #   3.6.8-r1:
 #     - CVE-2019-5010
 
-# was briefly present, and is in 3.16
-provides="pythonispython3=$pkgver-r$pkgrel"
-
 prepare() {
 	default_prepare
 
@@ -201,7 +198,7 @@ EOF
 }
 
 package() {
-	make -j `nproc` DESTDIR="$pkgdir" EXTRA_CFLAGS="$CFLAGS" install maninstall
+	make -j `nproc` DESTDIR="$pkgdir" EXTRA_CFLAGS="$CFLAGS" altinstall maninstall
 	install -Dm644 LICENSE "$pkgdir"/usr/share/licenses/$pkgname/LICENSE
 
 	install -Dm644 "$srcdir"/externally-managed \

@@ -1,0 +1,68 @@
+diff --git a/dev/alpine/main/pants221/APKBUILD b/dev/alpine/main/pants221/APKBUILD
+index 5db4c16..24bcd8d 100644
+--- a/dev/alpine/main/pants221/APKBUILD
++++ b/dev/alpine/main/pants221/APKBUILD
+@@ -53,7 +53,7 @@ check() {
+ package() {
+ 	mkdir -p "$pkgdir/usr/bin/"
+ 
+-	ln -s "$srcdir"/pants-release_$pkgver/dist/src.python.pants/pants-pex.pex "$pkgdir"/usr/bin/pants_"$_basever"
++	mv "$srcdir"/pants-release_$pkgver/dist/src.python.pants/pants-pex.pex "$pkgdir"/usr/bin/pants_"$_basever"
+ }
+ 
+ sha512sums="
+diff --git a/dev/alpine/main/pants222/APKBUILD b/dev/alpine/main/pants222/APKBUILD
+index cf8da41..ef6c590 100644
+--- a/dev/alpine/main/pants222/APKBUILD
++++ b/dev/alpine/main/pants222/APKBUILD
+@@ -54,7 +54,7 @@ check() {
+ package() {
+ 	mkdir -p "$pkgdir/usr/bin/"
+ 
+-	ln -s "$srcdir"/pants-release_"$pkgver"/dist/src.python.pants/pants-pex.pex "$pkgdir"/usr/bin/pants_"$_basever"
++	mv "$srcdir"/pants-release_"$pkgver"rc2/dist/src.python.pants/pants-pex.pex "$pkgdir"/usr/bin/pants_"$_basever"
+ }
+ 
+ sha512sums="
+diff --git a/dev/alpine/main/python310/APKBUILD b/dev/alpine/main/python310/APKBUILD
+index 09f79c8..f74d9f4 100644
+--- a/dev/alpine/main/python310/APKBUILD
++++ b/dev/alpine/main/python310/APKBUILD
+@@ -94,9 +94,6 @@ builddir="$srcdir/Python-$pkgver"
+ #   3.6.8-r1:
+ #     - CVE-2019-5010
+ 
+-# was briefly present, and is in 3.16
+-provides="pythonispython3=$pkgver-r$pkgrel"
+-
+ prepare() {
+ 	default_prepare
+ 
+diff --git a/dev/alpine/main/python311/APKBUILD b/dev/alpine/main/python311/APKBUILD
+index bb1f56e..39b69b0 100644
+--- a/dev/alpine/main/python311/APKBUILD
++++ b/dev/alpine/main/python311/APKBUILD
+@@ -88,9 +88,6 @@ builddir="$srcdir/Python-$pkgver"
+ #   3.6.8-r1:
+ #     - CVE-2019-5010
+ 
+-# was briefly present, and is in 3.16
+-provides="pythonispython3=$pkgver-r$pkgrel"
+-
+ prepare() {
+ 	default_prepare
+ 
+diff --git a/dev/alpine/main/python312/APKBUILD b/dev/alpine/main/python312/APKBUILD
+index 6ef64e7..5daae81 100644
+--- a/dev/alpine/main/python312/APKBUILD
++++ b/dev/alpine/main/python312/APKBUILD
+@@ -88,9 +88,6 @@ builddir="$srcdir/Python-$pkgver"
+ #   3.6.8-r1:
+ #     - CVE-2019-5010
+ 
+-# was briefly present, and is in 3.16
+-provides="pythonispython3=$pkgver-r$pkgrel"
+-
+ prepare() {
+ 	default_prepare
+ 
