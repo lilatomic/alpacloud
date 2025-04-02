@@ -1,4 +1,4 @@
-from alpacloud.lens.models import LensAttr, LensGetitem
+from alpacloud.lens.models import LensAttr, LensGetitem, Lens
 
 
 class C:
@@ -49,3 +49,25 @@ class TestCompose:
 		l = LensGetitem("q0").compose(LensGetitem("q1"))
 		l.bind(c).s("tgt")
 		assert c["q0"]["q1"] == "tgt"
+
+	def test_getitem(self):
+		c = {"q0": {"q1": "v"}}
+		l = Lens()["q0"]["q1"]
+		assert l.bind(c).g() == "v"
+
+	def test_setitem(self):
+		c = {"q0": {"q1": "v"}}
+		l = Lens()["q0"]["q1"]
+		l.bind(c).s("tgt")
+		assert c["q0"]["q1"] == "tgt"
+
+	def test_getattr(self):
+		c = {"q0": C()}
+		l = Lens()["q0"].q
+		assert l.bind(c).g() == "q"
+
+	def test_setattr(self):
+		c = {"q0": C()}
+		l = Lens()["q0"].q
+		l.bind(c).s("tgt")
+		assert c["q0"].q == "tgt"

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from abc import abstractmethod
 from dataclasses import dataclass
 from typing import Callable, Generic, Optional, TypeVar
 
@@ -9,9 +10,11 @@ T = TypeVar("T")
 
 
 class ALens(Generic[O, T]):
+	@abstractmethod
 	def get(self, o: O):
 		"""Get the value"""
 
+	@abstractmethod
 	def set(self, o: O, t: T):
 		"""Set the value"""
 
@@ -24,7 +27,20 @@ class ALens(Generic[O, T]):
 		return ComposedLen(self, l)
 
 	def __getitem__(self, k: K) -> ALens[O, T]:
-		return LensGetitem(k)
+		return self.compose(LensGetitem(k))
+
+	def __getattr__(self, item):
+		return self.compose(LensAttr(item))
+
+
+class Lens(ALens[O, T]):
+	"""A lens to start"""
+
+	def get(self, o: O):
+		return o
+
+	def set(self, o: O, t: T):
+		return t
 
 
 class BoundLens(Generic[O, T]):
