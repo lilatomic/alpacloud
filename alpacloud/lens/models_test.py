@@ -1,4 +1,4 @@
-from alpacloud.lens.models import LensAttr, LensGetitem, Lens
+from alpacloud.lens.models import Lens, LensAttr, LensGetitem
 
 
 class C:
@@ -71,3 +71,9 @@ class TestCompose:
 		l = Lens()["q0"].q
 		l.bind(c).s("tgt")
 		assert c["q0"].q == "tgt"
+
+
+class TestRepr:
+	def test_some(self):
+		l = Lens()["q0"].q
+		assert l._path() == 'Lens()["q0"].q'

@@ -2,14 +2,22 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Callable, Generic, Optional, TypeVar
+from typing import Callable, ClassVar, Generic, Optional, TypeVar
 
 K = TypeVar("K")
 O = TypeVar("O")
 T = TypeVar("T")
 
 
+class LensError(Exception):
+	def __init__(self, message: str, lens: ALens):
+		super().__init__(message)
+		self.lens = lens
+
+
 class ALens(Generic[O, T]):
+	_has_path: ClassVar[bool] = False
+
 	@abstractmethod
 	def get(self, o: O):
 		"""Get the value"""
@@ -24,7 +32,10 @@ class ALens(Generic[O, T]):
 
 	def compose(self, l: ALens[O, T]):
 		"""Apply this lens and another lens"""
-		return ComposedLen(self, l)
+		return LensComposed(self, l)
+
+	def _path(self) -> str:
+		return repr(self)
 
 	def __getitem__(self, k: K) -> ALens[O, T]:
 		return self.compose(LensGetitem(k))
@@ -41,6 +52,9 @@ class Lens(ALens[O, T]):
 
 	def set(self, o: O, t: T):
 		return t
+
+	def __repr__(self) -> str:
+		return "Lens()"
 
 
 class BoundLens(Generic[O, T]):
@@ -62,7 +76,7 @@ class BoundLens(Generic[O, T]):
 
 
 @dataclass(frozen=True)
-class ComposedLen(ALens[O, T]):
+class LensComposed(ALens[O, T]):
 	l0: ALens[O, T]
 	l1: ALens[O, T]
 
@@ -74,10 +88,22 @@ class ComposedLen(ALens[O, T]):
 		self.l1.set(v0, t)
 		self.l0.set(o, v0)
 
+	def _path(self) -> str:
+		o = self.l0._path()
+
+		if self.l1._has_path:
+			o += self.l1._path()
+		else:
+			o += f".compose({self.l1._path()})"
+
+		return o
+
 
 @dataclass(frozen=True)
 class LensAttr(ALens[O, T]):
 	attr: str
+
+	_has_path: ClassVar[bool] = True
 
 	def get(self, o: O) -> T:
 		return getattr(o, self.attr)
@@ -85,11 +111,16 @@ class LensAttr(ALens[O, T]):
 	def set(self, o: O, t: T) -> None:
 		setattr(o, self.attr, t)
 
+	def _path(self) -> str:
+		return f".{self.attr}"
+
 
 @dataclass(frozen=True)
 class LensGetitem(ALens[O, T]):
 	key: str
 	default: Optional[T] = None
+
+	_has_path: ClassVar[bool] = True
 
 	def get(self, o: O) -> T:
 		if self.default is not None:
@@ -102,3 +133,6 @@ class LensGetitem(ALens[O, T]):
 
 	def set(self, o: O, t: T) -> None:
 		return o.__setitem__(self.key, t)
+
+	def _path(self) -> str:
+		return f'["{self.key}"]'
