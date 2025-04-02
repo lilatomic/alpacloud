@@ -25,7 +25,7 @@ class TestGetitem:
 
 	def test_get_absent_default(self):
 		c = {"q": "v"}
-		assert LensGetitem("w", "tgt").bind(c).g() is "tgt"
+		assert LensGetitem("w", "tgt").bind(c).g() == "tgt"
 
 	def test_set_present(self):
 		c = {"q": "v"}
@@ -37,3 +37,15 @@ class TestGetitem:
 		LensGetitem("w").bind(c).s("tgt")
 		assert c["w"] == "tgt"
 
+
+class TestCompose:
+	def test_get(self):
+		c = {"q0": {"q1": "v"}}
+		l = LensGetitem("q0").compose(LensGetitem("q1"))
+		assert l.bind(c).g() == "v"
+
+	def test_set(self):
+		c = {"q0": {"q1": "v"}}
+		l = LensGetitem("q0").compose(LensGetitem("q1"))
+		l.bind(c).s("tgt")
+		assert c["q0"]["q1"] == "tgt"

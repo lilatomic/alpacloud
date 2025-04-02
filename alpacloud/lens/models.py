@@ -1,19 +1,30 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Generic, TypeVar, Optional
+from typing import Callable, Generic, Optional, TypeVar
 
+K = TypeVar("K")
 O = TypeVar("O")
 T = TypeVar("T")
 
 
 class ALens(Generic[O, T]):
-	def get(self, o: O): ...
+	def get(self, o: O):
+		"""Get the value"""
 
-	def set(self, o: O, t: T): ...
+	def set(self, o: O, t: T):
+		"""Set the value"""
 
 	def bind(self, o: O) -> BoundLens[O, T]:
+		"""Bind this lens to an object"""
 		return BoundLens(o, self)
+
+	def compose(self, l: ALens[O, T]):
+		"""Apply this lens and another lens"""
+		return ComposedLen(self, l)
+
+	def __getitem__(self, k: K) -> ALens[O, T]:
+		return LensGetitem(k)
 
 
 class BoundLens(Generic[O, T]):
@@ -32,6 +43,20 @@ class BoundLens(Generic[O, T]):
 	def m(self, f: Callable[[T], T]) -> None:
 		"""Map the value"""
 		self._l.set(self._o, f(self._l.get(self._o)))
+
+
+@dataclass(frozen=True)
+class ComposedLen(ALens[O, T]):
+	l0: ALens[O, T]
+	l1: ALens[O, T]
+
+	def get(self, o: O):
+		return self.l1.get(self.l0.get(o))
+
+	def set(self, o: O, t: T):
+		v0 = self.l0.get(o)
+		self.l1.set(v0, t)
+		self.l0.set(o, v0)
 
 
 @dataclass(frozen=True)
