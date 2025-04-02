@@ -19,18 +19,18 @@ class ALens(Generic[O, T]):
 	_has_path: ClassVar[bool] = False
 
 	@abstractmethod
-	def get(self, o: O):
+	def _get(self, o: O):
 		"""Get the value"""
 
 	@abstractmethod
-	def set(self, o: O, t: T):
+	def _set(self, o: O, t: T):
 		"""Set the value"""
 
-	def bind(self, o: O) -> BoundLens[O, T]:
+	def _bind(self, o: O) -> BoundLens[O, T]:
 		"""Bind this lens to an object"""
 		return BoundLens(o, self)
 
-	def compose(self, l: ALens[O, T]):
+	def _compose(self, l: ALens[O, T]):
 		"""Apply this lens and another lens"""
 		return LensComposed(self, l)
 
@@ -38,25 +38,25 @@ class ALens(Generic[O, T]):
 		return repr(self)
 
 	def __getitem__(self, k: K) -> ALens[O, T]:
-		return self.compose(LensGetitem(k))
+		return self._compose(LensGetitem(k))
 
 	def __getattr__(self, item):
-		return self.compose(LensAttr(item))
+		return self._compose(LensAttr(item))
 
 	def __mul__(self, other: O):
 		return LensComposed(self, other)
 
 	def __matmul__(self, other: O):
-		return self.bind(other)
+		return self._bind(other)
 
 
 class Lens(ALens[O, T]):
 	"""A lens to start"""
 
-	def get(self, o: O):
+	def _get(self, o: O):
 		return o
 
-	def set(self, o: O, t: T):
+	def _set(self, o: O, t: T):
 		return t
 
 	def __repr__(self) -> str:
@@ -70,15 +70,15 @@ class BoundLens(Generic[O, T]):
 
 	def g(self) -> T:
 		"""Get the value"""
-		return self._l.get(self._o)
+		return self._l._get(self._o)
 
 	def s(self, t: T) -> None:
 		"""Set the value"""
-		self._l.set(self._o, t)
+		self._l._set(self._o, t)
 
 	def m(self, f: Callable[[T], T]) -> None:
 		"""Map the value"""
-		self._l.set(self._o, f(self._l.get(self._o)))
+		self._l._set(self._o, f(self._l._get(self._o)))
 
 
 @dataclass(frozen=True)
@@ -86,13 +86,13 @@ class LensComposed(ALens[O, T]):
 	l0: ALens[O, T]
 	l1: ALens[O, T]
 
-	def get(self, o: O):
-		return self.l1.get(self.l0.get(o))
+	def _get(self, o: O):
+		return self.l1._get(self.l0._get(o))
 
-	def set(self, o: O, t: T):
-		v0 = self.l0.get(o)
-		self.l1.set(v0, t)
-		self.l0.set(o, v0)
+	def _set(self, o: O, t: T):
+		v0 = self.l0._get(o)
+		self.l1._set(v0, t)
+		self.l0._set(o, v0)
 
 	def _path(self) -> str:
 		o = self.l0._path()
@@ -111,10 +111,10 @@ class LensAttr(ALens[O, T]):
 
 	_has_path: ClassVar[bool] = True
 
-	def get(self, o: O) -> T:
+	def _get(self, o: O) -> T:
 		return getattr(o, self.attr)
 
-	def set(self, o: O, t: T) -> None:
+	def _set(self, o: O, t: T) -> None:
 		setattr(o, self.attr, t)
 
 	def _path(self) -> str:
@@ -128,7 +128,7 @@ class LensGetitem(ALens[O, T]):
 
 	_has_path: ClassVar[bool] = True
 
-	def get(self, o: O) -> T:
+	def _get(self, o: O) -> T:
 		if self.default is not None:
 			try:
 				return o.__getitem__(self.key)
@@ -137,7 +137,7 @@ class LensGetitem(ALens[O, T]):
 		else:
 			return o.__getitem__(self.key)
 
-	def set(self, o: O, t: T) -> None:
+	def _set(self, o: O, t: T) -> None:
 		return o.__setitem__(self.key, t)
 
 	def _path(self) -> str:
