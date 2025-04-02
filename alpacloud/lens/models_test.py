@@ -77,3 +77,14 @@ class TestRepr:
 	def test_some(self):
 		l = Lens()["q0"].q
 		assert l._path() == 'Lens()["q0"].q'
+
+class TestSyntax:
+	def test_compose(self):
+		q = {"q0": {"q1": "v"}}
+		l = LensGetitem("q0") * LensGetitem("q1")
+		assert l.bind(q).g() == "v"
+
+	def test_bind(self):
+		q = {"q0": {"q1": "v"}}
+		l = Lens()["q0"]["q1"]
+		assert (l @ q).g() == "v"

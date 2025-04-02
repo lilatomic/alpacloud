@@ -43,6 +43,12 @@ class ALens(Generic[O, T]):
 	def __getattr__(self, item):
 		return self.compose(LensAttr(item))
 
+	def __mul__(self, other: O):
+		return LensComposed(self, other)
+
+	def __matmul__(self, other: O):
+		return self.bind(other)
+
 
 class Lens(ALens[O, T]):
 	"""A lens to start"""
