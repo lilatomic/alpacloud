@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Callable, ClassVar, Generic, Optional, TypeVar
+from typing import Callable, ClassVar, Generic, Optional, TypeVar, Sequence, Type
 
 K = TypeVar("K")
 O = TypeVar("O")
 T = TypeVar("T")
+U = TypeVar("U")
 
 
 class LensError(Exception):
@@ -142,3 +143,81 @@ class LensGetitem(ALens[O, T]):
 
 	def _path(self) -> str:
 		return f'["{self.key}"]'
+
+
+class AManyLens(Generic[O, T]):
+	"""A lens with many foci"""
+	_has_path: ClassVar[bool] = False
+
+	@abstractmethod
+	def _get(self, o: O) -> Sequence[T]:
+		"""Get the values"""
+
+	@abstractmethod
+	def _set(self, o: O, t: T) -> None:
+		"""Set all foci to the same value"""
+
+	def _bind(self, o: O) -> BoundLens[O, T]:
+		return BoundLens(o, self)
+
+	def _compose(self, l: ALens[O, T]):
+		return LensManyComposed(self, l)
+
+	def _path(self) -> str:
+		return repr(self)
+
+	def __getitem__(self, k: K) -> AManyLens[O, T]:
+		return self._compose(LensGetitem(k))
+
+	def __getattr__(self, item):
+		return self._compose(LensAttr(item))
+
+	def __mul__(self, other: O):
+		return LensManyComposed(self, other)
+
+	def __matmul__(self, other: O):
+		return self._bind(other)
+
+# class BoundManyLens(Generic[O, T]):
+# 	def __init__(self, o: O, l: AManyLens[O, T]):
+# 		self._o = o
+# 		self._l = l
+#
+# 	def g(self) -> Sequence[T]:
+# 		"""Get the values"""
+# 		return self._l._get(self._o)
+#
+# 	def s(self, t: T) -> None:
+# 		return self._l._set(self._o, t)
+#
+# 	def _m(self, f: Callable[[T], T]) -> None:
+# 		for e in self._l:
+
+@dataclass(frozen=True)
+class LensElements(AManyLens[O, T]):
+	"""A lens into all elements of a list"""
+
+	def _get(self, o: O) -> T:
+		return o
+
+	def _set(self, o: O, t: T) -> None:
+		for i, _ in enumerate(o):
+			o[i] = t
+
+
+@dataclass(frozen=True)
+class LensManyComposed(AManyLens[O, T]):
+	splitter: ALens[O, Sequence[U]]
+	l1: ALens[U, T]
+
+	def _get(self, o: O) -> Sequence[U]:
+		return [self.l1._get(e) for e in self.splitter._get(o)]
+
+	def _set(self, o: O, t: T):
+		v0 = self.splitter._get(o)
+		for e in v0:
+			self.l1._set(e, t)
+#
+#
+# @dataclass(frozen=True)
+# class ALensMany()

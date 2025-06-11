@@ -1,4 +1,4 @@
-from alpacloud.lens.models import Lens, LensAttr, LensGetitem
+from alpacloud.lens.models import Lens, LensAttr, LensGetitem, LensElements
 
 
 class C:
@@ -88,3 +88,39 @@ class TestSyntax:
 		q = {"q0": {"q1": "v"}}
 		l = Lens()["q0"]["q1"]
 		assert (l @ q).g() == "v"
+
+class TestMulti:
+	"""Tests for lenses that operate on multiple items"""
+
+	# def test_get(self):
+	# 	c = [1,2,3]
+	# 	l = Lens
+
+	def test_get(self):
+		c = [1,2,3]
+		l = LensElements()
+		assert (l@c).g() == c
+
+	def test_set(self):
+		c = [1,2,3]
+		l = LensElements()
+		(l @ c).s(1)
+		assert c == [1,1,1]
+
+	def test_compose(self):
+		c = [C(), C(), C()]
+		l = LensElements().q
+		assert (l @ c).g() == ["q", "q", "q"]
+
+	def test_compose_set(self):
+		c = [C(), C(), C()]
+		b = LensElements().q @ c
+		b.s(1)
+		assert b.g() == [1,1,1]
+
+	def test_compose_multiple(self):
+		c = [[C(), C(), C()]]
+		b = LensElements()._compose(LensElements()).q @ c
+		print(b._l._path())
+		b.s(1)
+		assert b.g() == [1,1,1]
