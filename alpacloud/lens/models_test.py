@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from alpacloud.lens.models import ComposedLens, ForeachLens, IdentityLens, IndexLens, PropLens, CodecLens, KeyLens
+from alpacloud.lens.models import ComposedLens, ForeachLens, IdentityLens, IndexLens, PropLens, CodecLens, KeyLens, FilterLens
 
 v = [0, 1, 2]
 u = ["a", [0, 1, 2], "c"]
@@ -101,3 +101,23 @@ class TestCodec:
 			return es * 2
 
 		assert l.map(s, a) == "0,2,4"
+
+class TestFilter:
+	v = [1,2,3]
+	o = [1,3,5]
+
+	@staticmethod
+	def is_even(e):
+		return e % 2 == 0
+
+	def test_present(self):
+		l = ForeachLens(FilterLens(self.is_even))
+		assert l.get(self.v) == [None, 2, None]
+		assert l.set(self.v, 9) == [1,9,3]
+		assert l.map(self.v, lambda es: es*2) == [1,4,3]
+
+	def test_absent(self):
+		l = ForeachLens(FilterLens(self.is_even))
+		assert l.get(self.o) == [None, None, None]
+		assert l.set(self.o, 9) == self.o
+		assert l.map(self.o, lambda es: es*2) == self.o

@@ -192,3 +192,33 @@ class CodecLens(LensT[S, T, A, B], Generic[S, T, A, B, C]):
 
 	def set(self, s: S, b: B) -> T:
 		return self.enc(b)
+
+
+@dataclass
+class FilterLens(LensT[S, T, A, B]):
+	"""A lens which will have a focus if its predicate matches"""
+
+	predicate: Callable[[A], bool]
+	predicate_name: str = "filter"
+
+	@property
+	def name(self) -> str:
+		return f"?({self.predicate_name})"
+
+	def get(self, s: S) -> A:
+		if self.predicate(s):
+			return s
+		else:
+			return None
+
+	def set(self, s: S, b: B) -> T:
+		if self.predicate(s):
+			return b
+		else:
+			return s
+
+	def map(self, s: S, f: Callable[[A], B]):
+		if self.predicate(s):
+			return f(s)
+		else:
+			return s
