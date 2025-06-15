@@ -63,6 +63,9 @@ class LensT(Generic[S, T, A, B], ABC):
 	def __matmul__(self, target):
 		return BoundLens(self, target)
 
+	def __mod__(self, other):
+		return self.l_compose(other)
+
 
 @dataclass
 class BoundLens(Generic[S, T, A, B]):

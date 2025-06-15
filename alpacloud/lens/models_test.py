@@ -151,3 +151,9 @@ class TestHelpers:
 		l = KeyLens("a")
 
 		assert (l * IndexLens(0) @ w).get() == [1, 2, 3, 4]
+
+	def test_compose(self):
+		l1 = IndexLens(0)
+		l2 = IndexLens(1)
+
+		assert (l1 % l2).l_get(self.v) == "a"
