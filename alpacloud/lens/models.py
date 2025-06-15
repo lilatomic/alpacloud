@@ -5,6 +5,9 @@ from copy import copy
 from dataclasses import dataclass
 from typing import Callable, Generic, TypeVar
 
+# TODO: try removing set to make implementing multilenses easier
+# Implement set in terms of map and Const
+
 S = TypeVar("S")
 T = TypeVar("T")
 U = TypeVar("U")
@@ -23,7 +26,6 @@ def compose(l1: LensT[S, T, A, B], l2: LensT[T, U, B, C]) -> LensT[S, U, A, C]:
 
 
 class LensT(Generic[S, T, A, B], ABC):
-
 	@property
 	@abstractmethod
 	def name(self) -> str:
@@ -36,6 +38,9 @@ class LensT(Generic[S, T, A, B], ABC):
 	@abstractmethod
 	def set(self, s: S, b: B) -> T:
 		pass
+
+	def map(self, s: S, f: Callable[[A], B]):
+		return self.set(s, f(self.get(s)))
 
 	def compose(self, other: LensT[T, U, B, C]) -> LensT[S, U, A, C]:
 		return compose(self, other)
@@ -60,22 +65,34 @@ class BoundLens(Generic[S, T, A, B]):
 
 
 @dataclass
-class ComposedLens(LensT[S, U, A, C], Generic[S, T, U, A, B, C]):
+class IdentityLens(LensT[S, T, A, B]):
+	"""A lens that just gets the current thing. Useful for terminating multilenses."""
 
+	@property
+	def name(self) -> str:
+		return ""
+
+	def get(self, s: S) -> A:
+		return s
+
+	def set(self, s: S, b: B) -> T:
+		return b
+
+
+@dataclass
+class ComposedLens(LensT[S, U, A, C], Generic[S, T, U, A, B, C]):
 	l1: LensT[S, T, A, B]
 	l2: LensT[T, U, B, C]
+
+	@property
+	def name(self) -> str:
+		return self.l1.name + self.l2.name
 
 	def get(self, s: S) -> A:
 		return self.l2.get(self.l1.get(s))
 
 	def set(self, s: S, b: B) -> T:
-		return self.l1.set(
-			s,
-			self.l2.set(
-				self.l1.get(s),
-				b
-			)
-		)
+		return self.l1.set(s, self.l2.set(self.l1.get(s), b))
 
 
 @dataclass
@@ -93,9 +110,11 @@ class PropLens(LensT[S, T, A, B]):
 		setattr(s, self.prop, b)
 		return s
 
+
 @dataclass
 class IndexLens(LensT[S, T, A, B]):
 	index: int
+
 	@property
 	def name(self):
 		return f"[{self.index}]"
@@ -107,6 +126,7 @@ class IndexLens(LensT[S, T, A, B]):
 		o = copy(s)
 		o[self.index] = b
 		return o
+
 
 @dataclass
 class KeyLens(LensT[S, T, A, B]):
@@ -123,3 +143,21 @@ class KeyLens(LensT[S, T, A, B]):
 		o = copy(s)
 		o[self.key] = b
 		return o
+
+
+@dataclass
+class ForeachLens(LensT[S, T, A, B]):
+	l: LensT[S, T, A, B]
+
+	@property
+	def name(self) -> str:
+		return "[*]" + self.l.name
+
+	def get(self, s: S) -> A:
+		return list(map(self.l.get, s))
+
+	def set(self, s: S, b: B) -> T:
+		return list(map(lambda e: self.l.set(e, b), s))
+
+	def map(self, s: S, f: Callable[[A], B]) -> T:
+		return list(map(lambda e: self.l.map(e, f), s))
