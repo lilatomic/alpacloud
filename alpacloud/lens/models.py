@@ -25,7 +25,7 @@ TupleOf = tuple[U, ...]
 
 
 def compose(l1: LensT[S, T, A, B], l2: LensT[T, U, B, C]) -> LensT[S, U, A, C]:
-	pass
+	return ComposedLens(l1, l2)
 
 
 class LensT(Generic[S, T, A, B], ABC):
@@ -51,20 +51,32 @@ class LensT(Generic[S, T, A, B], ABC):
 	def l_bind(self, s: S) -> BoundLens[S, T, A, B]:
 		return BoundLens(self, s)
 
+	def __getitem__(self, k: K):
+		return self.l_compose(KeyLens(k))
+
+	def __getattr__(self, item):
+		return self.l_compose(PropLens(item))
+
+	def __mul__(self, other):
+		return self.l_compose(ForeachLens(other))
+
+	def __matmul__(self, target):
+		return BoundLens(self, target)
+
 
 @dataclass
 class BoundLens(Generic[S, T, A, B]):
 	lens: LensT[S, T, A, B]
 	s: S
 
-	def l_get(self) -> A:
+	def get(self) -> A:
 		return self.lens.l_get(self.s)
 
-	def l_set(self, b: B) -> T:
+	def set(self, b: B) -> T:
 		return self.lens.l_set(self.s, b)
 
-	def l_map(self, f: Callable[[A], B]) -> T:
-		return self.lens.l_set(self.s, f(self.l_get()))
+	def map(self, f: Callable[[A], B]) -> T:
+		return self.lens.l_set(self.s, f(self.get()))
 
 
 @dataclass

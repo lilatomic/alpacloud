@@ -125,3 +125,29 @@ class TestFilter:
 		assert l.l_get(self.o) == [None, None, None]
 		assert l.l_set(self.o, 9) == self.o
 		assert l.l_map(self.o, lambda es: es * 2) == self.o
+
+
+class TestHelpers:
+	v = [[1, "a"], [2, "b"], [3, C(9)], [4, [0, 1, 2]]]
+
+	def test_getitem(self):
+		l = IndexLens(1)
+		assert l[1].l_get(self.v) == "b"
+
+	def test_getattr(self):
+		w = [C(0), C(9)]
+		l = IndexLens(1)
+
+		assert l.f.l_get(w) == 9
+
+	def test_foreach(self):
+		w = {"a": self.v}
+		l = KeyLens("a")
+
+		assert (l * IndexLens(0)).l_get(w) == [1, 2, 3, 4]
+
+	def test_bind(self):
+		w = {"a": self.v}
+		l = KeyLens("a")
+
+		assert (l * IndexLens(0) @ w).get() == [1, 2, 3, 4]
