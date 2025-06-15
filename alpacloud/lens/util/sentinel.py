@@ -1,6 +1,5 @@
-import sys
-
 _registry = {}
+
 
 class Sentinel:
 	"""Unique sentinel values."""
@@ -8,7 +7,7 @@ class Sentinel:
 	def __new__(cls, name, module_name=None):
 		name = str(name)
 
-		registry_key = f'{module_name}-{name}'
+		registry_key = f"{module_name}-{name}"
 
 		sentinel = _registry.get(registry_key, None)
 		if sentinel is not None:
