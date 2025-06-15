@@ -94,6 +94,8 @@ class ComposedLens(LensT[S, U, A, C], Generic[S, T, U, A, B, C]):
 	def set(self, s: S, b: B) -> T:
 		return self.l1.set(s, self.l2.set(self.l1.get(s), b))
 
+	def map(self, s: S, f: Callable[[A], B]):
+		return self.l1.set(s, self.l2.map(self.l1.get(s), f))
 
 @dataclass
 class PropLens(LensT[S, T, A, B]):
@@ -161,3 +163,22 @@ class ForeachLens(LensT[S, T, A, B]):
 
 	def map(self, s: S, f: Callable[[A], B]) -> T:
 		return list(map(lambda e: self.l.map(e, f), s))
+
+
+@dataclass
+class CodecLens(LensT[S, T, A, B], Generic[S, T, A, B, C]):
+	"""A lens which unpacks a value to index into it"""
+
+	dec: Callable[[A], C]
+	enc: Callable[[C], B]
+	codec_name: str = "codec"
+
+	@property
+	def name(self) -> str:
+		return f"|({self.codec_name})"
+
+	def get(self, s: S) -> A:
+		return self.dec(s)
+
+	def set(self, s: S, b: B) -> T:
+		return self.enc(b)

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from alpacloud.lens.models import ComposedLens, ForeachLens, IdentityLens, IndexLens, PropLens
+from alpacloud.lens.models import ComposedLens, ForeachLens, IdentityLens, IndexLens, PropLens, CodecLens
 
 v = [0, 1, 2]
 u = ["a", [0, 1, 2], "c"]
@@ -58,3 +58,35 @@ class TestForEach:
 
 		assert l.set(w, 1) == [[1, 1], [1, 1], [1, 1]]
 		assert l.map(w, lambda x: x * 2) == [["aa", 0], ["bb", 2], ["cc", 4]]
+
+class TestCodec:
+	csvlens = CodecLens(
+		dec=lambda s: s.split(","),
+		enc=lambda es: ",".join(es),
+		codec_name="csv",
+	)
+	str2intlens = CodecLens(
+		dec=int,
+		enc=str,
+		codec_name="str2int",
+	)
+
+	def test_codec(self):
+		s = "0,1,2"
+		assert self.csvlens.get(s) == ["0","1","2"]
+		assert self.csvlens.set(s, ["4","5"]) == "4,5"
+		assert self.csvlens.map(s, lambda es: es*2) == "0,1,2,0,1,2"
+
+	def test_codec_composed(self):
+		s = "0,1,2"
+		l = ComposedLens(self.csvlens, ForeachLens(self.str2intlens))
+
+		assert l.get(s) == [0,1,2]
+		assert l.set(s, 9) == "9,9,9"
+		o = []
+
+		def a(es):
+			o.append(es)
+			return es * 2
+
+		assert l.map(s, a) == "0,2,4"
