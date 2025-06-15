@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from alpacloud.lens.models import CodecLens, ComposedLens, FilterLens, ForeachLens, IdentityLens, IndexLens, KeyLens, PropLens
+from alpacloud.lens.models import CodecLens, CombinedLens, ComposedLens, ConstLens, FilterLens, ForeachLens, IdentityLens, IndexLens, KeyLens, PropLens
 
 v = [0, 1, 2]
 u = ["a", [0, 1, 2], "c"]
@@ -66,6 +66,14 @@ class TestComposed:
 		l = ComposedLens(IndexLens(1), IndexLens(0))
 		assert l.l_get(u) == 0
 		assert l.l_set(u, 9) == ["a", [9, 1, 2], "c"]
+
+
+class TestCombined:
+	def test_combine(self):
+		l = CombinedLens((IndexLens(0), IndexLens(1)))
+		assert l.l_get(v) == [0, 1]
+		assert l.l_set(v, 9) == [9, 9, 2]
+		assert l.l_map(v, lambda x: x + 5) == [5, 6, 2]
 
 
 class TestForEach:
@@ -168,4 +176,25 @@ class TestHelpers:
 		l1 = IndexLens(0)
 		l2 = IndexLens(1)
 
-		assert (l1 % l2).l_get(self.v) == "a"
+		assert (l1 / l2).l_get(self.v) == "a"
+
+	def test_combine(self):
+		l1 = IndexLens(0)
+		l2 = IndexLens(1)
+
+		assert (l1 % l2).l_get(self.v) == [[1, "a"], [2, "b"]]
+
+	def test_after_compose(self):
+		l1 = IndexLens(0)
+		l2 = IndexLens(1)
+
+		l = (l1 % l2) * IndexLens(0)
+		assert l.l_get(self.v) == [1, 2]
+
+	def test_const(self):
+		v = [0, 1, 2]
+		l = IndexLens(1) / ConstLens(9)
+
+		assert l.l_get(self.v) == 9
+		assert l.l_set(v, 8) == [0, 9, 2]
+		assert l.l_map(v, lambda es: es * 2) == [0, 9, 2]

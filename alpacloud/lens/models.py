@@ -63,8 +63,11 @@ class LensT(Generic[S, T, A, B], ABC):
 	def __matmul__(self, target):
 		return BoundLens(self, target)
 
-	def __mod__(self, other):
+	def __truediv__(self, other):
 		return self.l_compose(other)
+
+	def __mod__(self, other):
+		return CombinedLens((self, other))
 
 
 @dataclass
@@ -98,6 +101,26 @@ class IdentityLens(LensT[S, T, A, B]):
 
 
 @dataclass
+class ConstLens(LensT[S, T, A, A]):
+	"""A lens that always gives the same result. Useful for binding values to lenses"""
+
+	v: A
+
+	@property
+	def l_name(self) -> str:
+		return f"const({self.v})"
+
+	def l_get(self, s: S) -> A:
+		return self.v
+
+	def l_set(self, s: S, b: B) -> T:
+		return self.v
+
+	def l_map(self, s: S, f: Callable[[A], B]):
+		return self.l_set(s, self.v)
+
+
+@dataclass
 class ComposedLens(LensT[S, U, A, C], Generic[S, T, U, A, B, C]):
 	l1: LensT[S, T, A, B]
 	l2: LensT[T, U, B, C]
@@ -114,6 +137,32 @@ class ComposedLens(LensT[S, U, A, C], Generic[S, T, U, A, B, C]):
 
 	def l_map(self, s: S, f: Callable[[A], B]):
 		return self.l1.l_set(s, self.l2.l_map(self.l1.l_get(s), f))
+
+
+@dataclass
+class CombinedLens(LensT[S, T, A, B]):
+	lenses: tuple[LensT[S, T, A, B], ...]
+	combined_name: str | None = None
+
+	@property
+	def l_name(self) -> str:
+		if self.combined_name is not None:
+			return f"({self.combined_name})"
+		else:
+			return f"({len(self.lenses)} lenses)"
+
+	def l_get(self, s: S) -> A:
+		return [l.l_get(s) for l in self.lenses]
+
+	def l_set(self, s: S, b: B) -> T:
+		for l in self.lenses:
+			s = l.l_set(s, b)
+		return s
+
+	def l_map(self, s: S, f: Callable[[A], B]):
+		for l in self.lenses:
+			s = l.l_map(s, f)
+		return s
 
 
 @dataclass
