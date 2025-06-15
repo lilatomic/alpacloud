@@ -165,12 +165,22 @@ class KeyLens(LensT[S, T, A, B], Generic[S, T, A, B, K]):
 		if self.default is KEYERROR:
 			return s[self.key]
 		else:
-			return s.get(self.key, self.default)
+			return s.get(self.key, copy(self.default))  # TODO: maybe don't always copy, or default_factory
 
 	def l_set(self, s: S, b: B) -> T:
 		o = copy(s)
 		o[self.key] = b
 		return o
+
+
+def kord(k: K) -> KeyLens:
+	"""Get the key, with a dict for the default"""
+	return KeyLens(k, {})
+
+
+def korl(k: K) -> KeyLens:
+	"""Get the key, with a list for the default"""
+	return KeyLens(k, [])
 
 
 @dataclass

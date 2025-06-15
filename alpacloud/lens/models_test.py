@@ -41,6 +41,18 @@ class TestKey:
 		l = KeyLens(0, "default")
 		assert l.l_get(self.d) == "default"
 
+	def test_key_default_mutable(self):
+		l = KeyLens(0, {})
+
+		v = (l % KeyLens(1)).l_set({}, 9)
+		# assert v == {0:{1: 9}}
+		assert v == {0: {1: 9}}
+
+		w = (l % KeyLens(2)).l_set({}, 8)
+		assert w == {0: {2: 8}}
+
+		assert v == {0: {1: 9}}
+
 
 class TestAttribute:
 	def test_attribute(self):
