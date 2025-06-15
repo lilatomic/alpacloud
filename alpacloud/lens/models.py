@@ -1,122 +1,125 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
+from copy import copy
 from dataclasses import dataclass
 from typing import Callable, Generic, TypeVar
 
 S = TypeVar("S")
 T = TypeVar("T")
+U = TypeVar("U")
+
 A = TypeVar("A")
 B = TypeVar("B")
+C = TypeVar("C")
 
-U = TypeVar("U")
 
 F = Callable[[A], B]
 TupleOf = tuple[U, ...]
 
 
-class Either(ABC, Generic[A, B]):
+def compose(l1: LensT[S, T, A, B], l2: LensT[T, U, B, C]) -> LensT[S, U, A, C]:
 	pass
 
 
-@dataclass
-class Left(Either[A, B]):
-	v: A
+class LensT(Generic[S, T, A, B], ABC):
 
-
-@dataclass
-class Right(Either[A, B]):
-	v: B
-
-
-class Maybe(Generic[A]):
-	pass
-
-
-@dataclass
-class Just(Maybe[A]):
-	v: A
-
-
-class Nothing(Maybe[A]):
-	pass
-
-
-class LensT(ABC, Generic[S, T, A, B]):
+	@property
 	@abstractmethod
-	def view(self, s: S) -> A:
+	def name(self) -> str:
 		pass
 
 	@abstractmethod
-	def update(self, b: B, s: S) -> T:
+	def get(self, s: S) -> A:
 		pass
+
+	@abstractmethod
+	def set(self, s: S, b: B) -> T:
+		pass
+
+	def compose(self, other: LensT[T, U, B, C]) -> LensT[S, U, A, C]:
+		return compose(self, other)
+
+	def bind(self, s: S) -> BoundLens[S, T, A, B]:
+		return BoundLens(self, s)
 
 
 @dataclass
-class LensIndex(LensT[S, T, A, B]):
+class BoundLens(Generic[S, T, A, B]):
+	lens: LensT[S, T, A, B]
+	s: S
+
+	def get(self) -> A:
+		return self.lens.get(self.s)
+
+	def set(self, b: B) -> T:
+		return self.lens.set(self.s, b)
+
+	def map(self, f: Callable[[A], B]) -> T:
+		return self.lens.set(self.s, f(self.get()))
+
+
+@dataclass
+class ComposedLens(LensT[S, U, A, C], Generic[S, T, U, A, B, C]):
+
+	l1: LensT[S, T, A, B]
+	l2: LensT[T, U, B, C]
+
+	def get(self, s: S) -> A:
+		return self.l2.get(self.l1.get(s))
+
+	def set(self, s: S, b: B) -> T:
+		return self.l1.set(
+			s,
+			self.l2.set(
+				self.l1.get(s),
+				b
+			)
+		)
+
+
+@dataclass
+class PropLens(LensT[S, T, A, B]):
+	prop: str
+
+	@property
+	def name(self):
+		return f".{self.prop}"
+
+	def get(self, s: S) -> A:
+		return getattr(s, self.prop)
+
+	def set(self, s: S, b: B) -> T:
+		setattr(s, self.prop, b)
+		return s
+
+@dataclass
+class IndexLens(LensT[S, T, A, B]):
 	index: int
+	@property
+	def name(self):
+		return f"[{self.index}]"
 
-	def view(self, s: S) -> A:
+	def get(self, s: S) -> A:
 		return s[self.index]
 
-	def update(self, b: B, s: S) -> T:
-		# make the reference positive to prevent s[-1:] from reversing the list
-		idx = self.index if self.index >= 0 else len(s) + self.index
-		return s.__class__((*s[:idx], b, *s[idx + 1 :]))
+	def set(self, s: S, b: B) -> T:
+		o = copy(s)
+		o[self.index] = b
+		return o
 
+@dataclass
+class KeyLens(LensT[S, T, A, B]):
+	key: str
 
-class PrismT(Generic[S, T, A, B]):
-	@abstractmethod
-	def match(self, s: S) -> Either[A, T]: ...
+	@property
+	def name(self):
+		return f"[{self.key}]"
 
-	@abstractmethod
-	def build(self, b: B) -> T: ...
+	def get(self, s: S) -> A:
+		return s[self.key]
 
-
-class PrismMaybe(PrismT[S, T, A, B]):
-	def match(self, s: Maybe[S]) -> Either[A, T]:
-		if isinstance(s, Just):
-			return Left(s.v)
-		else:
-			return Right(None)
-
-	def build(self, b: B) -> T:
-		return Just(b)
-
-
-class Affine(ABC, Generic[S, T, A, B]):
-	def preview(self, s: S) -> Either[A, T]:
-		pass
-
-	def set(self, b: B, s: S) -> T:
-		pass
-
-
-class AffineFirst(Affine[list, list, A, B]):
-	def preview(self, s: S) -> Either[A, T]:
-		if len(s) > 0:
-			return Left(s[0])
-		else:
-			return Right(None)
-
-	def set(self, b: B, s: S) -> T:
-		if len(s) > 0:
-			return [b, *s[1:]]
-		else:
-			return []
-
-
-class TraversalT(ABC, Generic[S, T, A, B]):
-	@abstractmethod
-	def contents(self, s: S) -> TupleOf[A]:
-		pass
-
-	@abstractmethod
-	def fill(self, b: TupleOf[B], s: S) -> T:
-		pass
-
-
-class TraversalEnds(TraversalT[list, list, A, B]):
-	def contents(self, s: S) -> TupleOf[A]:
-		return (s[0], s[-1])
-
-	def fill(self, b: TupleOf[B], s: S) -> T:
-		return [b[0], *s[1:-1], b[1]]
+	def set(self, s: S, b: B) -> T:
+		o = copy(s)
+		o[self.key] = b
+		return o
