@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from alpacloud.lens.models import ComposedLens, ForeachLens, IdentityLens, IndexLens, PropLens, CodecLens
+from alpacloud.lens.models import ComposedLens, ForeachLens, IdentityLens, IndexLens, PropLens, CodecLens, KeyLens
 
 v = [0, 1, 2]
 u = ["a", [0, 1, 2], "c"]
@@ -28,6 +28,17 @@ class TestIndex:
 		assert l.get(v) == 2
 		assert l.set(v, 9) == [0, 1, 9]
 
+
+class TestKey:
+	d = {1: "1", 2: "2", 3: "3"}
+	def test_key(self):
+		l = KeyLens(1)
+		assert l.get(self.d) == "1"
+		assert l.set(self.d, "9") == {1: "9", 2: "2", 3: "3"}
+
+	def test_key_default(self):
+		l = KeyLens(0, "default")
+		assert l.get(self.d) == "default"
 
 class TestAttribute:
 	def test_attribute(self):

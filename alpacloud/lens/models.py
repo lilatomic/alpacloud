@@ -3,7 +3,9 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from copy import copy
 from dataclasses import dataclass
-from typing import Callable, Generic, TypeVar
+from typing import Callable, Generic, TypeVar, Hashable
+
+from alpacloud.lens.util.sentinel import Sentinel
 
 # TODO: try removing set to make implementing multilenses easier
 # Implement set in terms of map and Const
@@ -16,6 +18,7 @@ A = TypeVar("A")
 B = TypeVar("B")
 C = TypeVar("C")
 
+K = TypeVar("K", bound=Hashable)
 
 F = Callable[[A], B]
 TupleOf = tuple[U, ...]
@@ -130,16 +133,23 @@ class IndexLens(LensT[S, T, A, B]):
 		return o
 
 
+KEYERROR = Sentinel("KEYERROR")
+
+
 @dataclass
-class KeyLens(LensT[S, T, A, B]):
-	key: str
+class KeyLens(LensT[S, T, A, B], Generic[S, T, A, B, K]):
+	key: K
+	default: A | KEYERROR = KEYERROR
 
 	@property
 	def name(self):
 		return f"[{self.key}]"
 
 	def get(self, s: S) -> A:
-		return s[self.key]
+		if self.default is KEYERROR:
+			return s[self.key]
+		else:
+			return s.get(self.key, self.default)
 
 	def set(self, s: S, b: B) -> T:
 		o = copy(s)
