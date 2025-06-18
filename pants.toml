@@ -1,5 +1,5 @@
 [GLOBAL]
-pants_version = "2.23.0dev2"
+pants_version = "2.25.1"
 backend_packages = [
 	"pants.backend.python",
 	"pants.backend.experimental.python",
@@ -24,7 +24,7 @@ root_patterns = [
 [python]
 enable_resolves = true
 default_resolve = "tools"
-interpreter_constraints = [">=3.10"]
+interpreter_constraints = ["~=3.10"]
 
 [python.resolves]
 "mypy" = "cicd/mypy.lock"
