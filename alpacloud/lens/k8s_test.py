@@ -4,6 +4,7 @@ from pathlib import Path
 import yaml
 
 from alpacloud.lens.k8s import deployment_labels, xdict
+from alpacloud.lens.models import kord
 
 
 @dataclass
@@ -19,6 +20,14 @@ class ResourceLoader:
 res = ResourceLoader(Path(__file__).parent / "test_resources")
 
 
+class TestHelpers:
+	def test_xdict(self):
+		a = {"1": 1, "2": 2}
+		b = {"3": 3, "4": 4}
+		assert xdict(a)(b) == xdict(b)(a)
+		assert len(xdict(a)(b)) == 4
+
+
 class TestDeployment:
 	def test_set_labels(self):
 		matchlabels = {
@@ -31,7 +40,7 @@ class TestDeployment:
 		r = l.map(res["deployment"])
 
 		a = deployment_labels.l_get(r)
-		assert not a
+		[a0, a1] = a
 		assert matchlabels.items() <= a0.items()
 		assert matchlabels.items() <= a1.items()
 

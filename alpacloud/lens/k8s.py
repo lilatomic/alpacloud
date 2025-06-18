@@ -5,8 +5,8 @@ from alpacloud.lens.models import CombinedLens, kord
 metadata = kord("metadata")
 namespace = metadata["namespace"]
 name = metadata["name"]
-annotation = metadata % kord("annotations")
-labels = metadata % kord("labels")
+annotation = metadata / kord("annotations")
+labels = metadata / kord("labels")
 
 
 deployment_labels = CombinedLens(
