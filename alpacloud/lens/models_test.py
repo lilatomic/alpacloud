@@ -167,10 +167,11 @@ class TestHelpers:
 		assert (l * IndexLens(0)).l_get(w) == [1, 2, 3, 4]
 
 	def test_bind(self):
-		w = {"a": self.v}
+		s = {"a": w}
 		l = KeyLens("a")
+		f = lambda x: x - 9
 
-		assert (l * IndexLens(0) @ w).get() == [1, 2, 3, 4]
+		assert (l * IndexLens(1) @ f).map(s) == {'a': [['a', -9], ['b', -8], ['c', -7]]}
 
 	def test_compose(self):
 		l1 = IndexLens(0)

@@ -42,14 +42,14 @@ class LensT(Generic[S, T, A, B], ABC):
 	def l_set(self, s: S, b: B) -> T:
 		pass
 
-	def l_map(self, s: S, f: Callable[[A], B]):
+	def l_map(self, s: S, f: F):
 		return self.l_set(s, f(self.l_get(s)))
 
 	def l_compose(self, other: LensT[T, U, B, C]) -> LensT[S, U, A, C]:
 		return compose(self, other)
 
-	def l_bind(self, s: S) -> BoundLens[S, T, A, B]:
-		return BoundLens(self, s)
+	def l_bind(self, f: F) -> BoundLens[S, T, A, B]:
+		return BoundLens(self, f)
 
 	def __getitem__(self, k: K):
 		return self.l_compose(KeyLens(k))
@@ -60,8 +60,8 @@ class LensT(Generic[S, T, A, B], ABC):
 	def __mul__(self, other):
 		return self.l_compose(ForeachLens(other))
 
-	def __matmul__(self, target):
-		return BoundLens(self, target)
+	def __matmul__(self, f: F):
+		return BoundLens(self, f)
 
 	def __truediv__(self, other):
 		return self.l_compose(other)
@@ -73,16 +73,13 @@ class LensT(Generic[S, T, A, B], ABC):
 @dataclass
 class BoundLens(Generic[S, T, A, B]):
 	lens: LensT[S, T, A, B]
-	s: S
+	f: F
 
-	def get(self) -> A:
-		return self.lens.l_get(self.s)
+	def get(self, s: S) -> A:
+		return self.lens.l_get(s)
 
-	def set(self, b: B) -> T:
-		return self.lens.l_set(self.s, b)
-
-	def map(self, f: Callable[[A], B]) -> T:
-		return self.lens.l_set(self.s, f(self.get()))
+	def map(self, s: S) -> T:
+		return self.lens.l_map(s, self.f)
 
 
 @dataclass
