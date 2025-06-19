@@ -84,5 +84,6 @@ class TestDockerImageParsing:
 		assert decoded == expected
 
 		# Round-trip: decode → encode → decode
+		print(encode_image(decoded))
 		round_trip = decode_image(encode_image(decoded))
 		assert round_trip == decoded

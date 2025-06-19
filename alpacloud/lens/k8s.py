@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 from typing import Callable, Optional
+from urllib import parse
+from urllib.parse import urlparse
 
 from alpacloud.lens.models import CombinedLens, kord, CodecLens
 
@@ -36,39 +38,47 @@ def decode_image(image_str: str) -> Image:
 	default_registry = "docker.io"
 	default_tag = "latest"
 
-	# Split by last colon to separate tag (not port!)
 	if '@' in image_str:
-		image_str, _ = image_str.split('@', 1)  # ignore digest for this case
-
-	parts = image_str.rsplit(':', 1)
-	if len(parts) == 2 and '/' in parts[0] or '.' in parts[0] or ':' in parts[0]:
-		# ':' before tag and '/' or '.' implies tag
-		image_body, tag = parts
+		without_digest, digest = image_str.split('@', 1)
 	else:
-		image_body = image_str
-		tag = default_tag
+		digest = None
+		without_digest = image_str
 
-	# Split registry and repo
-	segments = image_body.split('/')
-	if len(segments) == 1:
-		registry = default_registry
-		repository = segments[0]
-	elif '.' in segments[0] or ':' in segments[0] or segments[0] == 'localhost':
-		# first part is registry
-		registry = segments[0]
-		repository = '/'.join(segments[1:])
-	else:
-		registry = default_registry
-		repository = image_body
+	match without_digest.split("/", 1):
+		case [maybe_registry, maybe_unbound_image]:
+			if "." in maybe_registry or "localhost" in maybe_registry:
+				# registry needs to be a valid domain name,
+				# so if it exists it will have a "." or be "localhost"
+				registry = maybe_registry
+				unbound_image = maybe_unbound_image
+			else:
+				# does not have a registry
+				registry = default_registry
+				unbound_image = without_digest
+		case [maybe_unbound_image]:
+			registry = default_registry
+			unbound_image = maybe_unbound_image
+		case _:
+			raise TypeError(f"Unknown image format: {image_str}")
 
-	return Image(registry=registry, repository=repository, tag=tag)
+	match unbound_image.split(":"):
+		case [repository, tag]:
+			return Image(registry, repository, tag, digest)
+		case [repository]:
+			return Image(registry, repository, default_tag, digest)
+		case _:
+			raise ValueError(f"Invalid image format, too many colons image={without_digest}")
 
 def encode_image(image: Image) -> str:
 	"""
 	Serialize an Image instance back to a Docker image string.
 	"""
-	parts = []
-	if image.registry != "docker.io":
-		parts.append(image.registry)
-	parts.append(image.repository)
-	return f"{'/'.join(parts)}:{image.tag}"
+	out = ""
+	if image.registry:
+		out += image.registry + "/"
+	out += image.repository
+	if image.tag:
+		out += ":" + image.tag
+	if image.digest:
+		out += "@" + image.digest
+	return out
