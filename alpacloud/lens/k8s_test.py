@@ -3,7 +3,7 @@ from pathlib import Path
 
 import yaml
 
-from alpacloud.lens.k8s import deployment_labels, xdict, Image, decode_image, encode_image
+from alpacloud.lens.k8s import deployment_labels, xdict, Image, decode_image, encode_image, image, ImageCodec
 from alpacloud.lens.models import kord
 import pytest
 
@@ -47,6 +47,8 @@ class TestDeployment:
 class TestDockerImageParsing:
 
 	@pytest.mark.parametrize("input_str, expected", [
+		# Null case, useful for creating
+		("",                                Image("docker.io", "", "latest")),
 		# Simple cases
 		("ubuntu",                          Image("docker.io", "ubuntu", "latest")),
 		("ubuntu:20.04",                    Image("docker.io", "ubuntu", "20.04")),
@@ -87,3 +89,15 @@ class TestDockerImageParsing:
 		print(encode_image(decoded))
 		round_trip = decode_image(encode_image(decoded))
 		assert round_trip == decoded
+
+
+class TestPod:
+	def test_replace_image(self):
+		l = image("nginx") @ ImageCodec.set_digest("localhost:4567")
+
+		p = res["pod"]
+
+		r = l.map(p)
+		assert r["spec"]["containers"][0]["image"].startswith("localhost:4567")
+
+

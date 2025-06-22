@@ -247,13 +247,15 @@ class ForeachLens(LensT[S, T, A, B]):
 		return list(map(lambda e: self.l.l_map(e, f), s))
 
 
-@dataclass
-class CodecLens(LensT[S, T, A, B], Generic[S, T, A, B, C]):
-	"""A lens which unpacks a value to index into it"""
+class CodecLensABC(LensT[S, T, A, B], Generic[S, T, A, B, C]):
 
-	dec: Callable[[A], C]
-	enc: Callable[[C], B]
-	codec_name: str = "codec"
+	codec_name: str
+
+	def dec(self, a: A) -> C:
+		"""Decode the value"""
+
+	def enc(self, c: C) -> B:
+		"""Encode the value into the target type"""
 
 	@property
 	def l_name(self) -> str:
@@ -264,6 +266,15 @@ class CodecLens(LensT[S, T, A, B], Generic[S, T, A, B, C]):
 
 	def l_set(self, s: S, b: B) -> T:
 		return self.enc(b)
+
+
+@dataclass
+class CodecLens(CodecLensABC, Generic[S, T, A, B, C]):
+	"""A lens which unpacks a value to index into it"""
+
+	dec: Callable[[A], C]
+	enc: Callable[[C], B]
+	codec_name: str = "codec"
 
 
 @dataclass

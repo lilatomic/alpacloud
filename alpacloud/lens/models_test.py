@@ -92,6 +92,15 @@ class TestForEach:
 		assert l.l_set(w, 1) == [[1, 1], [1, 1], [1, 1]]
 		assert l.l_map(w, lambda x: x * 2) == [["aa", 0], ["bb", 2], ["cc", 4]]
 
+	def test_ops_after_foreach(self):
+		l = ForeachLens(IndexLens(0)) / PropLens("f")
+
+		v = [[C(1)]]
+
+		print(l)
+		assert l.l_get(v) == 1
+		assert l.l_map(v, lambda x: x * 2) == [[[C(2)]]]
+
 
 class TestCodec:
 	csvlens = CodecLens(

@@ -1,9 +1,8 @@
+import dataclasses
 from dataclasses import dataclass
 from typing import Callable, Optional
-from urllib import parse
-from urllib.parse import urlparse
 
-from alpacloud.lens.models import CombinedLens, kord, CodecLens
+from alpacloud.lens.models import CombinedLens, kord, CodecLens, C, B, A, BoundLens, CodecLensABC, F, korl, FilterLens
 
 metadata = kord("metadata")
 namespace = metadata["namespace"]
@@ -82,3 +81,34 @@ def encode_image(image: Image) -> str:
 	if image.digest:
 		out += "@" + image.digest
 	return out
+
+
+class ImageCodec(CodecLensABC):
+	name = "ImageCodec"
+
+	def dec(self, a: A) -> C:
+		return decode_image(a)
+
+	def enc(self, c: C) -> B:
+		return encode_image(c)
+
+	@staticmethod
+	def set_registry(registry: str) -> F:
+		return lambda i: dataclasses.replace(i, tag=registry)
+
+	@staticmethod
+	def set_repository(repository: str) -> F:
+		return lambda i: dataclasses.replace(i, repository=repository)
+
+	@staticmethod
+	def set_tag(tag: str) -> F:
+		return lambda i: dataclasses.replace(i, tag=tag)
+
+	@staticmethod
+	def set_digest(digest: str) -> F:
+		return lambda i: dataclasses.replace(i, digest=digest)
+
+
+containers = kord("spec") / korl("containers")
+def image(container_name: str):
+	return containers * FilterLens(lambda container: container["name"] == container_name, predicate_name=f'name=={container_name}')["image"]
