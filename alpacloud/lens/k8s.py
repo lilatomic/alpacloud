@@ -100,7 +100,7 @@ class ImageCodec(CodecLensABC):
 
 	@staticmethod
 	def set_registry(registry: str) -> F:
-		return lambda i: dataclasses.replace(i, tag=registry)
+		return lambda i: dataclasses.replace(i, registry=registry)
 
 	@staticmethod
 	def set_repository(repository: str) -> F:
@@ -119,4 +119,4 @@ containers = kord("spec") / korl("containers")
 
 
 def image(container_name: str):
-	return containers * FilterLens(lambda container: container["name"] == container_name, predicate_name=f'name=={container_name}')["image"]
+	return containers * FilterLens(lambda container: container["name"] == container_name, predicate_name=f"name=={container_name}")["image"] / ImageCodec()

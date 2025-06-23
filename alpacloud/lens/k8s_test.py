@@ -90,11 +90,9 @@ class TestDockerImageParsing:
 
 class TestPod:
 	def test_replace_image(self):
-		l = image("nginx") @ ImageCodec.set_digest("localhost:4567")
+		l = image("nginx") @ ImageCodec.set_registry("localhost:4567")
 
 		p = res["pod"]
 
 		r = l.map(p)
-		assert r["spec"]["containers"][0]["image"].startswith("localhost:4567")
-
-
+		assert StrStartsWith("localhost:4567", r["spec"]["containers"][0]["image"]).check()
