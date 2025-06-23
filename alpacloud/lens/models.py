@@ -135,6 +135,13 @@ class ComposedLens(LensT[S, U, A, C], Generic[S, T, U, A, B, C]):
 	def l_map(self, s: S, f: Callable[[A], B]):
 		return self.l1.l_set(s, self.l2.l_map(self.l1.l_get(s), f))
 
+	def l_compose(self, other: LensT[T, U, B, C]) -> LensT[S, U, A, C]:
+		"""
+		This composes with the last item in the composition.
+		This allows lenses with special compositional rules/helpers, like ForEachLens, to implement those.
+		"""
+		return ComposedLens(self.l1, self.l2.l_compose(other))
+
 
 @dataclass
 class CombinedLens(LensT[S, T, A, B]):

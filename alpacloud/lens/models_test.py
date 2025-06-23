@@ -14,6 +14,11 @@ class C:
 	f: int
 
 
+@dataclass
+class M:
+	s: str
+
+
 c = C(1)
 
 
@@ -62,10 +67,18 @@ class TestAttribute:
 
 
 class TestComposed:
+	matrix = [[M("00"), M("01"), M("02")], [M("10"), M("11"), M("12")], [M("20"), M("21"), M("22")]]
+
 	def test_compose(self):
 		l = ComposedLens(IndexLens(1), IndexLens(0))
 		assert l.l_get(u) == 0
 		assert l.l_set(u, 9) == ["a", [9, 1, 2], "c"]
+
+	def test_multiple_compose(self):
+		l0 = ComposedLens(ComposedLens(IndexLens(1), IndexLens(0)), PropLens("s"))
+		l1 = ComposedLens(IndexLens(1), ComposedLens(IndexLens(0), PropLens("s")))
+
+		assert l0.l_get(self.matrix) == l1.l_get(self.matrix)
 
 
 class TestCombined:
