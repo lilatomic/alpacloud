@@ -2,7 +2,7 @@ import dataclasses
 from dataclasses import dataclass
 from typing import Callable, Optional
 
-from alpacloud.lens.models import CombinedLens, kord, CodecLens, C, B, A, BoundLens, CodecLensABC, F, korl, FilterLens
+from alpacloud.lens.models import A, B, C, CodecLensABC, CombinedLens, F, FilterLens, kord, korl
 
 metadata = kord("metadata")
 namespace = metadata["namespace"]
@@ -18,9 +18,11 @@ deployment_labels = CombinedLens(
 	)
 )
 
+
 def xdict(extensions: dict) -> Callable[[dict], dict]:
 	def _xdict(d: dict) -> dict:
 		return {**d, **extensions}
+
 	return _xdict
 
 
@@ -30,6 +32,7 @@ class Image:
 	repository: str
 	tag: str = "latest"
 	digest: Optional[str] = None
+
 
 def decode_image(image_str: str) -> Image:
 	""""""
@@ -85,7 +88,9 @@ def encode_image(image: Image) -> str:
 
 
 class ImageCodec(CodecLensABC):
-	name = "ImageCodec"
+	@property
+	def l_name(self) -> str:
+		return super()._fmt_name("ImageCodec")
 
 	def dec(self, a: A) -> C:
 		return decode_image(a)

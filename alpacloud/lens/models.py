@@ -235,7 +235,7 @@ class ForeachLens(LensT[S, T, A, B]):
 
 	@property
 	def l_name(self) -> str:
-		return "[*]" + self.l.l_name
+		return f"[*{self.l.l_name}]"
 
 	def l_get(self, s: S) -> A:
 		return list(map(self.l.l_get, s))
@@ -250,19 +250,16 @@ class ForeachLens(LensT[S, T, A, B]):
 		return ForeachLens(self.l.l_compose(other))
 
 
-class CodecLensABC(LensT[S, T, A, B], Generic[S, T, A, B, C]):
-
-	codec_name: str
-
+class CodecLensABC(LensT[S, T, A, B], Generic[S, T, A, B, C], ABC):
 	def dec(self, a: A) -> C:
 		"""Decode the value"""
 
 	def enc(self, c: C) -> B:
 		"""Encode the value into the target type"""
 
-	@property
-	def l_name(self) -> str:
-		return f"|({self.codec_name})"
+	@staticmethod
+	def _fmt_name(name: str) -> str:
+		return f"|({name})"
 
 	def l_get(self, s: S) -> A:
 		return self.dec(s)
@@ -279,6 +276,10 @@ class CodecLens(CodecLensABC, Generic[S, T, A, B, C]):
 
 	enc: Callable[[C], B]
 	codec_name: str = "codec"
+
+	@property
+	def l_name(self) -> str:
+		return super()._fmt_name(self.codec_name)
 
 
 @dataclass
