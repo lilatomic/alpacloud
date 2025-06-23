@@ -1,4 +1,4 @@
 files(
-    name="k8s_objs",
-    sources=["*.yml"],
+	name="k8s_objs",
+	sources=["*.yml"],
 )

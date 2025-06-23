@@ -180,7 +180,7 @@ class TestHelpers:
 		l = KeyLens("a")
 		f = lambda x: x - 9
 
-		assert (l * IndexLens(1) @ f).map(s) == {'a': [['a', -9], ['b', -8], ['c', -7]]}
+		assert (l * IndexLens(1) @ f).map(s) == {"a": [["a", -9], ["b", -8], ["c", -7]]}
 
 	def test_compose(self):
 		l1 = IndexLens(0)

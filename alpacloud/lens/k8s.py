@@ -37,8 +37,8 @@ def decode_image(image_str: str) -> Image:
 	default_registry = "docker.io"
 	default_tag = "latest"
 
-	if '@' in image_str:
-		without_digest, digest = image_str.split('@', 1)
+	if "@" in image_str:
+		without_digest, digest = image_str.split("@", 1)
 	else:
 		digest = None
 		without_digest = image_str
@@ -67,6 +67,7 @@ def decode_image(image_str: str) -> Image:
 			return Image(registry, repository, default_tag, digest)
 		case _:
 			raise ValueError(f"Invalid image format, too many colons image={without_digest}")
+
 
 def encode_image(image: Image) -> str:
 	"""
@@ -110,5 +111,7 @@ class ImageCodec(CodecLensABC):
 
 
 containers = kord("spec") / korl("containers")
+
+
 def image(container_name: str):
 	return containers * FilterLens(lambda container: container["name"] == container_name, predicate_name=f'name=={container_name}')["image"]

@@ -276,6 +276,7 @@ class CodecLens(CodecLensABC, Generic[S, T, A, B, C]):
 	"""A lens which unpacks a value to index into it"""
 
 	dec: Callable[[A], C]
+
 	enc: Callable[[C], B]
 	codec_name: str = "codec"
 
