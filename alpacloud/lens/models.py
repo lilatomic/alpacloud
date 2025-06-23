@@ -246,6 +246,9 @@ class ForeachLens(LensT[S, T, A, B]):
 	def l_map(self, s: S, f: Callable[[A], B]) -> T:
 		return list(map(lambda e: self.l.l_map(e, f), s))
 
+	def l_compose(self, other: LensT[T, U, B, C]) -> LensT[S, U, A, C]:
+		return ForeachLens(self.l.l_compose(other))
+
 
 class CodecLensABC(LensT[S, T, A, B], Generic[S, T, A, B, C]):
 

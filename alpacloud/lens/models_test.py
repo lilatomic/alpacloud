@@ -98,8 +98,8 @@ class TestForEach:
 		v = [[C(1)]]
 
 		print(l)
-		assert l.l_get(v) == 1
-		assert l.l_map(v, lambda x: x * 2) == [[[C(2)]]]
+		assert l.l_get(v) == [1]
+		assert l.l_map(v, lambda x: x * 2) == [[C(2)]]
 
 
 class TestCodec:
