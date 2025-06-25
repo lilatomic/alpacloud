@@ -1,8 +1,8 @@
 import dataclasses
 from dataclasses import dataclass
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
-from alpacloud.lens.models import A, B, C, CodecLensABC, CombinedLens, F, FilterLens, kord, korl
+from alpacloud.lens.models import A, B, BoundLensT, C, CodecLensABC, CombinedBoundLens, CombinedLens, F, FilterLens, IndexLens, append, kord, korl
 
 metadata = kord("metadata")
 namespace = metadata["namespace"]
@@ -118,5 +118,29 @@ class ImageCodec(CodecLensABC):
 containers = kord("spec") / korl("containers")
 
 
+def container_named(container_name: str) -> FilterLens:
+	return FilterLens(lambda container: container["name"] == container_name, predicate_name=f"name=={container_name}")
+
+
 def image(container_name: str):
-	return containers * FilterLens(lambda container: container["name"] == container_name, predicate_name=f"name=={container_name}")["image"] / ImageCodec()
+	return containers * container_named(container_name)["image"] / ImageCodec()
+
+
+volumes = kord("spec") / korl("volumes")
+
+
+def add_volume(volume_name: str, volume: Any, container: str | int = 0, mount_path: str | None = None) -> BoundLensT:
+	if mount_path is None:
+		mount_path = volume_name
+
+	if isinstance(container, int):
+		container_filter = IndexLens(container)
+	else:
+		container_filter = container_named(container)
+
+	return CombinedBoundLens(
+		(
+			volumes @ append({"name": volume_name, **volume}),
+			(containers / container_filter / korl("volumeMounts")) @ append({"name": volume_name, "mountPath": mount_path}),
+		)
+	)

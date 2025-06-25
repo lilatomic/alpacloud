@@ -1,23 +1,9 @@
-from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
-import yaml
 
-from alpacloud.lens.conftest import StrStartsWith
-from alpacloud.lens.k8s import Image, ImageCodec, decode_image, deployment_labels, encode_image, image, xdict
-
-
-@dataclass
-class ResourceLoader:
-	base_path: Path
-
-	def load_obj(self, name: str):
-		return yaml.safe_load((self.base_path / name).open())
-
-	def __getitem__(self, item):
-		return self.load_obj(item + ".yml")
-
+from alpacloud.lens.conftest import ResourceLoader, StrStartsWith
+from alpacloud.lens.k8s import Image, ImageCodec, add_volume, decode_image, deployment_labels, encode_image, image, xdict
 
 res = ResourceLoader(Path(__file__).parent / "test_resources")
 
@@ -96,3 +82,9 @@ class TestPod:
 
 		r = l.map(p)
 		assert StrStartsWith("localhost:4567", r["spec"]["containers"][0]["image"]).check()
+
+	def test_add_volume(self):
+		l = add_volume("redis-storage", {"emptyDir": {}}, mount_path="/data/redis")
+
+		c = res.load_case("volume", "redis")
+		c(l.map)
