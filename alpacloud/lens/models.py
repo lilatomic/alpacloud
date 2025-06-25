@@ -70,8 +70,23 @@ class LensT(Generic[S, T, A, B], ABC):
 		return CombinedLens((self, other))
 
 
+class BoundLensT(Generic[S, T, A, B], ABC):
+	def __mod__(self, other: BoundLensT[S, T, A, B]):
+		return CombinedBoundLens((self, other))
+
+	def map(self, s: S) -> T:
+		pass
+
+	@staticmethod
+	def const(l: LensT[S, T, A, B], v: B) -> BoundLens[S, T, A, B]:
+		def _const(_: A) -> B:
+			return v
+
+		return BoundLens(l, _const)
+
+
 @dataclass
-class BoundLens(Generic[S, T, A, B]):
+class BoundLens(BoundLensT[S, T, A, B]):
 	lens: LensT[S, T, A, B]
 	f: F
 
@@ -80,6 +95,27 @@ class BoundLens(Generic[S, T, A, B]):
 
 	def map(self, s: S) -> T:
 		return self.lens.l_map(s, self.f)
+
+
+@dataclass
+class CombinedBoundLens(BoundLensT[S, T, A, B]):
+	lenses: TupleOf[BoundLensT[S, T, A, B]]
+
+	def map(self, s: S) -> T:
+		for lens in self.lenses:
+			s = lens.map(s)
+		return s
+
+	def __mod__(self, other: BoundLensT[S, T, A, B]):
+		"""
+		Combine this bound lens with another bound lens.
+		Will coalesce when provided with a single BoundLens,
+		or create a tree when provided with a CombinedBoundLens.
+		"""
+		if isinstance(other, BoundLens):
+			return CombinedBoundLens((*self.lenses, other))
+		else:
+			return CombinedBoundLens((self, other))
 
 
 @dataclass
@@ -234,6 +270,14 @@ def kord(k: K) -> KeyLens:
 def korl(k: K) -> KeyLens:
 	"""Get the key, with a list for the default"""
 	return KeyLens(k, [])
+
+
+def append(a: A) -> Callable:
+	def _append(m):
+		m.append(a)  # TODO: idempotency
+		return m
+
+	return _append
 
 
 @dataclass

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from alpacloud.lens.models import CodecLens, CombinedLens, ComposedLens, ConstLens, FilterLens, ForeachLens, IdentityLens, IndexLens, KeyLens, PropLens
+from alpacloud.lens.models import BoundLensT, CodecLens, CombinedBoundLens, CombinedLens, ComposedLens, ConstLens, FilterLens, ForeachLens, IdentityLens, IndexLens, KeyLens, PropLens
 
 v = [0, 1, 2]
 u = ["a", [0, 1, 2], "c"]
@@ -167,6 +167,25 @@ class TestFilter:
 		assert l.l_get(self.o) == [None, None, None]
 		assert l.l_set(self.o, 9) == self.o
 		assert l.l_map(self.o, lambda es: es * 2) == self.o
+
+
+class TestBoundLens:
+	def test_combined(self):
+		l0 = BoundLensT.const(IndexLens(0), 9)
+		l1 = BoundLensT.const(IndexLens(1), 8)
+		v = [0, 1]
+
+		combined = l0 % l1
+		assert combined.map(v) == [9, 8]
+
+	def test_combined_coalesce(self):
+		"""Test that a CombinedBoundLens will be extended when combined with single items"""
+		l0 = BoundLensT.const(IndexLens(0), 9)
+		l1 = BoundLensT.const(IndexLens(1), 8)
+		l2 = BoundLensT.const(IndexLens(2), 7)
+
+		assert len(((l0 % l1) % l2).lenses) == 3
+		assert len(((l0 % l1) % CombinedBoundLens((l2,))).lenses) == 2
 
 
 class TestHelpers:
