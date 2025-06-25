@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import dataclasses
 from abc import ABC, abstractmethod
 from copy import copy
 from dataclasses import dataclass
-from typing import Callable, Generic, Hashable, TypeVar
+from typing import Callable, Generic, Hashable, Type, TypeVar
 
 from alpacloud.lens.util.sentinel import Sentinel
 
@@ -331,6 +332,11 @@ class CodecLens(CodecLensABC, Generic[S, T, A, B, C]):
 	@property
 	def l_name(self) -> str:
 		return super()._fmt_name(self.codec_name)
+
+
+def DataclassCodec(cls: Type) -> CodecLens:
+	"""Turn a dict into a dataclass"""
+	return CodecLens(dec=lambda d: cls(**d), enc=lambda c: dataclasses.asdict(c), codec_name=f"DataclassCodec({cls.__name__})")
 
 
 @dataclass
