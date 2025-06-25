@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from alpacloud.lens.conftest import ResourceLoader, StrStartsWith
-from alpacloud.lens.k8s import Image, ImageCodec, add_volume, decode_image, deployment_labels, encode_image, image, xdict
+from alpacloud.lens.k8s import Envvar, Image, ImageCodec, add_volume, decode_image, deployment_labels, encode_image, envvar, image, xdict
 
 res = ResourceLoader(Path(__file__).parent / "test_resources")
 
@@ -88,3 +88,11 @@ class TestPod:
 
 		c = res.load_case("volume", "redis")
 		c(l.map)
+
+	def test_envvar(self):
+		l0 = envvar("DEMO_GREETING") @ Envvar.set("Hello from the environment")
+		l1 = envvar("DEMO_FAREWELL") @ Envvar.set("Such a sweet sorrow")
+
+		c = res.load_case("envvar", "hello")
+
+		c((l0 % l1).map)

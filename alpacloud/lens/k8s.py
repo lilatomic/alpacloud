@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import dataclasses
 from dataclasses import dataclass
 from typing import Any, Callable, Optional
 
-from alpacloud.lens.models import A, B, BoundLensT, C, CodecLensABC, CombinedBoundLens, CombinedLens, F, FilterLens, IndexLens, append, kord, korl
+from alpacloud.lens.models import A, B, BoundLensT, C, CodecLensABC, CombinedBoundLens, CombinedLens, DataclassCodec, F, FilterLens, IndexLens, KeyLens, LensT, append, kord, korl
 
 metadata = kord("metadata")
 namespace = metadata["namespace"]
@@ -129,18 +131,54 @@ def image(container_name: str):
 volumes = kord("spec") / korl("volumes")
 
 
+def container_finder(container: str | int = 0):
+	if isinstance(container, int):
+		return IndexLens(container)
+	else:
+		return container_named(container)
+
+
 def add_volume(volume_name: str, volume: Any, container: str | int = 0, mount_path: str | None = None) -> BoundLensT:
 	if mount_path is None:
 		mount_path = volume_name
 
-	if isinstance(container, int):
-		container_filter = IndexLens(container)
-	else:
-		container_filter = container_named(container)
-
 	return CombinedBoundLens(
 		(
 			volumes @ append({"name": volume_name, **volume}),
-			(containers / container_filter / korl("volumeMounts")) @ append({"name": volume_name, "mountPath": mount_path}),
+			(containers / container_finder(container) / korl("volumeMounts")) @ append({"name": volume_name, "mountPath": mount_path}),
 		)
 	)
+
+
+@dataclass
+class NamedListCodec(CodecLensABC):
+	"""Some lists have items with unique keys. This converts one of those lists into a dict"""
+
+	n: str = "name"
+
+	@property
+	def l_name(self) -> str:
+		return "indexable_list"
+
+	def dec(self, a: A) -> B:
+		return {e[self.n]: e for e in a}
+
+	def enc(self, c: C) -> B:
+		return list(c.values())
+
+
+@dataclass
+class Envvar:
+	name: str
+	value: str | None = None
+
+	@staticmethod
+	def set(v: str):
+		def _set_value(s: Envvar) -> Envvar:
+			return Envvar(s.name, v)
+
+		return _set_value
+
+
+def envvar(n: str, container: str | int = 0) -> LensT:
+	return containers / container_finder(container) / korl("env") / NamedListCodec() / KeyLens(n, {"name": n}) / DataclassCodec(Envvar)
