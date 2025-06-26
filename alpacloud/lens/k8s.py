@@ -1,3 +1,5 @@
+"""Lenses for working with Kubernetes objects"""
+
 from __future__ import annotations
 
 import dataclasses
@@ -22,6 +24,8 @@ deployment_labels = CombinedLens(
 
 
 def xdict(extensions: dict) -> Callable[[dict], dict]:
+	"""Extend a dictionary"""
+
 	def _xdict(d: dict) -> dict:
 		return {**d, **extensions}
 
@@ -30,6 +34,8 @@ def xdict(extensions: dict) -> Callable[[dict], dict]:
 
 @dataclass
 class Image:
+	"""A Docker image reference"""
+
 	registry: str
 	repository: str
 	tag: str = "latest"
@@ -37,7 +43,7 @@ class Image:
 
 
 def decode_image(image_str: str) -> Image:
-	""""""
+	"""Load a Docker image from the `image` string."""
 	# Default values
 	default_registry = "docker.io"
 	default_tag = "latest"
@@ -90,6 +96,8 @@ def encode_image(image: Image) -> str:
 
 
 class ImageCodec(CodecLensABC):
+	"""Lens to transform the `image` property of a Kubernetes manifest into a dataclass"""
+
 	@property
 	def l_name(self) -> str:
 		return super()._fmt_name("ImageCodec")
@@ -102,18 +110,22 @@ class ImageCodec(CodecLensABC):
 
 	@staticmethod
 	def set_registry(registry: str) -> F:
+		"""Set the registry of the image"""
 		return lambda i: dataclasses.replace(i, registry=registry)
 
 	@staticmethod
 	def set_repository(repository: str) -> F:
+		"""Set the repository of the image."""
 		return lambda i: dataclasses.replace(i, repository=repository)
 
 	@staticmethod
 	def set_tag(tag: str) -> F:
+		"""Set the tag of the image."""
 		return lambda i: dataclasses.replace(i, tag=tag)
 
 	@staticmethod
 	def set_digest(digest: str) -> F:
+		"""Set the digest of the image."""
 		return lambda i: dataclasses.replace(i, digest=digest)
 
 
@@ -121,10 +133,12 @@ containers = kord("spec") / korl("containers")
 
 
 def container_named(container_name: str) -> FilterLens:
+	"""Find a container with a specific name."""
 	return FilterLens(lambda container: container["name"] == container_name, predicate_name=f"name=={container_name}")
 
 
 def image(container_name: str):
+	"""Get the image from a pod manifest."""
 	return containers * container_named(container_name)["image"] / ImageCodec()
 
 
@@ -132,6 +146,7 @@ volumes = kord("spec") / korl("volumes")
 
 
 def container_finder(container: str | int = 0):
+	"""Find a container with a name or index from the list of containers."""
 	if isinstance(container, int):
 		return IndexLens(container)
 	else:
@@ -139,6 +154,7 @@ def container_finder(container: str | int = 0):
 
 
 def add_volume(volume_name: str, volume: Any, container: str | int = 0, mount_path: str | None = None) -> BoundLensT:
+	"""Add a volume to a pod."""
 	if mount_path is None:
 		mount_path = volume_name
 
@@ -169,11 +185,15 @@ class NamedListCodec(CodecLensABC):
 
 @dataclass
 class Envvar:
+	"""An envvar for a Kubernetes pod"""
+
 	name: str
 	value: str | None = None
 
 	@staticmethod
 	def set(v: str):
+		"""Set the value of the envvar"""
+
 		def _set_value(s: Envvar) -> Envvar:
 			return Envvar(s.name, v)
 
@@ -181,4 +201,5 @@ class Envvar:
 
 
 def envvar(n: str, container: str | int = 0) -> LensT:
+	"""Lens to get an envvar of a container of a pod."""
 	return containers / container_finder(container) / korl("env") / NamedListCodec() / KeyLens(n, {"name": n}) / DataclassCodec(Envvar)

@@ -6,6 +6,7 @@ python_requirements(
 	name="reqs0",
 	module_mapping={
 		"ansible-core": ["ansible"],
+		"pyyaml": ["yaml"],
 	},
 	resolve=parametrize("tools", "ansible.lilatomic.azcli", "ansible.lilatomic.api"),
 )

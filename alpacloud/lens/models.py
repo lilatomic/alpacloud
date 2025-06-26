@@ -1,3 +1,19 @@
+"""
+Lenses are a generalised representation of accessing data.
+This representation is then something we can reuse and pass around.
+For example, when modifying a value of a key in a dictionary,
+we might have code like the following:
+`my_dict["my_key"] = my_dict["my_key"] * 2`
+Note that we have to write out `my_dict["my_key"]` twice, even though they're the same.
+Lenses allow us to represent this as a object we can manipulate:
+```
+my_key = KeyLens("my_key")
+my_key.l_set(my_dict, my_key.l_get(my_dict) * 2)
+```
+In this case, this doesn't result in much compression.
+However, for no additional complexity in the invocation,
+the lens could involve many components, filters, and codecs.
+"""
 from __future__ import annotations
 
 import dataclasses
@@ -7,9 +23,6 @@ from dataclasses import dataclass
 from typing import Callable, Generic, Hashable, Type, TypeVar
 
 from alpacloud.lens.util.sentinel import Sentinel
-
-# TODO: try removing set to make implementing multilenses easier
-# Implement set in terms of map and Const
 
 S = TypeVar("S")
 T = TypeVar("T")
@@ -26,60 +39,105 @@ TupleOf = tuple[U, ...]
 
 
 def compose(l1: LensT[S, T, A, B], l2: LensT[T, U, B, C]) -> LensT[S, U, A, C]:
+	"""Compose 2 lenses."""
 	return ComposedLens(l1, l2)
 
 
 class LensT(Generic[S, T, A, B], ABC):
+	"""
+	A generalised representation of accessing data.
+
+	Methods of Lenses are prefixed with `l_`.
+	This makes them less likely to conflict with properties,
+	which allows convenient `thing.property` syntax.
+	"""
+
 	@property
 	@abstractmethod
 	def l_name(self) -> str:
-		pass
+		"""The name of the current lens."""
 
 	@abstractmethod
 	def l_get(self, s: S) -> A:
-		pass
+		"""Get the focus of this lens."""
 
 	@abstractmethod
 	def l_set(self, s: S, b: B) -> T:
-		pass
+		"""Set the focus of this lens."""
 
 	def l_map(self, s: S, f: F):
+		"""Transform the focus of this lens."""
 		return self.l_set(s, f(self.l_get(s)))
 
 	def l_compose(self, other: LensT[T, U, B, C]) -> LensT[S, U, A, C]:
+		"""Compose this lens with another one sequentially."""
 		return compose(self, other)
 
 	def l_bind(self, f: F) -> BoundLens[S, T, A, B]:
+		"""
+		Bind a mapping function to this lens.
+		This allows binding the result of transformations,
+		so they can be accumulated into a large transformation.
+		"""
 		return BoundLens(self, f)
 
 	def __getitem__(self, k: K):
 		return self.l_compose(KeyLens(k))
 
 	def __getattr__(self, item):
+		if item.startswith("__") and item.endswith("__"):
+			super().__getattribute__(item)
 		return self.l_compose(PropLens(item))
 
 	def __mul__(self, other):
+		"""
+		Apply the next lens on each element of the focus.
+
+		>>> w = {"k0": [[0, 1], [2, 3]]}
+		>>> l = KeyLens("k0") * IndexLens(0)
+		>>> l.l_get(w)
+		[0, 2]
+		"""
 		return self.l_compose(ForeachLens(other))
 
 	def __matmul__(self, f: F):
+		"""
+		Bind this lens with a mapping function.
+		"""
 		return BoundLens(self, f)
 
 	def __truediv__(self, other):
+		"""Compose this lens with another one sequentially."""
 		return self.l_compose(other)
 
 	def __mod__(self, other):
+		"""
+		Combine these lenses in parallel.
+
+		>>> w = [[0,1], [2,3]]
+		>>> l01 = IndexLens(0) / IndexLens(1)
+		>>> l10 = IndexLens(1) / IndexLens(0)
+		>>> l = l01 % l10
+		>>> l.l_get(w)
+		[1, 2]
+		"""
 		return CombinedLens((self, other))
 
 
 class BoundLensT(Generic[S, T, A, B], ABC):
+	"""A generalised representation of modifying data."""
+
 	def __mod__(self, other: BoundLensT[S, T, A, B]):
+		"""Combine these bound lenses in parallel."""
 		return CombinedBoundLens((self, other))
 
 	def map(self, s: S) -> T:
-		pass
+		"""Modify the focus of this lens."""
 
 	@staticmethod
 	def const(l: LensT[S, T, A, B], v: B) -> BoundLens[S, T, A, B]:
+		"""Set the focus of this lens to a constant value."""
+
 		def _const(_: A) -> B:
 			return v
 
@@ -88,10 +146,13 @@ class BoundLensT(Generic[S, T, A, B], ABC):
 
 @dataclass
 class BoundLens(BoundLensT[S, T, A, B]):
+	"""A generalised representation of modifying data."""
+
 	lens: LensT[S, T, A, B]
 	f: F
 
 	def get(self, s: S) -> A:
+		"""Get the focus of this lens. Useful for debugging."""
 		return self.lens.l_get(s)
 
 	def map(self, s: S) -> T:
@@ -100,6 +161,8 @@ class BoundLens(BoundLensT[S, T, A, B]):
 
 @dataclass
 class CombinedBoundLens(BoundLensT[S, T, A, B]):
+	"""A generalised representation of modifying data with multiple transforms."""
+
 	lenses: TupleOf[BoundLensT[S, T, A, B]]
 
 	def map(self, s: S) -> T:
@@ -156,6 +219,8 @@ class ConstLens(LensT[S, T, A, A]):
 
 @dataclass
 class ComposedLens(LensT[S, U, A, C], Generic[S, T, U, A, B, C]):
+	"""Lenses applied sequentially."""
+
 	l1: LensT[S, T, A, B]
 	l2: LensT[T, U, B, C]
 
@@ -182,6 +247,8 @@ class ComposedLens(LensT[S, U, A, C], Generic[S, T, U, A, B, C]):
 
 @dataclass
 class CombinedLens(LensT[S, T, A, B]):
+	"""Lenses combined in parallel. The resulting lens will have multiple objects focused"""
+
 	lenses: tuple[LensT[S, T, A, B], ...]
 	combined_name: str | None = None
 
@@ -208,6 +275,8 @@ class CombinedLens(LensT[S, T, A, B]):
 
 @dataclass
 class PropLens(LensT[S, T, A, B]):
+	"""Lens which focuses an attribute of an object. Equivalent to `object.attribute`"""
+
 	prop: str
 
 	@property
@@ -224,6 +293,8 @@ class PropLens(LensT[S, T, A, B]):
 
 @dataclass
 class IndexLens(LensT[S, T, A, B]):
+	"""Lens which gets an item from a collection, equivalent to `object[index]`"""
+
 	index: int
 
 	@property
@@ -244,6 +315,8 @@ KEYERROR = Sentinel("KEYERROR")
 
 @dataclass
 class KeyLens(LensT[S, T, A, B], Generic[S, T, A, B, K]):
+	"""Get a key from a dictionary"""
+
 	key: K
 	default: A | KEYERROR = KEYERROR
 
@@ -274,6 +347,8 @@ def korl(k: K) -> KeyLens:
 
 
 def append(a: A) -> Callable:
+	"""Append an item to the collection"""
+
 	def _append(m):
 		m.append(a)  # TODO: idempotency
 		return m
@@ -283,6 +358,20 @@ def append(a: A) -> Callable:
 
 @dataclass
 class ForeachLens(LensT[S, T, A, B]):
+	"""
+	Apply lenses to each item focused.
+
+	>>> w = [[1, 2], [3, 4]]
+	>>> l = ForeachLens(IndexLens(0))
+	>>> l.l_get(w)
+	[1, 3]
+
+	You can also get this lens with the `*` helper:
+	>>> l0 = IdentityLens() * IndexLens(1)
+	>>> l0.l_get(w)
+	[2, 4]
+	"""
+
 	l: LensT[S, T, A, B]
 
 	@property
@@ -303,6 +392,13 @@ class ForeachLens(LensT[S, T, A, B]):
 
 
 class CodecLensABC(LensT[S, T, A, B], Generic[S, T, A, B, C], ABC):
+	"""
+	A lens that decodes and re-encodes an object.
+
+	This is often used for decoding representations, like JSON parsing a string.
+	This is also used for unpacking strings, like parsing a url.
+	"""
+
 	def dec(self, a: A) -> C:
 		"""Decode the value"""
 
@@ -322,7 +418,7 @@ class CodecLensABC(LensT[S, T, A, B], Generic[S, T, A, B, C], ABC):
 
 @dataclass
 class CodecLens(CodecLensABC, Generic[S, T, A, B, C]):
-	"""A lens which unpacks a value to index into it"""
+	"""A lens that decodes and re-encodes its focus."""
 
 	dec: Callable[[A], C]
 
@@ -336,7 +432,11 @@ class CodecLens(CodecLensABC, Generic[S, T, A, B, C]):
 
 def DataclassCodec(cls: Type) -> CodecLens:
 	"""Turn a dict into a dataclass"""
-	return CodecLens(dec=lambda d: cls(**d), enc=lambda c: dataclasses.asdict(c), codec_name=f"DataclassCodec({cls.__name__})")
+	return CodecLens(
+		dec=lambda d: cls(**d),
+		enc=dataclasses.asdict,
+		codec_name=f"DataclassCodec({cls.__name__})",
+	)
 
 
 @dataclass

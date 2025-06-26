@@ -2,7 +2,20 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from alpacloud.lens.models import BoundLensT, CodecLens, CombinedBoundLens, CombinedLens, ComposedLens, ConstLens, FilterLens, ForeachLens, IdentityLens, IndexLens, KeyLens, PropLens
+from alpacloud.lens.models import (
+	BoundLensT,
+	CodecLens,
+	CombinedBoundLens,
+	CombinedLens,
+	ComposedLens,
+	ConstLens,
+	FilterLens,
+	ForeachLens,
+	IdentityLens,
+	IndexLens,
+	KeyLens,
+	PropLens,
+)
 
 v = [0, 1, 2]
 u = ["a", [0, 1, 2], "c"]
@@ -207,10 +220,18 @@ class TestHelpers:
 
 		assert (l * IndexLens(0)).l_get(w) == [1, 2, 3, 4]
 
+	def test_foreach_1(self):
+		w = {"k0": [[0, 1], [2, 3]]}
+		l = KeyLens("k0") * IndexLens(0)
+
+		assert l.l_get(w) == [0, 2]
+
 	def test_bind(self):
 		s = {"a": w}
 		l = KeyLens("a")
-		f = lambda x: x - 9
+
+		def f(x):
+			return x - 9
 
 		assert (l * IndexLens(1) @ f).map(s) == {"a": [["a", -9], ["b", -8], ["c", -7]]}
 

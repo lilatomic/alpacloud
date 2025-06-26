@@ -5,7 +5,6 @@ backend_packages = [
 	"pants.backend.experimental.python",
 	"pants.backend.experimental.python.lint.ruff.format",
 	"pants.backend.experimental.python.lint.ruff.check",
-	"pants.backend.python.lint.isort",
 	"pants.backend.python.lint.flake8",
 	"pants.backend.python.lint.pylint",
 	"pants.backend.python.typecheck.mypy",
@@ -34,6 +33,9 @@ interpreter_constraints = ["~=3.10"]
 
 [pylint]
 config = ".pylintrc"
+
+[pytest]
+args = ["--doctest-modules"]
 
 [flake8]
 config = ".flake8"
