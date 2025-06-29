@@ -6,7 +6,26 @@ import dataclasses
 from dataclasses import dataclass
 from typing import Any, Callable, Optional
 
-from alpacloud.lens.models import A, B, BoundLensT, C, CodecLensABC, CombinedBoundLens, CombinedLens, DataclassCodec, F, FilterLens, IndexLens, KeyLens, LensT, append, kord, korl
+from alpacloud.lens.models import (
+	A,
+	B,
+	BoundLensT,
+	C,
+	CodecLensABC,
+	CombinedBoundLens,
+	CombinedLens,
+	Const,
+	DataclassCodec,
+	F,
+	FilterLens,
+	IdentityLens,
+	IndexLens,
+	KeyLens,
+	LensT,
+	append,
+	kord,
+	korl,
+)
 
 metadata = kord("metadata")
 namespace = metadata["namespace"]
@@ -14,11 +33,11 @@ name = metadata["name"]
 annotation = metadata / kord("annotations")
 labels = metadata / kord("labels")
 
-
+spec = kord("spec")
 deployment_labels = CombinedLens(
 	(
-		kord("spec") / kord("selector") / kord("matchLabels"),
-		kord("spec") / kord("template") / labels,
+		spec / kord("selector") / kord("matchLabels"),
+		spec / kord("template") / labels,
 	)
 )
 
@@ -129,7 +148,7 @@ class ImageCodec(CodecLensABC):
 		return lambda i: dataclasses.replace(i, digest=digest)
 
 
-containers = kord("spec") / korl("containers")
+containers = spec / korl("containers")
 
 
 def container_named(container_name: str) -> FilterLens:
@@ -142,7 +161,7 @@ def image(container_name: str):
 	return containers * container_named(container_name)["image"] / ImageCodec()
 
 
-volumes = kord("spec") / korl("volumes")
+volumes = spec / korl("volumes")
 
 
 def container_finder(container: str | int = 0):
@@ -203,3 +222,22 @@ class Envvar:
 def envvar(n: str, container: str | int = 0) -> LensT:
 	"""Lens to get an envvar of a container of a pod."""
 	return containers / container_finder(container) / korl("env") / NamedListCodec() / KeyLens(n, {"name": n}) / DataclassCodec(Envvar)
+
+
+def set_host(host: str) -> BoundLensT:
+	"""Set all hosts to the same root domain"""
+
+	return CombinedBoundLens(((spec["rules"] * KeyLens("host")) @ Const(host), (spec / kord("tls") * korl("hosts")) @ Const([host])))
+
+
+def replace_root_domain(old_root, new_root) -> Callable[[str], str]:
+	def _replace_root_domain(s: str) -> str:
+		return s.replace(old_root, new_root)
+
+	return _replace_root_domain
+
+
+def mut_hosts(f: Callable[[str], str]) -> BoundLensT:
+	"""modify all hosts in an ingress"""
+
+	return CombinedBoundLens(((spec["rules"] * KeyLens("host", None)) @ f, (spec / kord("tls") * korl("hosts") * IdentityLens()) @ f))

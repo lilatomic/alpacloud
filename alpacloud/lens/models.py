@@ -14,6 +14,7 @@ In this case, this doesn't result in much compression.
 However, for no additional complexity in the invocation,
 the lens could involve many components, filters, and codecs.
 """
+
 from __future__ import annotations
 
 import dataclasses
@@ -122,6 +123,14 @@ class LensT(Generic[S, T, A, B], ABC):
 		[1, 2]
 		"""
 		return CombinedLens((self, other))
+
+
+@dataclass
+class Const(Generic[B]):
+	v: B
+
+	def __call__(self, *args, **kwargs) -> B:
+		return self.v
 
 
 class BoundLensT(Generic[S, T, A, B], ABC):

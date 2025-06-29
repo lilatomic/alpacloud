@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from alpacloud.lens.conftest import ResourceLoader, StrStartsWith
-from alpacloud.lens.k8s import Envvar, Image, ImageCodec, add_volume, decode_image, deployment_labels, encode_image, envvar, image, xdict
+from alpacloud.lens.k8s import Envvar, Image, ImageCodec, add_volume, decode_image, deployment_labels, encode_image, envvar, image, mut_hosts, replace_root_domain, set_host, xdict
 
 res = ResourceLoader(Path(__file__).parent / "test_resources")
 
@@ -96,3 +96,18 @@ class TestPod:
 		c = res.load_case("envvar", "hello")
 
 		c((l0 % l1).map)
+
+
+class TestIngress:
+	def test_set_host(self):
+		l = set_host("bar.example.com")
+
+		c = res.load_case("ingress", "tls")
+		c(l.map)
+
+	def test_mut_hosts(self):
+		l = mut_hosts(replace_root_domain("foo.com", "example.com"))
+
+		c = res.load_case("ingress", "multihost")
+
+		c(l.map)
