@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from alpacloud.lens.models import (
+	AttrLens,
 	BoundLensT,
 	CodecLens,
 	CombinedBoundLens,
@@ -11,10 +12,9 @@ from alpacloud.lens.models import (
 	ConstLens,
 	FilterLens,
 	ForeachLens,
-	IdentityLens,
 	IndexLens,
 	KeyLens,
-	PropLens,
+	Lens,
 )
 
 v = [0, 1, 2]
@@ -74,7 +74,7 @@ class TestKey:
 
 class TestAttribute:
 	def test_attribute(self):
-		l = PropLens("f")
+		l = AttrLens("f")
 		assert l.l_get(c) == 1
 		assert l.l_set(c, 9) == C(9)
 
@@ -88,8 +88,8 @@ class TestComposed:
 		assert l.l_set(u, 9) == ["a", [9, 1, 2], "c"]
 
 	def test_multiple_compose(self):
-		l0 = ComposedLens(ComposedLens(IndexLens(1), IndexLens(0)), PropLens("s"))
-		l1 = ComposedLens(IndexLens(1), ComposedLens(IndexLens(0), PropLens("s")))
+		l0 = ComposedLens(ComposedLens(IndexLens(1), IndexLens(0)), AttrLens("s"))
+		l1 = ComposedLens(IndexLens(1), ComposedLens(IndexLens(0), AttrLens("s")))
 
 		assert l0.l_get(self.matrix) == l1.l_get(self.matrix)
 
@@ -113,13 +113,13 @@ class TestForEach:
 		assert l.l_map(w, lambda x: x * 2) == [["a", 0], ["b", 2], ["c", 4]]
 
 	def test_many_foreach(self):
-		l = ForeachLens(ForeachLens(IdentityLens()))
+		l = ForeachLens(ForeachLens(Lens()))
 
 		assert l.l_set(w, 1) == [[1, 1], [1, 1], [1, 1]]
 		assert l.l_map(w, lambda x: x * 2) == [["aa", 0], ["bb", 2], ["cc", 4]]
 
 	def test_ops_after_foreach(self):
-		l = ForeachLens(IndexLens(0)) / PropLens("f")
+		l = ForeachLens(IndexLens(0)) / AttrLens("f")
 
 		v = [[C(1)]]
 

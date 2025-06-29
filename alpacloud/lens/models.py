@@ -88,7 +88,7 @@ class LensT(Generic[S, T, A, B], ABC):
 	def __getattr__(self, item):
 		if item.startswith("__") and item.endswith("__"):
 			super().__getattribute__(item)
-		return self.l_compose(PropLens(item))
+		return self.l_compose(AttrLens(item))
 
 	def __mul__(self, other):
 		"""
@@ -192,7 +192,7 @@ class CombinedBoundLens(BoundLensT[S, T, A, B]):
 
 
 @dataclass
-class IdentityLens(LensT[S, T, A, B]):
+class Lens(LensT[S, T, A, B]):
 	"""A lens that just gets the current thing. Useful for terminating multilenses."""
 
 	@property
@@ -283,7 +283,7 @@ class CombinedLens(LensT[S, T, A, B]):
 
 
 @dataclass
-class PropLens(LensT[S, T, A, B]):
+class AttrLens(LensT[S, T, A, B]):
 	"""Lens which focuses an attribute of an object. Equivalent to `object.attribute`"""
 
 	prop: str
@@ -376,7 +376,7 @@ class ForeachLens(LensT[S, T, A, B]):
 	[1, 3]
 
 	You can also get this lens with the `*` helper:
-	>>> l0 = IdentityLens() * IndexLens(1)
+	>>> l0 = Lens() * IndexLens(1)
 	>>> l0.l_get(w)
 	[2, 4]
 	"""
