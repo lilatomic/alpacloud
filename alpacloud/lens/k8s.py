@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import dataclasses
 from dataclasses import dataclass
 from typing import Any, Callable, Optional
@@ -18,9 +19,9 @@ from alpacloud.lens.models import (
 	DataclassCodec,
 	F,
 	FilterLens,
-	IdentityLens,
 	IndexLens,
 	KeyLens,
+	Lens,
 	LensT,
 	append,
 	kord,
@@ -240,4 +241,16 @@ def replace_root_domain(old_root, new_root) -> Callable[[str], str]:
 def mut_hosts(f: Callable[[str], str]) -> BoundLensT:
 	"""modify all hosts in an ingress"""
 
-	return CombinedBoundLens(((spec["rules"] * KeyLens("host", None)) @ f, (spec / kord("tls") * korl("hosts") * IdentityLens()) @ f))
+	return CombinedBoundLens(((spec["rules"] * KeyLens("host", None)) @ f, (spec / kord("tls") * korl("hosts") * Lens()) @ f))
+
+
+class B64(CodecLensABC):
+	@property
+	def l_name(self) -> str:
+		return super()._fmt_name("base64")
+
+	def dec(self, a: A) -> C:
+		return base64.b64decode(a.encode()).decode()
+
+	def enc(self, c: C) -> C:
+		return base64.b64encode(c.encode()).decode()

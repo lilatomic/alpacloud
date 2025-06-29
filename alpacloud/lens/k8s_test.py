@@ -1,9 +1,27 @@
+import base64
 from pathlib import Path
 
 import pytest
 
 from alpacloud.lens.conftest import ResourceLoader, StrStartsWith
-from alpacloud.lens.k8s import Envvar, Image, ImageCodec, add_volume, decode_image, deployment_labels, encode_image, envvar, image, mut_hosts, replace_root_domain, set_host, xdict
+from alpacloud.lens.k8s import (
+	B64,
+	Envvar,
+	Image,
+	ImageCodec,
+	add_volume,
+	containers,
+	decode_image,
+	deployment_labels,
+	encode_image,
+	envvar,
+	image,
+	mut_hosts,
+	replace_root_domain,
+	set_host,
+	xdict,
+)
+from alpacloud.lens.models import KeyLens
 
 res = ResourceLoader(Path(__file__).parent / "test_resources")
 
@@ -97,6 +115,13 @@ class TestPod:
 
 		c((l0 % l1).map)
 
+	def test_resources(self):
+		l = containers * KeyLens("resources")
+
+		c = res.load_case("resources", "pod")
+
+		c(l.l_get)
+
 
 class TestIngress:
 	def test_set_host(self):
@@ -111,3 +136,18 @@ class TestIngress:
 		c = res.load_case("ingress", "multihost")
 
 		c(l.map)
+
+
+class TestB64:
+	l = B64()
+
+	def test_get(self):
+		old_str = "hihello"
+		old_encoded = base64.b64encode(old_str.encode()).decode()
+		assert self.l.l_get(old_encoded) == old_str
+
+	def test_set(self):
+		old_str = "hihello"
+		new_str = "hellohi"
+		new_encoded = base64.b64encode(new_str.encode()).decode()
+		assert self.l.l_set(old_str, new_str) == new_encoded
