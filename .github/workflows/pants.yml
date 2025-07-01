@@ -10,22 +10,21 @@ jobs:
     strategy:
       matrix:
         platform: [ubuntu-latest]
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.10"]
 
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/cache@v3
-        id: cache
+      - uses: actions/checkout@v4
+      - uses: pantsbuild/actions/init-pants@v8
         with:
-          path: |
-            ~/.cache/pants/setup
-            ~/.cache/pants/lmdb_store
-            ~/.cache/pants/named_caches
-          key: ${{ runner.os }}-
-      - name: Setup Python for Pants
+          # v0 makes it easy to bust the cache if needed
+          # just increase the integer to start with a fresh cache
+          gha-cache-key: v1
+          named-caches-hash: ${{ hashFiles('cicd/tools.lock') }}
+
+      - name: Setup Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
-          python-version: 3.8
+          python-version: "3.9"
       - name: Setup Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
@@ -60,16 +59,17 @@ jobs:
           pip3 install dist/alpacloud-ansible-builder-*.tar.gz
           alpacloud-ansible-builder --help
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+      - name: Upload test coverage to Codecov
+        uses: codecov/codecov-action@v4
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           files: dist/coverage/python/coverage.xml
           fail_ci_if_error: true
           verbose: true
         if: always()
       - name: Upload pants log
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: pants-log
+          name: pants-log-${{ matrix.python-version }}
           path: .pants.d/pants.log
         if: always() # We want the log even on failures.
