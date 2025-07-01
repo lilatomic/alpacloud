@@ -31,28 +31,28 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Bootstrap Pants
         run: |
-          ./pants --version
+          pants --version
 
       - name: Check BUILD files
-        run: "./pants tailor --check update-build-files --check ::"
+        run: "pants tailor --check update-build-files --check ::"
       - name: Lint and typecheck
         run: |
-          ./pants lint check ::
+          pants lint check ::
         if: success() || failure()
 
       - name: Test
         run: |
-          ./pants --tag="-integration" test ::
+          pants --tag="-integration" test ::
         if: success() || failure()
       - name: Integration Test
         run: |
           az login --service-principal --tenant ${{ secrets.AZCLI_TENANT_ID }} -u ${{ secrets.AZCLI_USERNAME }} -p ${{ secrets.AZCLI_PASSWORD }}
-          ./pants --tag="integration" test ::
+          pants --tag="integration" test ::
         if: success() || failure()
 
       - name: Package
         run: |
-          ./pants package ::
+          pants package ::
       - name: Validate packages
         run: |
           ls dist
