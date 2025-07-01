@@ -49,6 +49,12 @@ report = ["xml", "html"]
 [mypy]
 install_from_resolve = "mypy"
 
+[ruff]
+config = "pyproject.toml"
+
+[update-build-files]
+formatter = "ruff"
+
 [anonymous-telemetry]
 enabled = true
 repo_id = "aa6f686d-ffa7-35a8-99c9-37a1a61e8f67"
