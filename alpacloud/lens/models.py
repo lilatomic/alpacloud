@@ -164,18 +164,18 @@ class BoundLens(BoundLensT[S, T, A, B]):
 
 
 @dataclass
-class CombinedBoundLens(BoundLensT[S, T, A, B]):
+class CombinedBoundLens(BoundLensT[S, S, A, B]):
 	"""A generalised representation of modifying data with multiple transforms."""
 
-	lenses: TupleOf[BoundLensT[S, T, A, B]]
+	lenses: TupleOf[BoundLensT[S, S, A, B]]
 
-	def map(self, s: S) -> T:
-		acc: S | T = s
+	def map(self, s: S) -> S:
+		acc: S = s
 		for lens in self.lenses:
-			acc = lens.map(s)
+			acc = lens.map(acc)
 		return acc  # type: ignore # cannot express that mapping can change the type
 
-	def __mod__(self, other: BoundLensT[S, T, A, B]):
+	def __mod__(self, other: BoundLensT[S, S, A, B]):
 		"""
 		Combine this bound lens with another bound lens.
 		Will coalesce when provided with a single BoundLens,
@@ -270,7 +270,7 @@ class CombinedLens(LensT[S, S, list[A], B]):
 	def l_set(self, s: S, b: B) -> S:
 		acc: S = s
 		for l in self.lenses:
-			acc = l.l_set(s, b)
+			acc = l.l_set(acc, b)
 		return acc
 
 	def l_map(self, s: S, f: F):
@@ -429,14 +429,19 @@ class CodecLensABC(LensT[S, T, A, B], ABC):
 		return self.enc(b)
 
 
-@dataclass
 class CodecLens(CodecLensABC, Generic[S, T, A, B]):
 	"""A lens that decodes and re-encodes its focus."""
 
-	dec: Callable[[S], A]  # type: ignore
-	enc: Callable[[B], T]  # type: ignore
+	def __init__(self, dec: Callable[[S], A], enc: Callable[[B], T], codec_name: str = "codec"):
+		self.decoder = dec
+		self.encoder = enc
+		self.codec_name = codec_name
 
-	codec_name: str = "codec"
+	def dec(self, s: S) -> A:
+		return self.decoder(s)
+
+	def enc(self, b: B) -> T:
+		return self.encoder(b)
 
 	@property
 	def l_name(self) -> str:
