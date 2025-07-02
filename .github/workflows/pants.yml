@@ -55,8 +55,11 @@ jobs:
           pants package ::
       - name: Validate packages
         run: |
+          set -xe +f
           ls dist
-          pip3 install dist/alpacloud-ansible-builder-*.tar.gz
+          files=(dist/alpacloud_ansible_builder-*.tar.gz)
+          echo "installing ${files[0]}"
+          pip3 install "${files[0]}"
           alpacloud-ansible-builder --help
 
       - name: Upload test coverage to Codecov
