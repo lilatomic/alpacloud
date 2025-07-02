@@ -44,6 +44,7 @@ use_coverage = true
 
 [coverage-py]
 report = ["xml", "html"]
+global_report = true
 
 [mypy]
 install_from_resolve = "tools"
