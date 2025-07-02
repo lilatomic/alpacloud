@@ -30,7 +30,7 @@ class AlpineRepo:
 		"""List files in a directory in an alpine repo"""
 		page = self.get_page(dir)
 
-		rows = iter(page.find("table", {"summary": "tree listing"}).find_all("tr"))
+		rows = iter(page.find("table", {"summary": "tree listing"}).find_all("tr"))  # type: ignore
 		next(rows)  # escape header
 
 		dir_items = {}

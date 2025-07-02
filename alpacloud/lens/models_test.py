@@ -129,7 +129,7 @@ class TestForEach:
 
 
 class TestCodec:
-	csvlens = CodecLens(
+	csvlens: CodecLens[str, str, list, list] = CodecLens(
 		dec=lambda s: s.split(","),
 		enc=lambda es: ",".join(es),
 		codec_name="csv",

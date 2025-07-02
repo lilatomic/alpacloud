@@ -11,6 +11,11 @@ python_requirements(
 	resolve=parametrize("tools", "ansible.lilatomic.azcli", "ansible.lilatomic.api"),
 )
 
+python_requirement(
+	requirements=["mypy~=1.16.1", "types-PyYAML", "types-requests"],
+	resolve="tools",
+)
+
 python_distribution(
 	name="alpacloud",
 	dependencies=[

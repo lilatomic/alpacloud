@@ -1,4 +1,6 @@
-_registry = {}
+from __future__ import annotations
+
+_registry: dict[str, Sentinel] = {}
 
 
 class Sentinel:

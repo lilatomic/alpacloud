@@ -8,16 +8,12 @@ from dataclasses import dataclass
 from typing import Any, Callable, Optional
 
 from alpacloud.lens.models import (
-	A,
-	B,
 	BoundLensT,
-	C,
 	CodecLensABC,
 	CombinedBoundLens,
 	CombinedLens,
 	Const,
 	DataclassCodec,
-	F,
 	FilterLens,
 	IndexLens,
 	KeyLens,
@@ -27,6 +23,7 @@ from alpacloud.lens.models import (
 	kord,
 	korl,
 )
+from alpacloud.lens.util.type import B, F
 
 metadata = kord("metadata")
 namespace = metadata["namespace"]
@@ -122,10 +119,10 @@ class ImageCodec(CodecLensABC):
 	def l_name(self) -> str:
 		return super()._fmt_name("ImageCodec")
 
-	def dec(self, a: A) -> C:
+	def dec(self, a: str) -> Image:
 		return decode_image(a)
 
-	def enc(self, c: C) -> B:
+	def enc(self, c: Image) -> str:
 		return encode_image(c)
 
 	@staticmethod
@@ -196,10 +193,10 @@ class NamedListCodec(CodecLensABC):
 	def l_name(self) -> str:
 		return "indexable_list"
 
-	def dec(self, a: A) -> B:
+	def dec(self, a: list[dict]) -> dict[str, dict]:
 		return {e[self.n]: e for e in a}
 
-	def enc(self, c: C) -> B:
+	def enc(self, c: dict[str, B]) -> list[B]:
 		return list(c.values())
 
 
@@ -249,8 +246,8 @@ class B64(CodecLensABC):
 	def l_name(self) -> str:
 		return super()._fmt_name("base64")
 
-	def dec(self, a: A) -> C:
+	def dec(self, a: str) -> str:
 		return base64.b64decode(a.encode()).decode()
 
-	def enc(self, c: C) -> C:
+	def enc(self, c: str) -> str:
 		return base64.b64encode(c.encode()).decode()
