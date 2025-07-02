@@ -29,6 +29,7 @@ module = [
     "setuptools",
     "ansible.*",
     "knack.*",
+    "azure.cli.*"
 ]
 ignore_missing_imports = true
 

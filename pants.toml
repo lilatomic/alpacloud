@@ -26,7 +26,6 @@ default_resolve = "tools"
 interpreter_constraints = ["~=3.10"]
 
 [python.resolves]
-"mypy" = "cicd/mypy.lock"
 "tools" = "cicd/tools.lock"
 "ansible.lilatomic.azcli" = "cicd/ansible.lilatomic.azcli.lock"
 "ansible.lilatomic.api" = "cicd/ansible.lilatomic.api.lock"
@@ -47,7 +46,7 @@ use_coverage = true
 report = ["xml", "html"]
 
 [mypy]
-install_from_resolve = "mypy"
+install_from_resolve = "tools"
 
 [ruff]
 config = "pyproject.toml"
