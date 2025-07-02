@@ -24,6 +24,7 @@ python_requirements(
 	module_mapping={
 		"azure-cli": ["azure.cli"],
 		"ansible-core": ["ansible"],
+		"ansible-base": ["ansible_collections"],
 	},
 	resolve="ansible.lilatomic.azcli",
 )

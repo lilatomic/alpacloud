@@ -15,6 +15,9 @@ python_tests(
 
 python_requirements(
 	name="reqs",
-	module_mapping={"ansible-core": ["ansible"]},
+	module_mapping={
+		"ansible-core": ["ansible"],
+		"ansible-base": ["ansible_collections"],
+	},
 	resolve="ansible.lilatomic.api",
 )
