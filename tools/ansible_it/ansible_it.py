@@ -45,9 +45,7 @@ def run_ansible_playbook(playbook_path: str) -> List[AnsibleTaskOutput]:
 	"""Run an Ansible playbook and capture output"""
 	os.environ["ANSIBLE_STDOUT_CALLBACK"] = "oneline"
 	os.environ["ANSIBLE_COLLECTIONS_PATHS"] = ":".join(["."])
-	os.environ[
-		"ANSIBLE_LOG_PATH"
-	] = output_file  # forces logging, even though it doesn't actually go here
+	os.environ["ANSIBLE_LOG_PATH"] = output_file  # forces logging, even though it doesn't actually go here
 
 	# need to import here, after setting environemnt variables,
 	# because Ansible doesn't really do the dependency-injection thing

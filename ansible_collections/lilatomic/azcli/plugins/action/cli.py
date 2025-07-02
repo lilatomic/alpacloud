@@ -1,4 +1,5 @@
 """Action plugin for invoking the Azure CLI"""
+
 import io
 import itertools
 import json
@@ -38,9 +39,7 @@ class AzCliParams:
 
 	@staticmethod
 	def _cli_format_arg(arg: str):
-		if arg.startswith("--") or arg.startswith(
-			"-"
-		):  # dashes have been specified by the user
+		if arg.startswith("--") or arg.startswith("-"):  # dashes have been specified by the user
 			return arg
 		elif len(arg) == 1:  # single letters get 1 dash
 			return "-" + arg

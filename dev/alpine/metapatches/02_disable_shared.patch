@@ -1,0 +1,78 @@
+diff --git a/dev/alpine/main/python310/APKBUILD b/dev/alpine/main/python310/APKBUILD
+index 54be0e4..83ad956 100644
+--- a/dev/alpine/main/python310/APKBUILD
++++ b/dev/alpine/main/python310/APKBUILD
+@@ -122,7 +122,6 @@ build() {
+ 		--enable-ipv6 \
+ 		--enable-loadable-sqlite-extensions \
+ 		--enable-optimizations \
+-		--enable-shared \
+ 		--with-lto \
+ 		--with-computed-gotos \
+ 		--with-dbmliborder=gdbm:ndbm \
+@@ -207,9 +206,6 @@ package() {
+ 	# those are provided by python3-tkinter
+ 	rm -r "$pkgdir"/usr/bin/idle* "$pkgdir"/usr/lib/python*/idlelib \
+ 		"$pkgdir"/usr/lib/python*/tkinter
+-
+-	ln -s python3 "$pkgdir"/usr/bin/python
+-	ln -s python3-config "$pkgdir"/usr/bin/python-config
+ }
+ 
+ dev() {
+diff --git a/dev/alpine/main/python311/APKBUILD b/dev/alpine/main/python311/APKBUILD
+index 529998d..78715e9 100644
+--- a/dev/alpine/main/python311/APKBUILD
++++ b/dev/alpine/main/python311/APKBUILD
+@@ -126,7 +126,6 @@ build() {
+ 		--enable-ipv6 \
+ 		--enable-loadable-sqlite-extensions \
+ 		--enable-optimizations \
+-		--enable-shared \
+ 		--with-lto \
+ 		--with-computed-gotos \
+ 		--with-dbmliborder=gdbm:ndbm \
+@@ -205,9 +204,6 @@ package() {
+ 	# those are provided by python3-tkinter
+ 	rm -r "$pkgdir"/usr/bin/idle* "$pkgdir"/usr/lib/python*/idlelib \
+ 		"$pkgdir"/usr/lib/python*/tkinter
+-
+-	ln -s python3 "$pkgdir"/usr/bin/python
+-	ln -s python3-config "$pkgdir"/usr/bin/python-config
+ }
+ 
+ dev() {
+diff --git a/dev/alpine/main/python312/APKBUILD b/dev/alpine/main/python312/APKBUILD
+index b5aa61a..2ff2f1d 100644
+--- a/dev/alpine/main/python312/APKBUILD
++++ b/dev/alpine/main/python312/APKBUILD
+@@ -124,7 +124,6 @@ build() {
+ 		--enable-ipv6 \
+ 		--enable-loadable-sqlite-extensions \
+ 		--enable-optimizations \
+-		--enable-shared \
+ 		--with-lto \
+ 		--with-computed-gotos \
+ 		--with-dbmliborder=gdbm:ndbm \
+@@ -187,9 +186,6 @@ package() {
+ 	# those are provided by python3-tkinter
+ 	rm -r "$pkgdir"/usr/bin/idle* "$pkgdir"/usr/lib/python*/idlelib \
+ 		"$pkgdir"/usr/lib/python*/tkinter
+-
+-	ln -s python3 "$pkgdir"/usr/bin/python
+-	ln -s python3-config "$pkgdir"/usr/bin/python-config
+ }
+ 
+ dev() {
+diff --git a/dev/alpine/main/python39/APKBUILD b/dev/alpine/main/python39/APKBUILD
+index 26a70b0..7c3a43c 100644
+--- a/dev/alpine/main/python39/APKBUILD
++++ b/dev/alpine/main/python39/APKBUILD
+@@ -89,7 +89,6 @@ build() {
+ 		--enable-ipv6 \
+ 		--enable-loadable-sqlite-extensions \
+ 		--enable-optimizations \
+-		--enable-shared \
+ 		--with-lto \
+ 		--with-computed-gotos \
+ 		--with-dbmliborder=gdbm:ndbm \

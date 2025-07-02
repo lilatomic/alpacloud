@@ -1,0 +1,61 @@
+# Contributor: Daniel Goldman <danielgoldman4@gmail.com>
+# Maintainer: Daniel Goldman <danielgoldman4@gmail.com>
+pkgname=pantsbuild221
+pkgver=2.21.1
+_basever="${pkgver%.*}"
+pkgrel=0
+pkgdesc="The Pants Build System"
+url="https://www.pantsbuild.org/"
+arch="all"
+license="Apache2.0"
+depends="
+	python39
+	unzip
+	bash
+	"
+makedepends="
+	python39
+	python39-dev
+	unzip
+	bash
+	protoc
+	rustup
+	linux-headers
+	"
+source="https://github.com/pantsbuild/pants/archive/refs/tags/release_$pkgver.tar.gz"
+builddir="$srcdir/"
+
+prepare() {
+# 	default_prepare
+	:
+}
+
+build() {
+	set -xe
+# 	rustup-init -y
+
+	export RUSTFLAGS="-C target-feature=-crt-static --cfg tokio_unstable"
+	export PATH=$PATH:$HOME/.cargo/bin
+
+	cd pants-release_$pkgver
+
+	# shim git repo so Pants is happy
+	git init
+
+	./pants package src/python/pants:pants-pex
+}
+
+check() {
+	# Replace with proper check command(s)
+	:
+}
+
+package() {
+	mkdir -p "$pkgdir/usr/bin/"
+
+	mv "$srcdir"/pants-release_$pkgver/dist/src.python.pants/pants-pex.pex "$pkgdir"/usr/bin/pants_"$_basever"
+}
+
+sha512sums="
+d5b22278bcb6c9b90ac78862086ee2e69b014cd56dc39e2a641db66fe4d731843b3cf9f01eebb6d09ce502c77db1238109db275cc2af5e92d75775fcd1125dcb  release_2.21.1.tar.gz
+"

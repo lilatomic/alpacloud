@@ -1,0 +1,239 @@
+# Contributor: Daniel Goldman <danielgoldman4@gmail.com>
+# Maintainer: Daniel Goldman <danielgoldman4@gmail.com>
+# Original Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+# Original Contributor: Sheila Aman <sheila@vulpine.house>
+
+pkgname=python39
+# the python3-tkinter's pkgver needs to be synchronized with this.
+pkgver=3.9.19
+_bluez_ver=5.55
+_basever="${pkgver%.*}"
+pkgrel=0
+pkgdesc="A high-level scripting language"
+url="https://www.python.org/"
+arch="all"
+license="PSF-2.0"
+subpackages="$pkgname-dbg $pkgname-dev $pkgname-doc $pkgname-tests::noarch"
+makedepends="
+	!gettext-dev
+	autoconf
+	autoconf-archive
+	automake
+	bzip2-dev
+	expat-dev
+	gdbm-dev>=1.18.1-r0
+	libffi-dev
+	libtool
+	linux-headers
+	mpdecimal-dev
+	ncurses-dev
+	openssl-dev
+	readline-dev
+	sqlite-dev
+	tcl-dev
+	xz-dev
+	zlib-dev
+	"
+source="https://www.python.org/ftp/python/$pkgver/Python-$pkgver.tar.xz
+	https://www.kernel.org/pub/linux/bluetooth/bluez-$_bluez_ver.tar.xz
+	fix-xattrs-glibc.patch
+	musl-find_library.patch
+	custom-bluetooth-h-path.patch
+	arm-alignment.patch
+	mpdecimal-2.5.1.patch
+	bpo-43112.patch
+	gnu-fallback-soabi.patch
+	"
+options="net" # Required for tests
+prepare_py_provides() {
+	:
+} # disables python inference
+scan_python3_dependency() {
+	:
+} # disables python inference
+builddir="$srcdir/Python-$pkgver"
+
+# secfixes:
+#   3.9.18-r0:
+#     - CVE-2023-40217
+#   3.9.16-r0:
+#     - CVE-2022-45061
+#   3.9.5-r0:
+#     - CVE-2021-29921
+#   3.9.4-r0:
+#     - CVE-2021-3426
+#   3.8.8-r0:
+#     - CVE-2021-23336
+#   3.8.7-r2:
+#     - CVE-2021-3177
+#   3.8.5-r0:
+#     - CVE-2019-20907
+#   3.8.4-r0:
+#     - CVE-2020-14422
+#   3.8.2-r0:
+#     - CVE-2020-8315
+#     - CVE-2020-8492
+#   3.7.5-r0:
+#     - CVE-2019-16056
+#     - CVE-2019-16935
+#   3.6.8-r1:
+#     - CVE-2019-5010
+
+prepare() {
+	default_prepare
+
+	# force system libs
+	rm -r Modules/expat \
+		Modules/_ctypes/darwin* \
+		Modules/_ctypes/libffi*
+
+	mv "$srcdir"/bluez-$_bluez_ver/lib "$srcdir"/bluez-$_bluez_ver/bluetooth
+
+	# Speed up LTO
+	sed -i -e "s|-flto |-flto=4 |g" configure configure.ac
+
+	autoreconf -fi
+
+	sed "s|@bluetoothdir@|\"$srcdir/bluez-$_bluez_ver\"|g" -i setup.py
+}
+
+build() {
+	# -Os overwrites --enable-optimizations
+	export CFLAGS="${CFLAGS/-Os/} -fno-semantic-interposition"
+	export LDFLAGS="$LDFLAGS -fno-semantic-interposition"
+
+	# Include bluez headers. Python only needs bluetooth/bluetoot.h and doesn't
+	# link against bluez. Depending on bluez-dev introduces a circular dep:
+	# Python -> bluez -> glib -> meson -> python
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--enable-ipv6 \
+		--enable-loadable-sqlite-extensions \
+		--enable-optimizations \
+		--with-lto \
+		--with-computed-gotos \
+		--with-dbmliborder=gdbm:ndbm \
+		--with-system-expat \
+		--with-system-ffi \
+		--with-system-libmpdec \
+		--without-ensurepip \
+		--with-bluetoothdir="$srcdir/bluez-$_bluez_ver"
+
+	# set thread stack size to 1MB so we don't segfault before we hit
+	# sys.getrecursionlimit()
+	# s390x needs more stack space due to its calling convention
+	local stacksize=0x100000
+	case "$CARCH" in
+		s390x) stacksize=0x200000;;
+	esac
+	make EXTRA_CFLAGS="$CFLAGS -DTHREAD_STACK_SIZE=$stacksize"
+}
+
+check() {
+	# test that we reach recursionlimit before we segfault
+	cat > test-stacksize.py <<-EOF
+	import threading
+	import sys
+
+	def fun(i):
+	  try:
+	    fun(i+1)
+	  except:
+	    sys.exit(0)
+
+	t = threading.Thread(target=fun, args=[1])
+	t.start()
+EOF
+	LD_LIBRARY_PATH=$PWD ./python test-stacksize.py
+
+	local fail
+
+	# musl related
+	fail="test__locale test_locale test_strptime test_re"	# various musl locale deficiencies
+	fail="$fail test_c_locale_coercion"
+	fail="$fail test_datetime"				# hangs if 'tzdata' installed
+	fail="$fail test_os"					# fpathconf, ttyname errno values
+	fail="$fail test_posix"					# sched_[gs]etscheduler not impl
+	fail="$fail test_shutil"				# lchmod, requires real unzip
+
+	# FIXME: failures needing investigation
+	fail="$fail test_faulthandler test_gdb"			# hangs(?)
+	fail="$fail test_tokenize test_tools"			# SLOW (~60s)
+	fail="$fail test_capi"					# test.test_capi.EmbeddingTests
+	fail="$fail test_threadsignals"				# test_{,r}lock_acquire_interruption
+	fail="$fail test_time"					# strftime/strptime %Z related
+	fail="$fail test_cmath test_math"			# hang(?) on x86
+	fail="$fail test_hash test_plistlib"			# fail on armhf
+	fail="$fail test_ctypes"				# fail on aarch64 (ctypes.test.test_win32.Structures)
+	fail="$fail test_cmd_line_script"			# fails on x86_64
+	fail="$fail test_multiprocessing_main_handling"		# fails on x86_64
+	fail="$fail test_runpy"					# fails on x86_64
+	fail="$fail test_threading"				# hangs on all arches (except x86_64?)
+	fail="$fail test_selectors"				# AssertionError: 'Python' not found in '' (python3.9)
+	fail="$fail test_nntplib"
+	fail="$fail test_asyncio"				# hangs; routinely problematic (e.g. bpo-39101, bpo-41891, bpo-42183)
+
+	# kernel related
+	fail="$fail test_fcntl"					# wants DNOTIFY, we don't have it
+
+	# just a single subtest test_memoryview_struct_module is breaking on pc64le.
+	if [ "$CARCH" = "ppc64le" ]; then
+		fail="$fail test_buffer"			# fail on ppc64le
+	fi
+	case "$CARCH" in
+		mips64)			fail="$fail test_compileall" ;;	# FIXME: crashes on octeon3
+	esac
+
+	make quicktest TESTOPTS="-j${JOBS:-$(nproc)} --exclude $fail"
+}
+
+package() {
+	make -j `nproc` DESTDIR="$pkgdir" EXTRA_CFLAGS="$CFLAGS" altinstall maninstall
+	install -Dm644 LICENSE "$pkgdir"/usr/share/licenses/$pkgname/LICENSE
+	# those are provided by python3-tkinter
+	rm -r "$pkgdir"/usr/bin/idle* "$pkgdir"/usr/lib/python*/idlelib \
+		"$pkgdir"/usr/lib/python*/tkinter
+
+	# TODO(Leo): some stuff still wants /usr/bin/python to be python2
+	# which is a bummer because they are holding back progress but they
+	# are important enough that we need to do it
+	#
+	# Python3 is the canonical python for the moment
+	# ln -s /usr/bin/python3 "$pkgdir"/usr/bin/python
+}
+
+dev() {
+	default_dev
+
+	# pyconfig.h is needed runtime so we move it back
+	mkdir -p "$pkgdir"/usr/include/python$_basever
+	mv "$subpkgdir"/usr/include/python$_basever/pyconfig.h \
+		"$pkgdir"/usr/include/python$_basever/
+}
+
+tests() {
+	pkgdesc="The test modules from the main python package"
+
+	cd "$pkgdir"/usr/lib/python$_basever
+	local i; for i in */test */tests; do
+		mkdir -p "$subpkgdir"/usr/lib/python$_basever/"$i"
+		mv "$i"/* "$subpkgdir"/usr/lib/python$_basever/"$i"
+		rm -rf "$i"
+	done
+	mv "$pkgdir"/usr/lib/python$_basever/test \
+		"$subpkgdir"/usr/lib/python$_basever/
+}
+
+sha512sums="
+5577830c734e63a70bbc62cd33d263b9aa87c4381b49cb694c3559067c4c682a55506b65ec5514a8e0a5abf6294dc728e909385d449ae1c388e62f83cea9bb89  Python-3.9.19.tar.xz
+9423cb60d15a6f068838497a1eaea9f5a32d70c07191c313ba821a6919d6e0c436ada4f547cc5f2db5eacc0123429ad54851f57df2554f61fa293743ec14a033  bluez-5.55.tar.xz
+fe123dd871f7a3fa868c499a957b94f1d815a1e1de964aaff1116c579defd4d9d1e9b7eb418cf114b169b97426ed603bf4b1e61b45ec483df06abe988c6a30ee  fix-xattrs-glibc.patch
+ab8eaa2858d5109049b1f9f553198d40e0ef8d78211ad6455f7b491af525bffb16738fed60fc84e960c4889568d25753b9e4a1494834fea48291b33f07000ec2  musl-find_library.patch
+df78b2bb4890047cb7bcd5db0972f108368bbb8b51b6635d5f6376c3e0c7bf131e5cba2cbad36287893c5929d8a6bfa65e254ab0bcf41a55659e2ba3247d9a52  custom-bluetooth-h-path.patch
+a84483246e413650a904c34c18f5e4f4168c39067d069f48557c330de6eb3db19fd96a4d453d742db3dcb7c7f962722903f62823c752ff90510c89830435ffc0  arm-alignment.patch
+d95e36ef3c315a2ddf689c9319e027cf56e8817b0cae139e3ade4742ab6f9efcb3cc4adca178e9bbc8757bd0e3fb924ac2b37e66e70eaa7288202a25339eed7d  mpdecimal-2.5.1.patch
+5be787c7f5197925a4b4f64f23e166a65637c6be22d7a70c6a4a0291d82179484591884154aff15c4ea03dbec5b952a6c2cebfa9661e309b461a237a82b97287  bpo-43112.patch
+7500d4e51975446fd59231985f75a198e8074b9f0a0941b7998958e8a4175de09bd08fd1b4db26aa82f9cef0db922078bf4a6f05e50abc37a200c5f6169e6868  gnu-fallback-soabi.patch
+"

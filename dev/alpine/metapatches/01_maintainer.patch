@@ -1,0 +1,59 @@
+diff --git a/dev/alpine/main/python310/APKBUILD b/dev/alpine/main/python310/APKBUILD
+index 0fd3b5d..54be0e4 100644
+--- a/dev/alpine/main/python310/APKBUILD
++++ b/dev/alpine/main/python310/APKBUILD
+@@ -1,5 +1,8 @@
+-# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+-# Contributor: Sheila Aman <sheila@vulpine.house>
++# Contributor: Daniel Goldman <danielgoldman4@gmail.com>
++# Maintainer: Daniel Goldman <danielgoldman4@gmail.com>
++# Original Maintainer: Natanael Copa <ncopa@alpinelinux.org>
++# Original Contributor: Sheila Aman <sheila@vulpine.house>
++
+ pkgname=python310
+ # the python3-tkinter's pkgver needs to be synchronized with this.
+ pkgver=3.10.14
+diff --git a/dev/alpine/main/python311/APKBUILD b/dev/alpine/main/python311/APKBUILD
+index 3ff4bbe..529998d 100644
+--- a/dev/alpine/main/python311/APKBUILD
++++ b/dev/alpine/main/python311/APKBUILD
+@@ -1,5 +1,8 @@
+-# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+-# Contributor: Sheila Aman <sheila@vulpine.house>
++# Contributor: Daniel Goldman <danielgoldman4@gmail.com>
++# Maintainer: Daniel Goldman <danielgoldman4@gmail.com>
++# Original Maintainer: Natanael Copa <ncopa@alpinelinux.org>
++# Original Contributor: Sheila Aman <sheila@vulpine.house>
++
+ pkgname=python311
+ # the python3-tkinter's pkgver needs to be synchronized with this.
+ pkgver=3.11.9
+diff --git a/dev/alpine/main/python312/APKBUILD b/dev/alpine/main/python312/APKBUILD
+index fd2b10c..b5aa61a 100644
+--- a/dev/alpine/main/python312/APKBUILD
++++ b/dev/alpine/main/python312/APKBUILD
+@@ -1,5 +1,8 @@
+-# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+-# Contributor: Sheila Aman <sheila@vulpine.house>
++# Contributor: Daniel Goldman <danielgoldman4@gmail.com>
++# Maintainer: Daniel Goldman <danielgoldman4@gmail.com>
++# Original Maintainer: Natanael Copa <ncopa@alpinelinux.org>
++# Original Contributor: Sheila Aman <sheila@vulpine.house>
++
+ pkgname=python312
+ # the python3-tkinter's pkgver needs to be synchronized with this.
+ pkgver=3.12.3
+diff --git a/dev/alpine/main/python39/APKBUILD b/dev/alpine/main/python39/APKBUILD
+index a170435..26a70b0 100644
+--- a/dev/alpine/main/python39/APKBUILD
++++ b/dev/alpine/main/python39/APKBUILD
+@@ -1,5 +1,7 @@
+-# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+-# Contributor: Sheila Aman <sheila@vulpine.house>
++# Contributor: Daniel Goldman <danielgoldman4@gmail.com>
++# Maintainer: Daniel Goldman <danielgoldman4@gmail.com>
++# Original Maintainer: Natanael Copa <ncopa@alpinelinux.org>
++# Original Contributor: Sheila Aman <sheila@vulpine.house>
+ 
+ pkgname=python39
+ # the python3-tkinter's pkgver needs to be synchronized with this.

@@ -1,4 +1,5 @@
 """Install Ansible Collections automatically"""
+
 import datetime
 import os
 import subprocess
@@ -22,9 +23,7 @@ Collection = namedtuple("Collection", ["namespace", "name", "version", "galaxy"]
 @click.command()
 @click.argument("roots", nargs=-1)
 @click.option("--watch", is_flag=True)
-@click.option(
-	"--debounce", default=1000, help="time to wait for last modification, in ms"
-)
+@click.option("--debounce", default=1000, help="time to wait for last modification, in ms")
 def launch(roots, watch, debounce):
 	"""Install Ansible Collections automatically"""
 	debounce = datetime.timedelta(milliseconds=debounce)
@@ -38,14 +37,11 @@ def launch(roots, watch, debounce):
 			install(*c)
 
 	if watch:
-
 		to_process = {}
 
 		def handle_change(event):
 			event_path = event.src_path
-			path = next(
-				(path for path in collections.keys() if event_path.startswith(path))
-			)
+			path = next((path for path in collections.keys() if event_path.startswith(path)))
 
 			log.msg("change event", trigger=event.src_path, collection_path=path)
 			to_process[path] = datetime.datetime.now()
@@ -85,7 +81,7 @@ def launch(roots, watch, debounce):
 
 
 def collect_mappings(
-	mappings: Iterator[Dict[str, Collection]]
+	mappings: Iterator[Dict[str, Collection]],
 ) -> Dict[str, Collection]:
 	"""Flatten mappings"""
 	return reduce(lambda a, b: {**a, **b}, mappings)
@@ -110,9 +106,7 @@ def install(path: str, collection: Collection):
 	log.msg("installing", collection=path)
 
 	output_dir = os.path.join("build", collection.namespace, collection.name)
-	built_collection_name = (
-		f"{collection.namespace}-{collection.name}-{collection.version}.tar.gz"
-	)
+	built_collection_name = f"{collection.namespace}-{collection.name}-{collection.version}.tar.gz"
 
 	try:
 		r = subprocess.run(

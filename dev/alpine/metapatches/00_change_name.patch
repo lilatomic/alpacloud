@@ -1,0 +1,49 @@
+diff --git a/dev/alpine/main/python310/APKBUILD b/dev/alpine/main/python310/APKBUILD
+index bcae9b1..0fd3b5d 100644
+--- a/dev/alpine/main/python310/APKBUILD
++++ b/dev/alpine/main/python310/APKBUILD
+@@ -1,6 +1,6 @@
+ # Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+ # Contributor: Sheila Aman <sheila@vulpine.house>
+-pkgname=python3
++pkgname=python310
+ # the python3-tkinter's pkgver needs to be synchronized with this.
+ pkgver=3.10.14
+ _bluez_ver=5.65
+diff --git a/dev/alpine/main/python311/APKBUILD b/dev/alpine/main/python311/APKBUILD
+index ce28ffc..3ff4bbe 100644
+--- a/dev/alpine/main/python311/APKBUILD
++++ b/dev/alpine/main/python311/APKBUILD
+@@ -1,6 +1,6 @@
+ # Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+ # Contributor: Sheila Aman <sheila@vulpine.house>
+-pkgname=python3
++pkgname=python311
+ # the python3-tkinter's pkgver needs to be synchronized with this.
+ pkgver=3.11.9
+ _basever="${pkgver%.*}"
+diff --git a/dev/alpine/main/python312/APKBUILD b/dev/alpine/main/python312/APKBUILD
+index 1023a91..fd2b10c 100644
+--- a/dev/alpine/main/python312/APKBUILD
++++ b/dev/alpine/main/python312/APKBUILD
+@@ -1,6 +1,6 @@
+ # Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+ # Contributor: Sheila Aman <sheila@vulpine.house>
+-pkgname=python3
++pkgname=python312
+ # the python3-tkinter's pkgver needs to be synchronized with this.
+ pkgver=3.12.3
+ _basever="${pkgver%.*}"
+diff --git a/dev/alpine/main/python39/APKBUILD b/dev/alpine/main/python39/APKBUILD
+index aacb511..a170435 100644
+--- a/dev/alpine/main/python39/APKBUILD
++++ b/dev/alpine/main/python39/APKBUILD
+@@ -1,7 +1,7 @@
+ # Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+ # Contributor: Sheila Aman <sheila@vulpine.house>
+ 
+-pkgname=python3
++pkgname=python39
+ # the python3-tkinter's pkgver needs to be synchronized with this.
+ pkgver=3.9.18
+ _bluez_ver=5.55
