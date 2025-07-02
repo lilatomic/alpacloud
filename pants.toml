@@ -34,7 +34,7 @@ interpreter_constraints = ["~=3.10"]
 config = ".pylintrc"
 
 [pytest]
-args = ["--doctest-modules"]
+args = ["--doctest-modules", "--cov-append"]
 
 [flake8]
 config = ".flake8"

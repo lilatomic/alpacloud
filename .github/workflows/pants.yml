@@ -44,11 +44,27 @@ jobs:
         run: |
           pants --tag="-integration" test ::
         if: success() || failure()
+      - name: Upload test coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: dist/coverage/python/coverage.xml
+          fail_ci_if_error: true
+          verbose: true
+        if: always()
       - name: Integration Test
         run: |
           az login --service-principal --tenant ${{ secrets.AZCLI_TENANT_ID }} -u ${{ secrets.AZCLI_USERNAME }} -p ${{ secrets.AZCLI_PASSWORD }}
           pants --tag="integration" test ::
         if: success() || failure()
+      - name: Upload test coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: dist/coverage/python/coverage.xml
+          fail_ci_if_error: true
+          verbose: true
+        if: always()
 
       - name: Package
         run: |
@@ -62,14 +78,6 @@ jobs:
           pip3 install "${files[0]}"
           alpacloud-ansible-builder --help
 
-      - name: Upload test coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: dist/coverage/python/coverage.xml
-          fail_ci_if_error: true
-          verbose: true
-        if: always()
       - name: Upload pants log
         uses: actions/upload-artifact@v4
         with:
