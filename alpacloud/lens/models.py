@@ -463,25 +463,44 @@ class FilterLens(LensT[A, A | B, Optional[A], B]):
 
 	predicate: Callable[[A], bool]
 	predicate_name: str = "filter"
+	inner_lens: LensT | None = None
 
 	@property
 	def l_name(self) -> str:
-		return f"?({self.predicate_name})"
+		if self.inner_lens is None:
+			return f"?({self.predicate_name})"
+		else:
+			return f"?({self.predicate_name})" + self.inner_lens.l_name
 
 	def l_get(self, s: A) -> Optional[A]:
 		if self.predicate(s):
-			return s
+			if self.inner_lens:
+				return self.inner_lens.l_get(s)
+			else:
+				return s
 		else:
 			return None
 
 	def l_set(self, s: A, b: B) -> A | B:
 		if self.predicate(s):
-			return b
+			if self.inner_lens:
+				return self.inner_lens.l_set(s, b)
+			else:
+				return b
 		else:
 			return s
 
 	def l_map(self, s: A, f: Callable[[A], B]) -> A | B:
 		if self.predicate(s):
-			return f(s)
+			if self.inner_lens:
+				return self.inner_lens.l_map(s, f)
+			else:
+				return f(s)
 		else:
 			return s
+
+	def l_compose(self, other: LensT[T, U, B, C]) -> LensT[S, U, A, C]:  # type: ignore  # IDK why it's not widening the type
+		if self.inner_lens:
+			return dataclasses.replace(self, inner_lens=self.inner_lens.l_compose(other))  # type: ignore
+		else:
+			return dataclasses.replace(self, inner_lens=other)  # type: ignore

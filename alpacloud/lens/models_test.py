@@ -181,6 +181,14 @@ class TestFilter:
 		assert l.l_set(self.o, 9) == self.o
 		assert l.l_map(self.o, lambda es: es * 2) == self.o
 
+	def test_compose(self):
+		w = [[0, 1, 2], [3, 4]]
+		l = ForeachLens(FilterLens(lambda e: len(e) > 2)) / IndexLens(2)
+
+		assert l.l_get(w) == [2, None]
+		assert l.l_set(w, 9) == [[0, 1, 9], [3, 4]]
+		assert l.l_map(w, lambda es: es * 2) == [[0, 1, 4], [3, 4]]
+
 
 class TestBoundLens:
 	def test_combined(self):
