@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from asyncio import Protocol
-from typing import Callable, Dict, Generic, Hashable, Iterable, TypeVar
+from typing import Callable, Dict, Generic, Hashable, Iterable, TypeVar, Union
 
 S = TypeVar("S")
 T = TypeVar("T")
@@ -41,3 +41,7 @@ class SupportsIndex(Protocol, Generic[A]):
 
 	def get(self, k, default):
 		pass
+
+
+JSONPrimitive = Union[str, int, float, bool, None]
+JSONT = Union[JSONPrimitive, list["JSONT"], dict[str, "JSONT"]]
