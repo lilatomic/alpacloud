@@ -9,6 +9,7 @@ from alpacloud.lens.k8s import (
 	Envvar,
 	Image,
 	ImageCodec,
+	Item,
 	add_volume,
 	containers,
 	decode_image,
@@ -151,3 +152,21 @@ class TestB64:
 		new_str = "hellohi"
 		new_encoded = base64.b64encode(new_str.encode()).decode()
 		assert self.l.l_set(old_str, new_str) == new_encoded
+
+
+class TestItem:
+	def test_matches(self):
+		r = res["pod"]
+		assert Item("pod", "nginx").l_get(r)
+
+	def test_not_matches_name(self):
+		r = res["pod"]
+		assert not Item("pod", "blah").l_get(r)
+
+	def test_not_matches_kind(self):
+		r = res["pod"]
+		assert not Item("service", "nginx").l_get(r)
+
+	def test_matches_name_wildcard(self):
+		r = res["pod"]
+		assert Item("pod").l_get(r)

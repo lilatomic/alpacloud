@@ -352,6 +352,11 @@ def korl(k: K) -> KeyLens:
 	return KeyLens(k, [])
 
 
+def korn(k: K) -> KeyLens:
+	"""Get the key, with a None for the default"""
+	return KeyLens(k, None)
+
+
 def append(a: A) -> Callable:
 	"""Append an item to the collection"""
 

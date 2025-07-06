@@ -6,6 +6,8 @@ from typing import Any, Callable
 
 import yaml
 
+from alpacloud.argocdkit.postrender import YamlDumper
+
 
 @dataclass
 class Case:
@@ -27,6 +29,9 @@ class ResourceLoader:
 	def load_obj(self, name: str):
 		"""Load a test resource"""
 		return self._load_file((self.base_path / name).with_suffix(".yml"))
+
+	def load_objs(self, name: str):
+		return YamlDumper.safe_load_all((self.base_path / name).with_suffix(".yml").open())
 
 	def _load_file(self, p: Path):
 		return yaml.safe_load(p.open())
