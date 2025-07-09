@@ -1,18 +1,18 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Literal
 
+from pydantic import BaseModel
 
-@dataclass
-class Command:
+
+class Command(BaseModel):
 	command: list[str]
-	args: list[str]
+	args: list[str] = field(default_factory=list)
 
 
-@dataclass
-class Spec:
+class Spec(BaseModel):
 	version: str
-	init: Command
-	generate: Command
+	init: Command | None = None
+	generate: Command | None = None
 	# discover: ???
 	# parameters: ???
 	preserveFileMode: bool = False
@@ -20,13 +20,11 @@ class Spec:
 
 
 
-@dataclass
-class Metadata:
+class Metadata(BaseModel):
 	name: str
 
 
-@dataclass
-class Plugin:
+class Plugin(BaseModel):
 	metadata: Metadata
 	spec: Spec
 	apiVersion: Literal["argoproj.io/v1alpha1"] = "argoproj.io/v1alpha1"
