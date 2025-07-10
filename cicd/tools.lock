@@ -6,13 +6,14 @@
 // {
 //   "version": 3,
 //   "valid_for_interpreter_constraints": [
-//     "CPython~=3.10"
+//     "CPython>3.10"
 //   ],
 //   "generated_with_requirements": [
 //     "PyYAML>=6.0",
 //     "beautifulsoup4~=4.12",
 //     "click>=8.0.3",
 //     "mypy~=1.16.1",
+//     "pydantic-settings~=2.10.1",
 //     "pydantic~=2.11.7",
 //     "pytest>6",
 //     "requests~=2.32",
@@ -984,6 +985,35 @@
           "artifacts": [
             {
               "algorithm": "sha256",
+              "hash": "a60952460b99cf661dc25c29c0ef171721f98bfcb52ef8d9ea4c943d7c8cc796",
+              "url": "https://files.pythonhosted.org/packages/58/f0/427018098906416f580e3cf1366d3b1abfb408a0652e9f31600c24a1903c/pydantic_settings-2.10.1-py3-none-any.whl"
+            },
+            {
+              "algorithm": "sha256",
+              "hash": "06f0062169818d0f5524420a360d632d5857b83cffd4d42fe29597807a1614ee",
+              "url": "https://files.pythonhosted.org/packages/68/85/1ea668bbab3c50071ca613c6ab30047fb36ab0da1b92fa8f17bbc38fd36c/pydantic_settings-2.10.1.tar.gz"
+            }
+          ],
+          "project_name": "pydantic-settings",
+          "requires_dists": [
+            "azure-identity>=1.16.0; extra == \"azure-key-vault\"",
+            "azure-keyvault-secrets>=4.8.0; extra == \"azure-key-vault\"",
+            "boto3-stubs[secretsmanager]; extra == \"aws-secrets-manager\"",
+            "boto3>=1.35.0; extra == \"aws-secrets-manager\"",
+            "google-cloud-secret-manager>=2.23.1; extra == \"gcp-secret-manager\"",
+            "pydantic>=2.7.0",
+            "python-dotenv>=0.21.0",
+            "pyyaml>=6.0.1; extra == \"yaml\"",
+            "tomli>=2.0.1; extra == \"toml\"",
+            "typing-inspection>=0.4.0"
+          ],
+          "requires_python": ">=3.9",
+          "version": "2.10.1"
+        },
+        {
+          "artifacts": [
+            {
+              "algorithm": "sha256",
               "hash": "86540386c03d588bb81d44bc3928634ff26449851e99741617ecb9037ee5ec0b",
               "url": "https://files.pythonhosted.org/packages/c7/21/705964c7812476f378728bdf590ca4b771ec72385c533964653c68e86bdc/pygments-2.19.2-py3-none-any.whl"
             },
@@ -1032,6 +1062,26 @@
           ],
           "requires_python": ">=3.9",
           "version": "8.4.1"
+        },
+        {
+          "artifacts": [
+            {
+              "algorithm": "sha256",
+              "hash": "31f23644fe2602f88ff55e1f5c79ba497e01224ee7737937930c448e4d0e24dc",
+              "url": "https://files.pythonhosted.org/packages/5f/ed/539768cf28c661b5b068d66d96a2f155c4971a5d55684a514c1a0e0dec2f/python_dotenv-1.1.1-py3-none-any.whl"
+            },
+            {
+              "algorithm": "sha256",
+              "hash": "a8a6399716257f45be6a007360200409fce5cda2661e3dec71d23dc15f6189ab",
+              "url": "https://files.pythonhosted.org/packages/f6/b0/4bc07ccd3572a2f9df7e6782f52b0c6c90dcbb803ac4a167702d7d0dfe1e/python_dotenv-1.1.1.tar.gz"
+            }
+          ],
+          "project_name": "python-dotenv",
+          "requires_dists": [
+            "click>=5.0; extra == \"cli\""
+          ],
+          "requires_python": ">=3.9",
+          "version": "1.1.1"
         },
         {
           "artifacts": [
@@ -1641,6 +1691,7 @@
     "beautifulsoup4~=4.12",
     "click>=8.0.3",
     "mypy~=1.16.1",
+    "pydantic-settings~=2.10.1",
     "pydantic~=2.11.7",
     "pytest>6",
     "requests~=2.32",
@@ -1651,7 +1702,7 @@
     "watchdog>=2.1.6"
   ],
   "requires_python": [
-    "~=3.10"
+    ">3.10"
   ],
   "resolver_version": "pip-2020-resolver",
   "style": "universal",
