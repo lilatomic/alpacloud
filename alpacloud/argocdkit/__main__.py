@@ -9,6 +9,7 @@ from pydantic import BaseModel, TypeAdapter
 
 from alpacloud.argocdkit.cmp import run_cmp, CMP, App, T, S
 from alpacloud.argocdkit.spec import Plugin, Metadata, Spec, Command
+from alpacloud.lens.util.type import JSONT
 
 cmp_spec = Plugin(
 	metadata=Metadata(name="helm-and-python"),
@@ -27,8 +28,8 @@ class HelmParameters(BaseModel):
 
 
 class HelmPostRendererCMP(CMP):
-	param_t = HelmParameters
-	env_t = TypeAdapter[dict]
+	def parse_params(self, params: JSONT) -> T:
+		return HelmParameters.model_validate(params)
 
 	def values_argv(self, valuesObject, values, valueFiles):
 		values_files = valueFiles

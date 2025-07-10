@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 from abc import ABC, abstractmethod
@@ -7,8 +8,10 @@ from typing import Any, TypeVar, Generic
 from pydantic import BaseModel, ValidationError
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-S = TypeVar("S", bound=BaseModel)
-T = TypeVar("T", bound=BaseModel)
+from alpacloud.lens.util.type import JSONT
+
+S = TypeVar("S")
+T = TypeVar("T")
 
 
 class App(BaseSettings):
@@ -24,10 +27,9 @@ class App(BaseSettings):
 
 	model_config = SettingsConfigDict(env_prefix="ARGOCD_APP_")
 
-class Params(BaseSettings):
-	parameters: dict[str, Any]
 
-	model_config = SettingsConfigDict(env_prefix="ARGOCD_APP_")
+def load_params() -> str:
+	return json.loads(os.environ["ARGOCD_APP_PARAMETERS"]) or {}
 
 
 def load_plugin_env() -> dict[str, str]:
@@ -36,24 +38,27 @@ def load_plugin_env() -> dict[str, str]:
 
 class CMP(ABC, Generic[S, T]):
 	""""""
-	param_t: type[T]
-	env_t: type[S]
-
 	@abstractmethod
 	def generate(self, app: App, params: T, plugin_env: S) -> str:
 		"""Run your plugin."""
 
-	def run(self, app: App, params: Params, plugin_env: dict[str, str]):
+	def parse_params(self, params: JSONT) -> T | None:
+		return params
+
+	def parse_env(self, env: JSONT) -> S:
+		return env
+
+	def run(self, app: App, params: JSONT, plugin_env: JSONT):
 		"""Entrypoint for running a plugin."""
 		errors = []
 
 		try:
-			loaded_plugin = self.param_t.model_validate(params)
+			loaded_plugin = self.parse_params(params)
 		except ValidationError as e:
 			errors.append(e)
 
 		try:
-			loaded_plugin_env = self.env_t.model_validate(plugin_env)
+			loaded_plugin_env = self.parse_env(plugin_env)
 		except ValidationError as e:
 			errors.append(e)
 
@@ -66,7 +71,7 @@ class CMP(ABC, Generic[S, T]):
 
 def run_cmp(cmp: CMP[S, T]):
 	app = App()
-	params = Params()
+	params = load_params()
 	plugin_env = load_plugin_env()
 
 	generated = cmp.run(app, params, plugin_env)
