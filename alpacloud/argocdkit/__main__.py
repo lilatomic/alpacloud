@@ -15,7 +15,7 @@ cmp_spec = Plugin(
 	spec=Spec(
 		version="0.0.1",
 		generate=Command(
-			command=["python3","-m", "alpacloud.argocdkit.__main__"],
+			command=["/bin/alpacloud-argocdkit"],
 		),
 	)
 )
