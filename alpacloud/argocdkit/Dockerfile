@@ -25,3 +25,5 @@ FROM	python:3.13-slim
 COPY	--from=helm-installer /helm /usr/local/bin/helm
 COPY	alpacloud.argocdkit/__main__.pex /bin/alpacloud-argocdkit
 RUN	/bin/alpacloud-argocdkit gen-cfg
+
+COPY	alpacloud.argocdkit.test_resources/my_postrenderer.pex /bin/my_postrenderer

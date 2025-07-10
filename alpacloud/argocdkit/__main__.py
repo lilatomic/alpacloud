@@ -25,6 +25,7 @@ class HelmParameters(BaseModel):
 	valueFiles: list[str] = []
 	valuesObject: dict = {}
 	values: str | None = None
+	postRenderers: list[str] = []
 
 
 class HelmPostRendererCMP(CMP):
@@ -49,6 +50,9 @@ class HelmPostRendererCMP(CMP):
 
 		return [f"--values={f}" for f in valueFiles]
 
+
+	def postrenderers_argv(self, postRenderers: list[str]):
+		return [f"--post-renderer={f}" for f in postRenderers]
 
 	def generate(self, app: App, params: T, plugin_env: S):
 		argv = []
