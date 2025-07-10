@@ -56,7 +56,8 @@ class HelmPostRendererCMP(CMP):
 		argv.extend(self.values_argv(params.valuesObject, params.values, params.valueFiles))
 		argv.append(f"--namespace={app.namespace}")
 
-		return sh.Command("helm")(["template", ".", app.name, *argv])
+		argv.extend(self.postrenderers_argv(params.postRenderers))
+
 		return sh.Command("helm")(["template", app.name, ".", *argv])
 
 
