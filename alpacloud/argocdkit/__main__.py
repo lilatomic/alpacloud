@@ -57,6 +57,7 @@ class HelmPostRendererCMP(CMP):
 		argv.append(f"--namespace={app.namespace}")
 
 		return sh.Command("helm")(["template", ".", app.name, *argv])
+		return sh.Command("helm")(["template", app.name, ".", *argv])
 
 
 if __name__ == "__main__":
