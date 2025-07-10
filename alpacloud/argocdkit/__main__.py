@@ -53,6 +53,7 @@ class HelmPostRendererCMP(CMP):
 		argv = []
 
 		argv.extend(self.values_argv(params.valuesObject, params.values, params.valueFiles))
+		argv.append(f"--namespace={app.namespace}")
 
 		return sh.Command("helm")(["template", ".", *argv])
 
