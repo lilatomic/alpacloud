@@ -29,6 +29,7 @@ class HelmParameters(BaseModel):
 
 class HelmPostRendererCMP(CMP):
 	def parse_params(self, params: JSONT) -> T:
+		params = super().parse_params(params)
 		return HelmParameters.model_validate(params)
 
 	def values_argv(self, valuesObject, values, valueFiles):

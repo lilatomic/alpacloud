@@ -43,7 +43,17 @@ class CMP(ABC, Generic[S, T]):
 		"""Run your plugin."""
 
 	def parse_params(self, params: JSONT) -> T | None:
-		return params
+		def deserialise_param(p: dict):
+			if "string" in p:
+				return p["string"]
+			elif "map" in p:
+				return p["map"]
+			elif "array" in p:
+				return p["array"]
+			else:
+				raise ValidationError("unknown parameter type")
+
+		return {p["name"]: deserialise_param(p) for p in params}
 
 	def parse_env(self, env: JSONT) -> S:
 		return env
