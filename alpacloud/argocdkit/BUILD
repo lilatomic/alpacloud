@@ -3,6 +3,7 @@ python_sources()
 docker_image(
 	name="docker",
 	repository="cmp",
+	image_tags=["0.0.1"],
 )
 
 python_tests(
