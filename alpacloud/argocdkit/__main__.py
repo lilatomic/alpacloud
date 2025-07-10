@@ -57,7 +57,7 @@ class HelmPostRendererCMP(CMP):
 
 
 if __name__ == "__main__":
-	if sys.argv[1] == "gen-cfg":
+	if len(sys.argv) > 1 and sys.argv[1] == "gen-cfg":
 		p = Path("/home/argocd/cmp-server/config/plugin.yaml")
 		p.parent.mkdir(parents=True, exist_ok=True)
 		with p.open(mode="w") as f:
