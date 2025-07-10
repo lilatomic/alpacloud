@@ -55,7 +55,7 @@ class HelmPostRendererCMP(CMP):
 		argv.extend(self.values_argv(params.valuesObject, params.values, params.valueFiles))
 		argv.append(f"--namespace={app.namespace}")
 
-		return sh.Command("helm")(["template", ".", *argv])
+		return sh.Command("helm")(["template", ".", app.name, *argv])
 
 
 if __name__ == "__main__":
