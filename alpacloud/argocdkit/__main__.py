@@ -1,25 +1,15 @@
 import json
-import os
 import sys
 import tempfile
 from pathlib import Path
 
 import sh
-from pydantic import BaseModel, TypeAdapter
+from pydantic import BaseModel
 
-from alpacloud.argocdkit.cmp import run_cmp, CMP, App, T, S
-from alpacloud.argocdkit.spec import Plugin, Metadata, Spec, Command
+from alpacloud.argocdkit.cmp import CMP, App, S, run_cmp
+from alpacloud.argocdkit.spec import Command, Metadata, Plugin, Spec
 from alpacloud.lens.util.type import JSONT
 
-cmp_spec = Plugin(
-	metadata=Metadata(name="helm-and-python"),
-	spec=Spec(
-		version="0.0.1",
-		generate=Command(
-			command=["/bin/alpacloud-argocdkit"],
-		),
-	)
-)
 
 class HelmParameters(BaseModel):
 	valueFiles: list[str] = []
@@ -29,7 +19,19 @@ class HelmParameters(BaseModel):
 
 
 class HelmPostRendererCMP(CMP):
-	def parse_params(self, params: JSONT) -> T:
+	@property
+	def spec(self) -> Plugin:
+		return Plugin(
+			metadata=Metadata(name="helm-and-python"),
+			spec=Spec(
+				version="0.0.1",
+				generate=Command(
+					command=["/bin/alpacloud-argocdkit"],
+				),
+			),
+		)
+
+	def parse_params(self, params: JSONT) -> HelmParameters:
 		params = super().parse_params(params)
 		return HelmParameters.model_validate(params)
 
@@ -50,11 +52,10 @@ class HelmPostRendererCMP(CMP):
 
 		return [f"--values={f}" for f in valueFiles]
 
-
 	def postrenderers_argv(self, postRenderers: list[str]):
 		return [f"--post-renderer={f}" for f in postRenderers]
 
-	def generate(self, app: App, params: T, plugin_env: S):
+	def generate(self, app: App, params: HelmParameters, plugin_env: S):
 		argv = []
 
 		argv.extend(self.values_argv(params.valuesObject, params.values, params.valueFiles))
@@ -70,8 +71,6 @@ if __name__ == "__main__":
 		p = Path("/home/argocd/cmp-server/config/plugin.yaml")
 		p.parent.mkdir(parents=True, exist_ok=True)
 		with p.open(mode="w") as f:
-			f.write(cmp_spec.model_dump_json())
+			f.write(HelmPostRendererCMP().spec.model_dump_json())
 	else:
-		run_cmp(
-			HelmPostRendererCMP()
-		)
+		run_cmp(HelmPostRendererCMP())

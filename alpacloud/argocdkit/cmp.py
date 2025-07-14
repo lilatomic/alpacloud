@@ -2,13 +2,16 @@ import json
 import os
 import sys
 from abc import ABC, abstractmethod
+
+from alpacloud.argocdkit.spec import Plugin
+
 try:
 	from builtins import ExceptionGroup
 except ImportError:
 	from exceptiongroup import ExceptionGroup  # remove when we drop 3.10
-from typing import Any, TypeVar, Generic
+from typing import Generic, TypeVar
 
-from pydantic import BaseModel, ValidationError
+from pydantic import ValidationError
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from alpacloud.lens.util.type import JSONT
@@ -31,22 +34,29 @@ class App(BaseSettings):
 	model_config = SettingsConfigDict(env_prefix="ARGOCD_APP_")
 
 
-def load_params(environ = os.environ) -> str:
+def load_params(environ=os.environ) -> str:
 	return json.loads(environ["ARGOCD_APP_PARAMETERS"]) or {}
 
 
-def load_plugin_env(environ = os.environ) -> dict[str, str]:
+def load_plugin_env(environ=os.environ) -> dict[str, str]:
 	return {k.removeprefix("ARGOCD_ENV_"): v for k, v in environ.items() if k.startswith("ARGOCD_ENV")}
 
 
 class CMP(ABC, Generic[S, T]):
 	""""""
+
+	@property
+	@abstractmethod
+	def spec(self) -> Plugin:
+		"""The ArgoCD plugin spec."""
+
 	@abstractmethod
 	def generate(self, app: App, params: T, plugin_env: S) -> str:
 		"""Run your plugin."""
 
 	def parse_params(self, params: JSONT) -> T | None:
 		def deserialise_param(p: dict):
+			assert isinstance(p, dict), "parameter item was not a dict"
 			if "string" in p:
 				return p["string"]
 			elif "map" in p:
@@ -56,6 +66,7 @@ class CMP(ABC, Generic[S, T]):
 			else:
 				raise ValidationError("unknown parameter type")
 
+		assert isinstance(params, dict), "parameters is expected to be a dict"
 		return {p["name"]: deserialise_param(p) for p in params}
 
 	def parse_env(self, env: JSONT) -> S:
