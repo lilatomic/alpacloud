@@ -2,7 +2,10 @@ import json
 import os
 import sys
 from abc import ABC, abstractmethod
-from builtins import ExceptionGroup
+try:
+	from builtins import ExceptionGroup
+except ImportError:
+	from exceptiongroup import ExceptionGroup  # remove when we drop 3.10
 from typing import Any, TypeVar, Generic
 
 from pydantic import BaseModel, ValidationError
