@@ -6,11 +6,11 @@ from pathlib import Path
 
 from alpacloud.argocdkit.spec import Plugin
 
-try:
-	from builtins import ExceptionGroup
-except ImportError:
+if sys.version_info >= (3, 11):
+	from builtins import ExceptionGroup  # type: ignore
+else:
 	from exceptiongroup import ExceptionGroup  # remove when we drop 3.10
-from typing import Generic, TypeVar
+from typing import Any, Generic, TypeVar
 
 from pydantic import ValidationError
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -35,8 +35,8 @@ class App(BaseSettings):
 	model_config = SettingsConfigDict(env_prefix="ARGOCD_APP_")
 
 
-def load_params(environ=os.environ) -> str:
-	return json.loads(environ["ARGOCD_APP_PARAMETERS"]) or {}
+def load_params(environ=os.environ) -> list[dict[str, Any]]:
+	return json.loads(environ["ARGOCD_APP_PARAMETERS"]) or []
 
 
 def load_plugin_env(environ=os.environ) -> dict[str, str]:
@@ -55,9 +55,9 @@ class CMP(ABC, Generic[S, T]):
 	def generate(self, app: App, params: T, plugin_env: S) -> str:
 		"""Run your plugin."""
 
-	def parse_params(self, params: JSONT) -> T | None:
-		def deserialise_param(p: dict):
-			assert isinstance(p, dict), "parameter item was not a dict"
+	def parse_params(self, params: list[dict[str, Any]]) -> T:
+		def deserialise_param(p: JSONT):
+			assert isinstance(p, dict), f"parameter item was not a dict name={p['name']}"
 			if "string" in p:
 				return p["string"]
 			elif "map" in p:
@@ -67,13 +67,12 @@ class CMP(ABC, Generic[S, T]):
 			else:
 				raise ValidationError("unknown parameter type")
 
-		assert isinstance(params, dict), "parameters is expected to be a dict"
-		return {p["name"]: deserialise_param(p) for p in params}
+		return {p["name"]: deserialise_param(p) for p in params}  # type: ignore
 
 	def parse_env(self, env: JSONT) -> S:
-		return env
+		return env  # type: ignore
 
-	def run(self, app: App, params: JSONT, plugin_env: JSONT):
+	def run(self, app: App, params: JSONT, plugin_env: JSONT) -> str:
 		"""Entrypoint for running a plugin."""
 		errors = []
 
@@ -99,16 +98,21 @@ def run_cmp(cmp: CMP[S, T]):
 	params = load_params()
 	plugin_env = load_plugin_env()
 
-	generated = cmp.run(app, params, plugin_env)
+	generated = cmp.run(app, params, plugin_env)  # type: ignore
 	print(generated, file=sys.stdout)
+
 
 def entrypoint(cmp: CMP):
 	def _entrypoint():
 		if len(sys.argv) > 1 and sys.argv[1] == "gen-cfg":
-			p = Path("/home/argocd/cmp-server/config/plugin.yaml")
+			if len(sys.argv) > 2:
+				p = Path(sys.argv[2])
+			else:
+				p = Path("/home/argocd/cmp-server/config/plugin.yaml")
 			p.parent.mkdir(parents=True, exist_ok=True)
 			with p.open(mode="w") as f:
 				f.write(cmp.spec.model_dump_json())
 		else:
 			run_cmp(cmp)
+
 	return _entrypoint

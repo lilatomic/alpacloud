@@ -11,10 +11,10 @@ envvars = res.load_obj("envvars.sample.json")
 class MyCMP(CMP):
 	@property
 	def spec(self) -> Plugin:
-		pass
+		return  # type: ignore
 
 	def generate(self, app: App, params: T, plugin_env: S) -> str:
-		pass
+		return "test"
 
 
 def test_parse_params():

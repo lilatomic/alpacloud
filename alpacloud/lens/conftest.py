@@ -28,7 +28,7 @@ class ResourceLoader:
 
 	def load_obj(self, name: str):
 		"""Load a test resource"""
-		tgt = (self.base_path / name)
+		tgt = self.base_path / name
 		if tgt.suffix:
 			return self._load_file(tgt)
 		else:

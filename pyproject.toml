@@ -22,6 +22,7 @@ indent-style="tab"
 
 [tool.mypy]
 pretty = true
+plugins = ['pydantic.mypy']
 
 [[tool.mypy.overrides]]
 module = [
