@@ -11,13 +11,15 @@ RUN	apt-get update && apt-get install -y --no-install-recommends \
 	coreutils \
 	&& rm -rf /var/lib/apt/lists/*
 
-RUN	set -eux && \
-	mkdir -p /tmp/helm && cd /tmp/helm && \
-	curl -sSL "$HELM_URL" -o helm.tar.gz && \
-	echo "$HELM_SHA256  helm.tar.gz" | sha256sum -c - && \
-	tar -zxvf helm.tar.gz && \
-	mv linux-amd64/helm /helm && \
+WORKDIR	/tmp/helm
+SHELL	["/bin/bash", "-o", "pipefail", "-eux", "-c"]
+RUN	<<EOF
+	curl -sSL "$HELM_URL" -o helm.tar.gz
+	echo "$HELM_SHA256  helm.tar.gz" | sha256sum -c -
+	tar -zxvf helm.tar.gz
+	mv linux-amd64/helm /helm
 	chmod +x /helm
+EOF
 
 # -------- Stage 2: Final Python Image --------
 FROM	python:3.13-slim
