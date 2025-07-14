@@ -1,12 +1,10 @@
 import json
-import sys
 import tempfile
-from pathlib import Path
 
 import sh
 from pydantic import BaseModel
 
-from alpacloud.argocdkit.cmp import CMP, App, S, run_cmp
+from alpacloud.argocdkit.cmp import CMP, App, S, entrypoint
 from alpacloud.argocdkit.spec import Command, Metadata, Plugin, Spec
 from alpacloud.lens.util.type import JSONT
 
@@ -67,10 +65,4 @@ class HelmPostRendererCMP(CMP):
 
 
 if __name__ == "__main__":
-	if len(sys.argv) > 1 and sys.argv[1] == "gen-cfg":
-		p = Path("/home/argocd/cmp-server/config/plugin.yaml")
-		p.parent.mkdir(parents=True, exist_ok=True)
-		with p.open(mode="w") as f:
-			f.write(HelmPostRendererCMP().spec.model_dump_json())
-	else:
-		run_cmp(HelmPostRendererCMP())
+	entrypoint(HelmPostRendererCMP())()

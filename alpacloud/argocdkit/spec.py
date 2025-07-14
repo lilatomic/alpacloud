@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import field
 from typing import Literal
 
 from pydantic import BaseModel
@@ -17,7 +17,6 @@ class Spec(BaseModel):
 	# parameters: ???
 	preserveFileMode: bool = False
 	provideGitCreds: bool = False
-
 
 
 class Metadata(BaseModel):

@@ -2,6 +2,7 @@ import json
 import os
 import sys
 from abc import ABC, abstractmethod
+from pathlib import Path
 
 from alpacloud.argocdkit.spec import Plugin
 
@@ -100,3 +101,14 @@ def run_cmp(cmp: CMP[S, T]):
 
 	generated = cmp.run(app, params, plugin_env)
 	print(generated, file=sys.stdout)
+
+def entrypoint(cmp: CMP):
+	def _entrypoint():
+		if len(sys.argv) > 1 and sys.argv[1] == "gen-cfg":
+			p = Path("/home/argocd/cmp-server/config/plugin.yaml")
+			p.parent.mkdir(parents=True, exist_ok=True)
+			with p.open(mode="w") as f:
+				f.write(cmp.spec.model_dump_json())
+		else:
+			run_cmp(cmp)
+	return _entrypoint
