@@ -5,3 +5,8 @@ pex_binary(
 	entry_point="my_postrenderer.py",
 	interpreter_constraints=["CPython==3.13.*"],
 )
+
+files(
+	name="k8s_objs",
+	sources=["**/*.yml", "**/*.yaml", "**/*.tpl", "**/*.json"],
+)

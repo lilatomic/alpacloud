@@ -8,6 +8,8 @@ docker_image(
 
 python_tests(
 	name="tests",
+	dependencies=["./test_resources:k8s_objs"],
+	runtime_package_dependencies=["./test_resources:my_postrenderer"],
 )
 
 pex_binary(
