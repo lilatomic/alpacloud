@@ -67,12 +67,12 @@ class CMP(ABC, Generic[S, T]):
 
 		try:
 			loaded_plugin = self.parse_params(params)
-		except ValidationError as e:
+		except Exception as e:
 			errors.append(e)
 
 		try:
 			loaded_plugin_env = self.parse_env(plugin_env)
-		except ValidationError as e:
+		except Exception as e:
 			errors.append(e)
 
 		if errors:
