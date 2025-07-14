@@ -36,7 +36,7 @@ def load_params(environ = os.environ) -> str:
 
 
 def load_plugin_env(environ = os.environ) -> dict[str, str]:
-	return {k:v for k,v in environ.items() if k.startswith("ARGOCD_ENV")}
+	return {k.removeprefix("ARGOCD_ENV_"): v for k, v in environ.items() if k.startswith("ARGOCD_ENV")}
 
 
 class CMP(ABC, Generic[S, T]):
