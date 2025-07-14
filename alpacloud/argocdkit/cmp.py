@@ -31,12 +31,12 @@ class App(BaseSettings):
 	model_config = SettingsConfigDict(env_prefix="ARGOCD_APP_")
 
 
-def load_params() -> str:
-	return json.loads(os.environ["ARGOCD_APP_PARAMETERS"]) or {}
+def load_params(environ = os.environ) -> str:
+	return json.loads(environ["ARGOCD_APP_PARAMETERS"]) or {}
 
 
-def load_plugin_env() -> dict[str, str]:
-	return {k:v for k,v in os.environ.items() if k.startswith("ARGOCD_ENV")}
+def load_plugin_env(environ = os.environ) -> dict[str, str]:
+	return {k:v for k,v in environ.items() if k.startswith("ARGOCD_ENV")}
 
 
 class CMP(ABC, Generic[S, T]):
