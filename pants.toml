@@ -32,6 +32,7 @@ interpreter_constraints = [">3.10"]
 
 [pylint]
 config = ".pylintrc"
+install_from_resolve = "tools"
 
 [pytest]
 args = ["--doctest-modules", "--cov-append"]
