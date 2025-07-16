@@ -1,0 +1,58 @@
+name: Publish Docker images
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  push_to_registry:
+    name: Push Docker image to Docker Hub
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+      attestations: write
+      id-token: write
+    env:
+      tgttag: ${{ github.run_id }}
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Log in to CR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io/lilatomic
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: pantsbuild/actions/init-pants@v8
+        with:
+          # v0 makes it easy to bust the cache if needed
+          # just increase the integer to start with a fresh cache
+          gha-cache-key: v1
+          named-caches-hash: ${{ hashFiles('cicd/tools.lock') }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.13"
+
+      - name: Package
+        run: |
+          pants package --filter-target-type=docker_image alpacloud::
+#      - name: Publish
+#        run: |
+#          pants publish --filter-target-type=docker_image alpacloud::
+
+      - name: Upload pants log
+        uses: actions/upload-artifact@v4
+        with:
+          name: pants-log-3.13
+          path: .pants.d/pants.log
+        if: always() # We want the log even on failures.

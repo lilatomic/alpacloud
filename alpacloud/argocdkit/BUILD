@@ -2,8 +2,9 @@ python_sources()
 
 docker_image(
 	name="docker",
-	repository="cmp",
-	image_tags=["0.0.1"],
+	registries=["ghcr.io/lilatomic"],
+	repository="alpacloud/cmp",
+	image_tags=["0.0.1", env("tgttag", "localtest")],
 )
 
 python_tests(
