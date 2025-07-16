@@ -72,7 +72,7 @@ class CMP(ABC, Generic[S, T]):
 	def parse_env(self, env: JSONT) -> S:
 		return env  # type: ignore
 
-	def run(self, app: App, params: JSONT, plugin_env: JSONT) -> str:
+	def run(self, app: App, params: list[dict[str, Any]], plugin_env: JSONT) -> str:
 		"""Entrypoint for running a plugin."""
 		errors = []
 

@@ -1,12 +1,12 @@
 import json
 import tempfile
+from typing import Any
 
 import sh
 from pydantic import BaseModel
 
 from alpacloud.argocdkit.cmp import CMP, App, S, entrypoint
 from alpacloud.argocdkit.spec import Command, Metadata, Plugin, Spec
-from alpacloud.lens.util.type import JSONT
 
 
 class HelmParameters(BaseModel):
@@ -29,7 +29,7 @@ class HelmPostRendererCMP(CMP):
 			),
 		)
 
-	def parse_params(self, params: JSONT) -> HelmParameters:
+	def parse_params(self, params: list[dict[str, Any]]) -> HelmParameters:
 		params = super().parse_params(params)
 		return HelmParameters.model_validate(params)
 
