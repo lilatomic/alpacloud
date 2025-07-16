@@ -57,7 +57,7 @@ class CMP(ABC, Generic[S, T]):
 
 	def parse_params(self, params: list[dict[str, Any]]) -> T:
 		def deserialise_param(p: JSONT):
-			assert isinstance(p, dict), f"parameter item was not a dict name={p['name']}"
+			assert isinstance(p, dict)
 			if "string" in p:
 				return p["string"]
 			elif "map" in p:
