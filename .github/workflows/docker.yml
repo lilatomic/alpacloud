@@ -48,6 +48,7 @@ jobs:
         run: |
           pants package --filter-target-type=docker_image alpacloud::
       - name: Publish
+        id: publish
         run: |
           pants publish --filter-target-type=docker_image alpacloud::
           image_digest=$(docker inspect --format='{{index .RepoDigests 0}}' "ghcr.io/lilatomic/alpacloud/cmp:$tgttag")
@@ -56,7 +57,7 @@ jobs:
         uses: actions/attest-build-provenance@v2
         with:
           subject-name: ghcr.io/lilatomic/alpacloud/cmp
-          subject-digest: ${{ Publish.outputs.image_digest }}
+          subject-digest: ${{ steps.publish.outputs.image_digest }}
           push-to-registry: true
 
       - name: Upload pants log
