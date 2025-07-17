@@ -1,0 +1,5 @@
+ignored:
+  - DL3008
+override:
+  info:
+    - DL3008

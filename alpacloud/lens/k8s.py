@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import base64
 import dataclasses
+import re
 from dataclasses import dataclass
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, Pattern
 
 from alpacloud.lens.models import (
 	BoundLensT,
@@ -23,7 +24,7 @@ from alpacloud.lens.models import (
 	kord,
 	korl,
 )
-from alpacloud.lens.util.type import B, F
+from alpacloud.lens.util.type import JSONT, B, F
 
 metadata = kord("metadata")
 namespace = metadata["namespace"]
@@ -251,3 +252,19 @@ class B64(CodecLensABC):
 
 	def enc(self, c: str) -> str:
 		return base64.b64encode(c.encode()).decode()
+
+
+def Item(kind: str, name: str | Pattern = re.compile(r".*")) -> FilterLens:
+	if isinstance(name, str):
+		name = re.compile(name)
+
+	def matches(e: JSONT) -> bool:
+		return (
+			KeyLens("kind").l_get(e).lower() == kind.lower()  # type: ignore
+			and bool(name.fullmatch(metadata["name"].l_get(e)))  # type: ignore
+		)
+
+	return FilterLens(
+		predicate=matches,
+		predicate_name=f'?(kind="{kind}", name=r"{name}")',
+	)

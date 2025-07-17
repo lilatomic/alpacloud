@@ -9,6 +9,13 @@ python_requirements(
 		"pyyaml": ["yaml"],
 	},
 	resolve=parametrize("tools", "ansible.lilatomic.azcli", "ansible.lilatomic.api"),
+	source="requirements_global.txt",
+)
+
+python_requirements(
+	name="reqs1",
+	resolve="tools",
+	source="requirements.txt",
 )
 
 python_requirement(

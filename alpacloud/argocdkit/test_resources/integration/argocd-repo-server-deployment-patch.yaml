@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: argocd-repo-server
+spec:
+  template:
+    spec:
+      containers:
+        - name: my-cmp
+          command: [/var/run/argocd/argocd-cmp-server]
+          args: [--loglevel, debug]
+          image: cmp:0.0.1
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 999
+          env:
+            - name: HELM_PLUGINS
+              value: /custom-tools/helm-plugins/
+            - name: HELM_CACHE_HOME
+              value: /helm-working-dir/
+            - name: HELM_CONFIG_HOME
+              value: /helm-working-dir
+            - name: HELM_DATA_HOME
+              value: /helm-working-dir
+          volumeMounts:
+            - mountPath: /var/run/argocd
+              name: var-files
+            - mountPath: /home/argocd/cmp-server/plugins
+              name: plugins
+            - mountPath: /helm-working-dir
+              name: helm-plugin-tmp
+            - mountPath: /tmp
+              name: cmp-tmp
+      volumes:
+        - emptyDir: {}
+          name: helm-plugin-tmp
+        - emptyDir: {}
+          name: cmp-tmp

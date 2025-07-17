@@ -1,0 +1,5 @@
+resources:
+  - https://raw.githubusercontent.com/argoproj/argo-cd/refs/heads/master/manifests/install.yaml
+
+patches:
+  - path: argocd-repo-server-deployment-patch.yaml
