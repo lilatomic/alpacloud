@@ -10,3 +10,9 @@ files(
 	name="k8s_objs",
 	sources=["**/*.yml", "**/*.yaml", "**/*.tpl", "**/*.json"],
 )
+
+docker_image(
+    name="docker",
+    repository="cmp",
+    image_tags=["latesttest"],
+)

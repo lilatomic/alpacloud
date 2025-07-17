@@ -9,7 +9,7 @@ spec:
         - name: my-cmp
           command: [/var/run/argocd/argocd-cmp-server]
           args: [--loglevel, debug]
-          image: cmp:0.0.1
+          image: cmp:latesttest
           securityContext:
             runAsNonRoot: true
             runAsUser: 999
