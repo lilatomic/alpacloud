@@ -4,7 +4,6 @@ on:
   release:
     types:
       - published
-  workflow_dispatch:
 
 jobs:
   push_to_registry:
@@ -47,9 +46,18 @@ jobs:
       - name: Package
         run: |
           pants package --filter-target-type=docker_image alpacloud::
-#      - name: Publish
-#        run: |
-#          pants publish --filter-target-type=docker_image alpacloud::
+      - name: Publish
+        id: publish
+        run: |
+          pants publish --filter-target-type=docker_image alpacloud::
+          image_digest=$(docker inspect --format='{{index .RepoDigests 0}}' "ghcr.io/lilatomic/alpacloud/cmp:0.0.1" | cut -d@ -f2)
+          echo "image_digest=$image_digest" >> "$GITHUB_OUTPUT"
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ghcr.io/lilatomic/alpacloud/cmp
+          subject-digest: ${{ steps.publish.outputs.image_digest }}
+          push-to-registry: true
 
       - name: Upload pants log
         uses: actions/upload-artifact@v4
