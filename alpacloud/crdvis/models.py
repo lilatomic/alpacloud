@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from abc import ABC
 from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field
@@ -29,7 +30,13 @@ class OpenAPIV3Enum(BaseModel):
 	description: Optional[str] = None
 
 
-OpenAPIV3 = Union[OpenAPIV3Array, OpenAPIV3Enum, OpenAPIV3Union, OpenAPIV3Schema]
+class OpenAPIV3Dict(BaseModel):
+	type: str = "object"
+	additionalProperties: OpenAPIV3
+	description: Optional[str] = None
+
+
+OpenAPIV3 = Union[OpenAPIV3Array, OpenAPIV3Enum, OpenAPIV3Union, OpenAPIV3Dict, OpenAPIV3Schema]
 
 
 class Schema(BaseModel):

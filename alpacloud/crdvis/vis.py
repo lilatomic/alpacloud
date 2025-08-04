@@ -9,7 +9,7 @@ from textual.app import App, ComposeResult
 from textual.widgets import Footer, Header, Tree
 from textual.widgets.tree import TreeNode
 
-from alpacloud.crdvis.models import CustomResourceDefinition, OpenAPIV3, OpenAPIV3Array, OpenAPIV3Enum, OpenAPIV3Schema, OpenAPIV3Union
+from alpacloud.crdvis.models import CustomResourceDefinition, OpenAPIV3, OpenAPIV3Array, OpenAPIV3Enum, OpenAPIV3Schema, OpenAPIV3Union, OpenAPIV3Dict
 
 
 class CRDVisApp(App):
@@ -82,8 +82,19 @@ class CRDVisApp(App):
 		# Simply add the node without returning it, so no children can be added
 		parent.add_leaf(f"{key}: {value}")
 
-	def is_simple(self, openapi_node: OpenAPIV3Schema) -> bool:
-		return openapi_node.type not in {"object", "array", "enum"}
+	def is_simple(self, openapi_node: OpenAPIV3) -> bool:
+		if isinstance(openapi_node, OpenAPIV3Schema):
+			return openapi_node.type in ("string", "integer", "number", "boolean")
+		elif isinstance(openapi_node, OpenAPIV3Union):
+			return 				 all(self.is_simple(e) for e in openapi_node.anyOf)
+		elif isinstance(openapi_node, OpenAPIV3Enum):
+			return False
+		elif isinstance(openapi_node, OpenAPIV3Array):
+			return self.is_simple(openapi_node.items)
+		elif isinstance(openapi_node, OpenAPIV3Dict):
+			return self.is_simple(openapi_node.additionalProperties)
+		else:
+			return True
 
 	def find_typename(self, openapi_node: OpenAPIV3) -> str:
 		match openapi_node:
@@ -96,8 +107,13 @@ class CRDVisApp(App):
 			# 	return "Union"
 			case OpenAPIV3Enum():
 				return "Enum"
-			# case OpenAPIV3Array():
-			# return f"Array[{self.find_typename(openapi_node.items)}]"
+			case OpenAPIV3Array():
+				if self.is_simple(openapi_node.items):
+					return f"Array\[{self.find_typename(openapi_node.items)}]"
+				else:
+					return "Array\[object]"
+			case OpenAPIV3Dict():
+				return "Dict"
 			case _:
 				raise TypeError(f"Unexpected type: {type(openapi_node)}")
 
@@ -116,9 +132,7 @@ class CRDVisApp(App):
 						self.add_openapi_node(schema_item, prop_name, prop)
 
 			case OpenAPIV3Union():
-				all_simple_types = all(self.is_simple(e) for e in openapi_node.anyOf)
-
-				if all_simple_types:
+				if self.is_simple(openapi_node):
 					k = f"{name}: Union{[self.find_typename(e) for e in openapi_node.anyOf]}"
 					schema_item = parent_node.add_leaf(k)
 				else:
@@ -128,15 +142,11 @@ class CRDVisApp(App):
 						self.add_openapi_node(schema_item, "Option", e)
 
 			case OpenAPIV3Array():
-				is_simple_type = self.is_simple(openapi_node.items)
-
-				if is_simple_type:
-					k = rf"{name}: Array\[{self.find_typename(openapi_node.items)}]"
+				k = rf"{name}: {self.find_typename(openapi_node)}"
+				if self.is_simple(openapi_node.items):
 					schema_item = parent_node.add_leaf(k)
 
 				else:
-					k = rf"{name}: Array\[object]"
-
 					schema_item = parent_node.add(k)
 					items_node = self.add_openapi_node(schema_item, "Items", openapi_node.items)
 					items_node.expand()
@@ -146,6 +156,17 @@ class CRDVisApp(App):
 				schema_item = parent_node.add(k)
 				for enum_value in openapi_node.enum:
 					self._add_leaf_node(schema_item, "Value", enum_value)
+
+			case OpenAPIV3Dict():
+				if self.is_simple(openapi_node):
+					k = f"{name}: {self.find_typename(openapi_node)}\[string, {self.find_typename(openapi_node.additionalProperties)}]"
+					schema_item = parent_node.add_leaf(k)
+
+				else:
+					k = f"{name}: {self.find_typename(openapi_node)}"
+					schema_item = parent_node.add(k)
+					self.add_openapi_node(schema_item, "Items", openapi_node.additionalProperties)
+
 
 			case _:
 				raise TypeError(f"Unexpected type: {type(openapi_node)}")
