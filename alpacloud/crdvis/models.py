@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -8,12 +8,21 @@ from pydantic import BaseModel, Field
 class OpenAPIV3Schema(BaseModel):
 	type: str
 	description: Optional[str] = None
-	properties: Optional[Dict[str, OpenAPIV3Schema | OpenAPIV3Union]] = None
+	properties: Optional[Dict[str, OpenAPIV3]] = None
 
 
 class OpenAPIV3Union(BaseModel):
-	anyOf: List[OpenAPIV3Schema | OpenAPIV3Union]
+	anyOf: List[OpenAPIV3]
 	description: Optional[str] = None
+
+
+class OpenAPIV3Array(BaseModel):
+	type: str = "array"
+	items: OpenAPIV3
+	description: Optional[str] = None
+
+
+OpenAPIV3 = Union[OpenAPIV3Array, OpenAPIV3Union, OpenAPIV3Schema]
 
 
 class Schema(BaseModel):

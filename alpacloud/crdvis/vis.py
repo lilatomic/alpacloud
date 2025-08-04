@@ -9,7 +9,7 @@ from textual.app import App, ComposeResult
 from textual.widgets import Footer, Header, Tree
 from textual.widgets.tree import TreeNode
 
-from alpacloud.crdvis.models import CustomResourceDefinition, OpenAPIV3Schema, OpenAPIV3Union
+from alpacloud.crdvis.models import CustomResourceDefinition, OpenAPIV3Array, OpenAPIV3Schema, OpenAPIV3Union
 
 
 class CRDVisApp(App):
@@ -100,7 +100,7 @@ class CRDVisApp(App):
 				all_simple_types = all(e.type != "object" for e in openapi_node.anyOf)
 
 				if all_simple_types:
-					k = f"{name}: Union[{[e.type for e in openapi_node.anyOf]}]"
+					k = f"{name}: Union{[e.type for e in openapi_node.anyOf]}"
 					schema_item = parent_node.add_leaf(k)
 				else:
 					k = f"{name}: Union"
@@ -108,6 +108,16 @@ class CRDVisApp(App):
 					for e in openapi_node.anyOf:
 						self.add_openapi_node(schema_item, "Option", e)
 
+			case OpenAPIV3Array():
+				k = f"{name}: Array"
+				schema_item = parent_node.add(k)
+				items_node = self.add_openapi_node(schema_item, "Items", openapi_node.items)
+				items_node.expand()
+
+			case _:
+				raise TypeError(f"Unexpected type: {type(openapi_node)}")
+
+		return schema_item
 
 
 def main():
