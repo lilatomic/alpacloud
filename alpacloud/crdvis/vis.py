@@ -3,13 +3,26 @@ CRDVis visualization module for displaying Kubernetes CRD resources.
 """
 
 import os
+from typing import Callable
 
 import yaml
 from textual.app import App, ComposeResult
-from textual.widgets import Footer, Header, Tree, TextArea
+from textual.widgets import Footer, Header, Tree, TextArea, Input
 from textual.widgets.tree import TreeNode
 
 from alpacloud.crdvis.models import CustomResourceDefinition, OpenAPIV3, OpenAPIV3Array, OpenAPIV3Enum, OpenAPIV3Schema, OpenAPIV3Union, OpenAPIV3Dict
+
+
+
+class FindBox(Input):
+	BINDINGS = [("enter", "find", "Find")]
+
+	def __init__(self, placeholder: str, id: str = "find-box", find_method: Callable = None) -> None:
+		self.find_method = find_method
+		super().__init__(placeholder, id=id)
+
+	async def action_find(self):
+		await self.find_method(self.value)
 
 
 class CRDVisApp(App):
@@ -19,21 +32,30 @@ class CRDVisApp(App):
 	CSS = """
     .description-area {
         height: 25%;
-        dock: bottom;
         background: $surface;
         color: $text;
         border-top: tall $primary;
         padding: 1 2;
     }
+	.find-box {
+		border: none;
+		padding: 0 0;
+		dock: bottom;
+	}
     """
 
 	CSS_PATH = None  # We're not using custom CSS for this skeleton
+
+	BINDINGS = [
+		("ctrl+g", "goto", "goto"),
+	]
 
 	def compose(self) -> ComposeResult:
 		"""Create child widgets for the app."""
 		yield Header()
 		yield Tree("CRD Version")
 		yield TextArea(read_only=True, classes="description-area")
+		yield FindBox(placeholder="Find...", id="find-box", find_method=self.do_find)
 		yield Footer()
 
 	def on_tree_node_selected(self, event: Tree.NodeSelected) -> None:
@@ -204,6 +226,43 @@ class CRDVisApp(App):
 		schema_item.data = openapi_node
 		return schema_item
 
+	async def _focus_to_node(self, node: TreeNode) -> None:
+		"""Focus the tree widget on the given node."""
+		tree = self.query_one(Tree)
+
+		parent = node.parent
+		while parent:
+			parent.expand()
+			parent = parent.parent
+
+		tree.select_node(node)
+
+
+	async def action_goto(self) -> None:
+		findbox = self.query_one(FindBox)
+		findbox.focus()
+
+	async def do_find(self, s: str):
+		found = self.find_node_start(s)
+		if found:
+			await self._focus_to_node(found)
+			self.notify(f"Found node with label '{found.label}'.")
+		else:
+			self.notify("No node found with the given label.")
+
+	def find_node_start(self, s: str) -> TreeNode | None:
+		return self.find_node(s, self.query_one(Tree).root)
+
+	def find_node(self, s: str, cursor: TreeNode) -> TreeNode | None:
+		"""Find a node in the tree by its label."""
+		if s in cursor.label:
+			return cursor
+		else:
+			for child in cursor.children:
+				node = self.find_node(s, child)
+				if node:
+					return node
+			return None
 
 def main():
 	"""Run the CRD Visualizer app."""
