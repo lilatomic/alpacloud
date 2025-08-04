@@ -11,7 +11,8 @@ from rich.text import Text
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Vertical
-from textual.widgets import Footer, Header, Input, Static, Tree
+from textual.screen import ModalScreen
+from textual.widgets import Button, Footer, Header, Input, Label, Static, Tree
 from textual.widgets.tree import TreeNode
 
 from alpacloud.crdvis.models import CustomResourceDefinition, OpenAPIV3, OpenAPIV3Array, OpenAPIV3Dict, OpenAPIV3Enum, OpenAPIV3Schema, OpenAPIV3Union
@@ -38,6 +39,40 @@ class FindBox(Input):
 class SearchMode(enum.Enum):
 	find = "find"
 	goto = "goto"
+
+
+class OpenDialog(ModalScreen):
+	BINDINGS = [
+		("escape", "cancel", "Cancel"),
+		("enter", "submit", "Submit"),
+	]
+
+	CSS = """
+	#open-dialog {
+		width: 60%;
+		height: auto;
+		border: thick $background 80%;
+		background: $surface;
+		padding: 1 2;
+		margin: 1 2;
+	}
+	"""
+
+	def compose(self) -> ComposeResult:
+		yield Vertical(
+			Label("Open a CRD file"),
+			Input(placeholder="Enter the path to the CRD file"),
+			Button("Open", variant="primary", id="open-dialog-open"),
+			Button("Cancel", variant="warning", id="open-dialog-cancel"),
+			id="open-dialog",
+		)
+
+	def on_button_pressed(self, event: Button.Pressed) -> None:
+		if event.button.id == "open-dialog-open":
+			input_widget = self.query_one(Input)
+			self.dismiss(input_widget.value)
+		elif event.button.id == "open-dialog-cancel":
+			self.dismiss(None)
 
 
 class CRDVisApp(App):
