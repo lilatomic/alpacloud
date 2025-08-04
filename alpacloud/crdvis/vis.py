@@ -83,18 +83,19 @@ class CRDVisApp(App):
 		parent.add_leaf(f"{key}: {value}")
 
 	def is_simple(self, openapi_node: OpenAPIV3) -> bool:
-		if isinstance(openapi_node, OpenAPIV3Schema):
-			return openapi_node.type in ("string", "integer", "number", "boolean")
-		elif isinstance(openapi_node, OpenAPIV3Union):
-			return 				 all(self.is_simple(e) for e in openapi_node.anyOf)
-		elif isinstance(openapi_node, OpenAPIV3Enum):
-			return False
-		elif isinstance(openapi_node, OpenAPIV3Array):
-			return self.is_simple(openapi_node.items)
-		elif isinstance(openapi_node, OpenAPIV3Dict):
-			return self.is_simple(openapi_node.additionalProperties)
-		else:
-			return True
+		match openapi_node:
+			case OpenAPIV3Schema():
+				return openapi_node.type in ("string", "integer", "number", "boolean")
+			case OpenAPIV3Union():
+				return all(self.is_simple(e) for e in openapi_node.anyOf)
+			case OpenAPIV3Enum():
+				return False
+			case OpenAPIV3Array():
+				return self.is_simple(openapi_node.items)
+			case OpenAPIV3Dict():
+				return self.is_simple(openapi_node.additionalProperties)
+			case _:
+				raise TypeError(f"Unexpected type: {type(openapi_node)}")
 
 	def find_typename(self, openapi_node: OpenAPIV3) -> str:
 		match openapi_node:
