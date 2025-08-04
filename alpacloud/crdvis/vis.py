@@ -9,7 +9,7 @@ from textual.app import App, ComposeResult
 from textual.widgets import Footer, Header, Tree
 from textual.widgets.tree import TreeNode
 
-from alpacloud.crdvis.models import CustomResourceDefinition, OpenAPIV3Array, OpenAPIV3Schema, OpenAPIV3Union, OpenAPIV3Enum, OpenAPIV3
+from alpacloud.crdvis.models import CustomResourceDefinition, OpenAPIV3, OpenAPIV3Array, OpenAPIV3Enum, OpenAPIV3Schema, OpenAPIV3Union
 
 
 class CRDVisApp(App):
@@ -82,10 +82,8 @@ class CRDVisApp(App):
 		# Simply add the node without returning it, so no children can be added
 		parent.add_leaf(f"{key}: {value}")
 
-
 	def is_simple(self, openapi_node: OpenAPIV3Schema) -> bool:
-		return openapi_node.type not in { "object", "array", "enum" }
-
+		return openapi_node.type not in {"object", "array", "enum"}
 
 	def find_typename(self, openapi_node: OpenAPIV3) -> str:
 		match openapi_node:
@@ -99,10 +97,9 @@ class CRDVisApp(App):
 			case OpenAPIV3Enum():
 				return "Enum"
 			# case OpenAPIV3Array():
-				# return f"Array[{self.find_typename(openapi_node.items)}]"
+			# return f"Array[{self.find_typename(openapi_node.items)}]"
 			case _:
 				raise TypeError(f"Unexpected type: {type(openapi_node)}")
-
 
 	def add_openapi_node(self, parent_node, name, openapi_node):
 		match openapi_node:
@@ -134,14 +131,15 @@ class CRDVisApp(App):
 				is_simple_type = self.is_simple(openapi_node.items)
 
 				if is_simple_type:
-					k = f"{name}: Array[{self.find_typename(openapi_node.items)}]"
+					k = rf"{name}: Array\[{self.find_typename(openapi_node.items)}]"
+					schema_item = parent_node.add_leaf(k)
+
 				else:
-					k = f"{name}: Array[object]"
+					k = rf"{name}: Array\[object]"
 
-				schema_item = parent_node.add(k)
-
-				items_node = self.add_openapi_node(schema_item, "Items", openapi_node.items)
-				items_node.expand()
+					schema_item = parent_node.add(k)
+					items_node = self.add_openapi_node(schema_item, "Items", openapi_node.items)
+					items_node.expand()
 
 			case OpenAPIV3Enum():
 				k = f"{name}: {self.find_typename(openapi_node)}"

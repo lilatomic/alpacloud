@@ -22,6 +22,7 @@ class OpenAPIV3Array(BaseModel):
 	items: OpenAPIV3
 	description: Optional[str] = None
 
+
 class OpenAPIV3Enum(BaseModel):
 	type: str = "string"
 	enum: List[str]
