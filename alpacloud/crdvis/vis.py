@@ -7,9 +7,10 @@ import os
 from typing import Callable
 
 import yaml
+from rich.text import Text
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.widgets import Footer, Header, Input, TextArea, Tree
+from textual.widgets import Footer, Header, Input, Static, Tree
 from textual.widgets.tree import TreeNode
 
 from alpacloud.crdvis.models import CustomResourceDefinition, OpenAPIV3, OpenAPIV3Array, OpenAPIV3Dict, OpenAPIV3Enum, OpenAPIV3Schema, OpenAPIV3Union
@@ -31,6 +32,7 @@ class FindBox(Input):
 	def action_clear(self) -> None:
 		"""Clear the text area."""
 		self.clear()
+
 
 class SearchMode(enum.Enum):
 	find = "find"
@@ -69,27 +71,27 @@ class CRDVisApp(App):
 		"""Create child widgets for the app."""
 		yield Header()
 		yield Tree("CRD Version")
-		yield TextArea(read_only=True, classes="description-area")
+		yield Static(classes="description-area")
 		yield FindBox(placeholder="Find...", id="find-box", find_method=self.do_find)
 		yield Footer()
 
 	def on_tree_node_selected(self, event: Tree.NodeSelected) -> None:
 		"""Handle node selection in the tree."""
-		text_area = self.query_one(TextArea)
+		from textual.widgets import Static
+
+		text_area = self.query_one(Static)
 		node = event.node
 		# Check if this is an OpenAPI node that might have a description
+		text = Text("")
+
 		if hasattr(node, "data"):
 			data = node.data
-			if hasattr(data, "description"):
-				if not node.data or not node.data.description:
-					description = ""
-				else:
-					description = node.data.description
-				text_area.load_text(description)
-			else:
-				text_area.load_text("")
-		else:
-			text_area.load_text("")
+			if description := getattr(data, "description", None):
+				text += description
+			if pattern := getattr(data, "pattern", None):
+				text += Text(f"\nPattern: {pattern}", style="bold")
+
+		text_area.update(text)
 
 	def on_mount(self) -> None:
 		"""Load the CRD and populate the tree when the app starts."""

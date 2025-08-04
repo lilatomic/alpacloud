@@ -10,6 +10,7 @@ class OpenAPIV3Schema(BaseModel):
 	description: Optional[str] = None
 	properties: Optional[Dict[str, OpenAPIV3]] = None
 	format: Optional[str] = None
+	pattern: Optional[str] = None
 
 
 class OpenAPIV3Union(BaseModel):
