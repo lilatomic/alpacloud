@@ -11,7 +11,7 @@ import yaml
 from rich.text import Text
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.containers import Horizontal, Vertical
+from textual.containers import Container, Horizontal, Vertical
 from textual.screen import ModalScreen
 from textual.widgets import Button, Footer, Header, Input, Label, Static, Tree
 from textual.widgets.tree import TreeNode
@@ -48,25 +48,49 @@ class OpenDialog(ModalScreen):
 		Binding("enter", "submit", "Submit", priority=True),
 	]
 
-	CSS = """
-	#open-dialog {
+	DEFAULT_CSS = """
+	OpenDialog {
+		align: center middle;
+	}
+	
+	OpenDialog > Container {
+		width: auto;
+		height: auto;
 		border: thick $background 80%;
 		background: $surface;
-		padding: 1 2;
-		margin: 1 2;
+		margin: 1;
 	}
+	
+	OpenDialog > Container > Label {
+		width: 100%;
+		content-align-horizontal: center;
+		margin: 1;
+	}
+	
+	OpenDialog > Container > Input {
+		width: 100%;
+		content-align-horizontal: center;
+		margin: 1;
+	}
+	
+	OpenDialog > Container > Horizontal {
+		width: auto;
+		height: auto;
+		margin: 1 1;
+	}
+	
+	OpenDialog > Container > Horizontal > Button {
+		margin: 1 1;
+	}	
 	"""
 
 	def compose(self) -> ComposeResult:
-		yield Vertical(
-			Label("Open a CRD file"),
-			Input(placeholder="Enter the path to the CRD file"),
-			Horizontal(
-				Button("Open", variant="primary", id="open-dialog-open"),
-				Button("Cancel", variant="warning", id="open-dialog-cancel"),
-			),
-			id="open-dialog",
-		)
+		with Container():
+			yield Label("Open a CRD file")
+			yield Input(placeholder="Enter the path to the CRD file")
+			with Horizontal():
+				yield Button("Open", variant="primary", id="open-dialog-open")
+				yield Button("Cancel", variant="warning", id="open-dialog-cancel")
 
 	def _submit(self):
 		input_widget = self.query_one(Input)
