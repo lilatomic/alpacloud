@@ -16,7 +16,10 @@ from alpacloud.crdvis.models import CustomResourceDefinition, OpenAPIV3, OpenAPI
 
 
 class FindBox(Input):
-	BINDINGS = [("enter", "search", "Search")]
+	BINDINGS = [
+		("enter", "search", "Search"),
+		Binding("ctrl+c", "clear", "clear", show=False),
+	]
 
 	def __init__(self, placeholder: str, find_method: Callable, id: str = "find-box") -> None:
 		self.find_method = find_method
@@ -25,6 +28,9 @@ class FindBox(Input):
 	async def action_search(self):
 		await self.find_method(self.value)
 
+	def action_clear(self) -> None:
+		"""Clear the text area."""
+		self.clear()
 
 class SearchMode(enum.Enum):
 	find = "find"
