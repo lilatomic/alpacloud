@@ -255,7 +255,7 @@ class CRDVisApp(App):
 		"""Find a node in the tree by its label."""
 		found = []
 
-		if s in cursor.label:
+		if match_label(s, cursor.label):
 			found.append(cursor)
 
 		for child in cursor.children:
@@ -264,6 +264,11 @@ class CRDVisApp(App):
 				found.extend(nodes)
 
 		return found
+
+
+def match_label(label: str, s: str) -> bool:
+	"""Check if a label matches a substring."""
+	return s.lower() in label.lower()
 
 
 def main():
