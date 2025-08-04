@@ -52,9 +52,9 @@ class CRDVisApp(App):
 
 			# Add schema information
 			if first_version.openAPIV3Schema:
-				schema_node = root.add("Schema")
+				# schema_node = root.add("Schema")
 				openapi = first_version.openAPIV3Schema.openAPIV3Schema
-				self.add_openapi_node(schema_node, "Schema", openapi)
+				self.add_openapi_node(root, "Schema", openapi)
 
 			# Add selectable fields
 			if first_version.selectableFields:
