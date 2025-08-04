@@ -18,7 +18,7 @@ from alpacloud.crdvis.models import CustomResourceDefinition, OpenAPIV3, OpenAPI
 class FindBox(Input):
 	BINDINGS = [("enter", "search", "Search")]
 
-	def __init__(self, placeholder: str, id: str = "find-box", find_method: Callable = None) -> None:
+	def __init__(self, placeholder: str, find_method: Callable, id: str = "find-box") -> None:
 		self.find_method = find_method
 		super().__init__(placeholder, id=id)
 
@@ -75,7 +75,10 @@ class CRDVisApp(App):
 		if hasattr(node, "data"):
 			data = node.data
 			if hasattr(data, "description"):
-				description = node.data.description or ""
+				if not node.data or not node.data.description:
+					description = ""
+				else:
+					description = node.data.description
 				text_area.load_text(description)
 			else:
 				text_area.load_text("")
@@ -262,7 +265,10 @@ class CRDVisApp(App):
 
 		cursor = self.query_one(Tree).cursor_node
 		try:
-			current = all_results.index(cursor)
+			if cursor:
+				current = all_results.index(cursor)
+			else:
+				current = -1
 		except ValueError:
 			current = -1
 		found = all_results[(current + 1) % len(all_results)]
@@ -293,7 +299,11 @@ class CRDVisApp(App):
 
 def match_label(node: TreeNode[OpenAPIV3], s: str) -> bool:
 	"""Check if a label matches a substring."""
-	return s.lower() in node.label.plain.lower()
+	if isinstance(node.label, str):
+		tgt = node.label.lower()
+	else:
+		tgt = node.label.plain.lower()
+	return s.lower() in tgt
 
 
 def match_any(node: TreeNode[OpenAPIV3], s: str) -> bool:
@@ -302,9 +312,8 @@ def match_any(node: TreeNode[OpenAPIV3], s: str) -> bool:
 		return True
 	else:
 		data = node.data
-		if hasattr(data, "description"):
-			if data.description is not None:
-				return s.lower() in data.description.lower()
+		if description := getattr(data, "description", None):
+			return s.lower() in description.lower()
 	return False
 
 
