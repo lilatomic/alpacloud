@@ -9,7 +9,7 @@ from textual.app import App, ComposeResult
 from textual.widgets import Footer, Header, Tree
 from textual.widgets.tree import TreeNode
 
-from alpacloud.crdvis.models import CustomResourceDefinition, OpenAPIV3Array, OpenAPIV3Schema, OpenAPIV3Union, OpenAPIV3Enum
+from alpacloud.crdvis.models import CustomResourceDefinition, OpenAPIV3Array, OpenAPIV3Schema, OpenAPIV3Union, OpenAPIV3Enum, OpenAPIV3
 
 
 class CRDVisApp(App):
@@ -82,10 +82,32 @@ class CRDVisApp(App):
 		# Simply add the node without returning it, so no children can be added
 		parent.add_leaf(f"{key}: {value}")
 
+
+	def is_simple(self, openapi_node: OpenAPIV3Schema) -> bool:
+		return openapi_node.type not in { "object", "array", "enum" }
+
+
+	def find_typename(self, openapi_node: OpenAPIV3) -> str:
+		match openapi_node:
+			case OpenAPIV3Schema():
+				if openapi_node.format:
+					return openapi_node.format
+				else:
+					return openapi_node.type
+			# case OpenAPIV3Union():
+			# 	return "Union"
+			case OpenAPIV3Enum():
+				return "Enum"
+			# case OpenAPIV3Array():
+				# return f"Array[{self.find_typename(openapi_node.items)}]"
+			case _:
+				raise TypeError(f"Unexpected type: {type(openapi_node)}")
+
+
 	def add_openapi_node(self, parent_node, name, openapi_node):
 		match openapi_node:
 			case OpenAPIV3Schema():
-				k = f"{name}: {openapi_node.type}"
+				k = f"{name}: {self.find_typename(openapi_node)}"
 
 				if openapi_node.type == "object":
 					schema_item = parent_node.add(k)
@@ -97,10 +119,10 @@ class CRDVisApp(App):
 						self.add_openapi_node(schema_item, prop_name, prop)
 
 			case OpenAPIV3Union():
-				all_simple_types = all(e.type != "object" for e in openapi_node.anyOf)
+				all_simple_types = all(self.is_simple(e) for e in openapi_node.anyOf)
 
 				if all_simple_types:
-					k = f"{name}: Union{[e.type for e in openapi_node.anyOf]}"
+					k = f"{name}: Union{[self.find_typename(e) for e in openapi_node.anyOf]}"
 					schema_item = parent_node.add_leaf(k)
 				else:
 					k = f"{name}: Union"
@@ -109,13 +131,20 @@ class CRDVisApp(App):
 						self.add_openapi_node(schema_item, "Option", e)
 
 			case OpenAPIV3Array():
-				k = f"{name}: Array"
+				is_simple_type = self.is_simple(openapi_node.items)
+
+				if is_simple_type:
+					k = f"{name}: Array[{self.find_typename(openapi_node.items)}]"
+				else:
+					k = f"{name}: Array[object]"
+
 				schema_item = parent_node.add(k)
+
 				items_node = self.add_openapi_node(schema_item, "Items", openapi_node.items)
 				items_node.expand()
 
 			case OpenAPIV3Enum():
-				k = f"{name}: Enum"
+				k = f"{name}: {self.find_typename(openapi_node)}"
 				schema_item = parent_node.add(k)
 				for enum_value in openapi_node.enum:
 					self._add_leaf_node(schema_item, "Value", enum_value)
