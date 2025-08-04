@@ -97,8 +97,17 @@ class CRDVisApp(App):
 						self.add_openapi_node(schema_item, prop_name, prop)
 
 			case OpenAPIV3Union():
-				k = f"{name}: Union"
-				schema_item = parent_node.add(k)
+				all_simple_types = all(e.type != "object" for e in openapi_node.anyOf)
+
+				if all_simple_types:
+					k = f"{name}: Union[{[e.type for e in openapi_node.anyOf]}]"
+					schema_item = parent_node.add_leaf(k)
+				else:
+					k = f"{name}: Union"
+					schema_item = parent_node.add(k)
+					for e in openapi_node.anyOf:
+						self.add_openapi_node(schema_item, "Option", e)
+
 
 
 def main():
