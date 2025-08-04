@@ -9,7 +9,7 @@ from textual.app import App, ComposeResult
 from textual.widgets import Footer, Header, Tree
 from textual.widgets.tree import TreeNode
 
-from alpacloud.crdvis.models import CustomResourceDefinition, OpenAPIV3Array, OpenAPIV3Schema, OpenAPIV3Union
+from alpacloud.crdvis.models import CustomResourceDefinition, OpenAPIV3Array, OpenAPIV3Schema, OpenAPIV3Union, OpenAPIV3Enum
 
 
 class CRDVisApp(App):
@@ -113,6 +113,12 @@ class CRDVisApp(App):
 				schema_item = parent_node.add(k)
 				items_node = self.add_openapi_node(schema_item, "Items", openapi_node.items)
 				items_node.expand()
+
+			case OpenAPIV3Enum():
+				k = f"{name}: Enum"
+				schema_item = parent_node.add(k)
+				for enum_value in openapi_node.enum:
+					self._add_leaf_node(schema_item, "Value", enum_value)
 
 			case _:
 				raise TypeError(f"Unexpected type: {type(openapi_node)}")

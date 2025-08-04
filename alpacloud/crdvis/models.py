@@ -21,8 +21,13 @@ class OpenAPIV3Array(BaseModel):
 	items: OpenAPIV3
 	description: Optional[str] = None
 
+class OpenAPIV3Enum(BaseModel):
+	type: str = "string"
+	enum: List[str]
+	description: Optional[str] = None
 
-OpenAPIV3 = Union[OpenAPIV3Array, OpenAPIV3Union, OpenAPIV3Schema]
+
+OpenAPIV3 = Union[OpenAPIV3Array, OpenAPIV3Enum, OpenAPIV3Union, OpenAPIV3Schema]
 
 
 class Schema(BaseModel):
