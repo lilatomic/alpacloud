@@ -104,6 +104,7 @@ class CRDVisApp(App):
 	BINDINGS = [
 		Binding("ctrl+g", "goto", "goto", priority=True),
 		Binding("ctrl+f", "find", "find", priority=True),
+		Binding("ctrl+o", "open_dialog", "Open file", priority=True),
 	]
 
 	search_mode = SearchMode.find
@@ -308,6 +309,16 @@ class CRDVisApp(App):
 		findbox = self.query_one(FindBox)
 		self.search_mode = SearchMode.find
 		findbox.focus()
+
+	async def action_open_dialog(self) -> None:
+		"""Open the file open dialog."""
+		dialog = OpenDialog()
+		def o(path: str):
+			if path:
+				self.notify(f"Selected path: {path}")
+
+		await self.push_screen(dialog, o)
+
 
 	async def do_find(self, s: str):
 		all_results = self.find_all_nodes(s, self.query_one(Tree).root)
