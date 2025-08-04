@@ -9,7 +9,7 @@ from textual.app import App, ComposeResult
 from textual.widgets import Footer, Header, Tree
 from textual.widgets.tree import TreeNode
 
-from alpacloud.crdvis.models import CustomResourceDefinition
+from alpacloud.crdvis.models import CustomResourceDefinition, OpenAPIV3Schema, OpenAPIV3Union
 
 
 class CRDVisApp(App):
@@ -28,7 +28,7 @@ class CRDVisApp(App):
 		"""Load the CRD and populate the tree when the app starts."""
 		# Get the path to the sample CRD file
 		current_dir = os.getcwd()
-		sample_crd_path = os.path.join(current_dir, "alpacloud", "crdvis", "test_resources", "sample_crd.yaml")
+		sample_crd_path = os.path.join(current_dir, "alpacloud", "crdvis", "test_resources", "podmonitor.yaml")
 
 		# Load and deserialize the CRD
 		with open(sample_crd_path, "r") as f:
@@ -45,23 +45,16 @@ class CRDVisApp(App):
 			root = tree.root
 			root.label = f"CRD Version: {first_version.name}"
 
-			# Add basic information
-			self._add_node(root, "Name", first_version.name)
-			self._add_node(root, "Served", str(first_version.served))
-			self._add_node(root, "Storage", str(first_version.storage))
+			# Add basic information (non-expandable)
+			self._add_leaf_node(root, "Name", first_version.name)
+			self._add_leaf_node(root, "Served", str(first_version.served))
+			self._add_leaf_node(root, "Storage", str(first_version.storage))
 
 			# Add schema information
-			if first_version.schema:
+			if first_version.openAPIV3Schema:
 				schema_node = root.add("Schema")
-				for schema_key, schema_value in first_version.schema.items():
-					schema_item = schema_node.add(schema_key)
-					if hasattr(schema_value, "type"):
-						self._add_node(schema_item, "Type", schema_value.type)
-					if hasattr(schema_value, "properties"):
-						props_node = schema_item.add("Properties")
-						for prop_name, prop_value in schema_value.properties.items():
-							prop_node = props_node.add(prop_name)
-							self._add_node(prop_node, "Type", prop_value.type)
+				openapi = first_version.openAPIV3Schema.openAPIV3Schema
+				self.add_openapi_node(schema_node, "Schema", openapi)
 
 			# Add selectable fields
 			if first_version.selectableFields:
@@ -83,6 +76,29 @@ class CRDVisApp(App):
 	def _add_node(self, parent: TreeNode, key: str, value: str) -> TreeNode:
 		"""Helper method to add a key-value node to the tree."""
 		return parent.add(f"{key}: {value}")
+
+	def _add_leaf_node(self, parent: TreeNode, key: str, value: str) -> None:
+		"""Helper method to add a non-expandable key-value node to the tree."""
+		# Simply add the node without returning it, so no children can be added
+		parent.add_leaf(f"{key}: {value}")
+
+	def add_openapi_node(self, parent_node, name, openapi_node):
+		match openapi_node:
+			case OpenAPIV3Schema():
+				k = f"{name}: {openapi_node.type}"
+
+				if openapi_node.type == "object":
+					schema_item = parent_node.add(k)
+				else:
+					schema_item = parent_node.add_leaf(k)
+
+				if openapi_node.properties:
+					for prop_name, prop in openapi_node.properties.items():
+						self.add_openapi_node(schema_item, prop_name, prop)
+
+			case OpenAPIV3Union():
+				k = f"{name}: Union"
+				schema_item = parent_node.add(k)
 
 
 def main():

@@ -1,16 +1,23 @@
+from __future__ import annotations
+
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel
-
-
-class SchemaProperty(BaseModel):
-	type: str
-	properties: Optional[Dict[str, "SchemaProperty"]] = None
+from pydantic import BaseModel, Field
 
 
 class OpenAPIV3Schema(BaseModel):
 	type: str
-	properties: Dict[str, SchemaProperty]
+	description: Optional[str] = None
+	properties: Optional[Dict[str, OpenAPIV3Schema | OpenAPIV3Union]] = None
+
+
+class OpenAPIV3Union(BaseModel):
+	anyOf: List[OpenAPIV3Schema | OpenAPIV3Union]
+	description: Optional[str] = None
+
+
+class Schema(BaseModel):
+	openAPIV3Schema: OpenAPIV3Schema
 
 
 class SelectableField(BaseModel):
@@ -27,7 +34,7 @@ class CRDVersion(BaseModel):
 	name: str
 	served: bool
 	storage: bool
-	schema: Dict[str, OpenAPIV3Schema]
+	openAPIV3Schema: Optional[Schema] = Field(alias="schema", default=None)
 	selectableFields: Optional[List[SelectableField]] = None
 	additionalPrinterColumns: Optional[List[AdditionalPrinterColumn]] = None
 
