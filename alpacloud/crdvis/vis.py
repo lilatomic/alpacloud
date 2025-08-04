@@ -11,7 +11,7 @@ import yaml
 from rich.text import Text
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.containers import Vertical
+from textual.containers import Horizontal, Vertical
 from textual.screen import ModalScreen
 from textual.widgets import Button, Footer, Header, Input, Label, Static, Tree
 from textual.widgets.tree import TreeNode
@@ -44,14 +44,12 @@ class SearchMode(enum.Enum):
 
 class OpenDialog(ModalScreen):
 	BINDINGS = [
-		("escape", "cancel", "Cancel"),
-		("enter", "submit", "Submit"),
+		Binding("escape", "cancel", "Cancel", priority=True),
+		Binding("enter", "submit", "Submit", priority=True),
 	]
 
 	CSS = """
 	#open-dialog {
-		width: 60%;
-		height: auto;
 		border: thick $background 80%;
 		background: $surface;
 		padding: 1 2;
@@ -63,17 +61,31 @@ class OpenDialog(ModalScreen):
 		yield Vertical(
 			Label("Open a CRD file"),
 			Input(placeholder="Enter the path to the CRD file"),
-			Button("Open", variant="primary", id="open-dialog-open"),
-			Button("Cancel", variant="warning", id="open-dialog-cancel"),
+			Horizontal(
+				Button("Open", variant="primary", id="open-dialog-open"),
+				Button("Cancel", variant="warning", id="open-dialog-cancel"),
+			),
 			id="open-dialog",
 		)
 
+	def _submit(self):
+		input_widget = self.query_one(Input)
+		self.dismiss(input_widget.value)
+
+	def _cancel(self):
+		self.dismiss(None)
+
+	def action_submit(self) -> None:
+		self._submit()
+
+	def action_cancel(self) -> None:
+		self._cancel()
+
 	def on_button_pressed(self, event: Button.Pressed) -> None:
 		if event.button.id == "open-dialog-open":
-			input_widget = self.query_one(Input)
-			self.dismiss(input_widget.value)
+			self._submit()
 		elif event.button.id == "open-dialog-cancel":
-			self.dismiss(None)
+			self._cancel()
 
 
 class CRDVisApp(App):
