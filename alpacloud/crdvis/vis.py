@@ -7,11 +7,10 @@ from typing import Callable
 
 import yaml
 from textual.app import App, ComposeResult
-from textual.widgets import Footer, Header, Tree, TextArea, Input
+from textual.widgets import Footer, Header, Input, TextArea, Tree
 from textual.widgets.tree import TreeNode
 
-from alpacloud.crdvis.models import CustomResourceDefinition, OpenAPIV3, OpenAPIV3Array, OpenAPIV3Enum, OpenAPIV3Schema, OpenAPIV3Union, OpenAPIV3Dict
-
+from alpacloud.crdvis.models import CustomResourceDefinition, OpenAPIV3, OpenAPIV3Array, OpenAPIV3Dict, OpenAPIV3Enum, OpenAPIV3Schema, OpenAPIV3Union
 
 
 class FindBox(Input):
@@ -72,7 +71,6 @@ class CRDVisApp(App):
 				text_area.load_text("")
 		else:
 			text_area.load_text("")
-
 
 	def on_mount(self) -> None:
 		"""Load the CRD and populate the tree when the app starts."""
@@ -160,9 +158,9 @@ class CRDVisApp(App):
 				return "Enum"
 			case OpenAPIV3Array():
 				if self.is_simple(openapi_node.items):
-					return f"Array\[{self.find_typename(openapi_node.items)}]"
+					return rf"Array\[{self.find_typename(openapi_node.items)}]"
 				else:
-					return "Array\[object]"
+					return r"Array\[object]"
 			case OpenAPIV3Dict():
 				return "Dict"
 			case _:
@@ -210,7 +208,7 @@ class CRDVisApp(App):
 
 			case OpenAPIV3Dict():
 				if self.is_simple(openapi_node):
-					k = f"{name}: {self.find_typename(openapi_node)}\[string, {self.find_typename(openapi_node.additionalProperties)}]"
+					k = rf"{name}: {self.find_typename(openapi_node)}\[string, {self.find_typename(openapi_node.additionalProperties)}]"
 					schema_item = parent_node.add_leaf(k)
 
 				else:
@@ -218,10 +216,8 @@ class CRDVisApp(App):
 					schema_item = parent_node.add(k)
 					self.add_openapi_node(schema_item, "Items", openapi_node.additionalProperties)
 
-
 			case _:
 				raise TypeError(f"Unexpected type: {type(openapi_node)}")
-
 
 		schema_item.data = openapi_node
 		return schema_item
@@ -237,32 +233,38 @@ class CRDVisApp(App):
 
 		tree.select_node(node)
 
-
 	async def action_goto(self) -> None:
 		findbox = self.query_one(FindBox)
 		findbox.focus()
 
 	async def do_find(self, s: str):
-		found = self.find_node_start(s)
-		if found:
-			await self._focus_to_node(found)
-			self.notify(f"Found node with label '{found.label}'.")
-		else:
+		all_results = self.find_all_nodes(s, self.query_one(Tree).root)
+
+		if not all_results:
 			self.notify("No node found with the given label.")
 
-	def find_node_start(self, s: str) -> TreeNode | None:
-		return self.find_node(s, self.query_one(Tree).root)
+		cursor = self.query_one(Tree).cursor_node
+		try:
+			current = all_results.index(cursor)
+		except ValueError:
+			current = -1
+		found = all_results[(current + 1) % len(all_results)]
+		await self._focus_to_node(found)
 
-	def find_node(self, s: str, cursor: TreeNode) -> TreeNode | None:
+	def find_all_nodes(self, s: str, cursor: TreeNode) -> list[TreeNode]:
 		"""Find a node in the tree by its label."""
+		found = []
+
 		if s in cursor.label:
-			return cursor
-		else:
-			for child in cursor.children:
-				node = self.find_node(s, child)
-				if node:
-					return node
-			return None
+			found.append(cursor)
+
+		for child in cursor.children:
+			nodes = self.find_all_nodes(s, child)
+			if nodes:
+				found.extend(nodes)
+
+		return found
+
 
 def main():
 	"""Run the CRD Visualizer app."""
