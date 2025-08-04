@@ -148,10 +148,10 @@ class CRDVisApp(App):
 		current_dir = os.getcwd()
 		sample_crd_path = os.path.join(current_dir, "alpacloud", "crdvis", "test_resources", "podmonitor.yaml")
 
-		crd = CustomResourceDefinition.parse_obj(self.read_path("file://" + sample_crd_path))
+		crd = self.read_path("file://" + sample_crd_path)
 		self.load_crd(crd)
 
-	def read_path(self, path: str) -> str | None:
+	def read_path(self, path: str) -> CustomResourceDefinition:
 		"""
 		Read a path-like object to fetch a CRD.
 		"""
@@ -166,7 +166,8 @@ class CRDVisApp(App):
 		else:
 			content = path
 
-		return yaml.safe_load(content)
+		doc = yaml.safe_load(content)
+		return CustomResourceDefinition.model_validate(doc)
 
 	def load_crd(self, crd: CustomResourceDefinition) -> None:
 		# Get the first CRD version
@@ -175,6 +176,7 @@ class CRDVisApp(App):
 
 			# Get the tree widget and populate it
 			tree = self.query_one(Tree)
+			tree.clear()
 			root = tree.root
 			root.label = f"CRD Version: {first_version.name}"
 
@@ -333,6 +335,7 @@ class CRDVisApp(App):
 		def o(path: str):
 			if path:
 				self.notify(f"Selected path: {path}")
+				self.load_crd(self.read_path(path))
 
 		await self.push_screen(dialog, o)
 
