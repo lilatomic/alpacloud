@@ -2,11 +2,13 @@
 CRDVis visualization module for displaying Kubernetes CRD resources.
 """
 
+import enum
 import os
 from typing import Callable
 
 import yaml
 from textual.app import App, ComposeResult
+from textual.binding import Binding
 from textual.widgets import Footer, Header, Input, TextArea, Tree
 from textual.widgets.tree import TreeNode
 
@@ -14,14 +16,19 @@ from alpacloud.crdvis.models import CustomResourceDefinition, OpenAPIV3, OpenAPI
 
 
 class FindBox(Input):
-	BINDINGS = [("enter", "find", "Find")]
+	BINDINGS = [("enter", "search", "Search")]
 
 	def __init__(self, placeholder: str, id: str = "find-box", find_method: Callable = None) -> None:
 		self.find_method = find_method
 		super().__init__(placeholder, id=id)
 
-	async def action_find(self):
+	async def action_search(self):
 		await self.find_method(self.value)
+
+
+class SearchMode(enum.Enum):
+	find = "find"
+	goto = "goto"
 
 
 class CRDVisApp(App):
@@ -46,8 +53,11 @@ class CRDVisApp(App):
 	CSS_PATH = None  # We're not using custom CSS for this skeleton
 
 	BINDINGS = [
-		("ctrl+g", "goto", "goto"),
+		Binding("ctrl+g", "goto", "goto", priority=True),
+		Binding("ctrl+f", "find", "find", priority=True),
 	]
+
+	search_mode = SearchMode.find
 
 	def compose(self) -> ComposeResult:
 		"""Create child widgets for the app."""
@@ -235,6 +245,12 @@ class CRDVisApp(App):
 
 	async def action_goto(self) -> None:
 		findbox = self.query_one(FindBox)
+		self.search_mode = SearchMode.goto
+		findbox.focus()
+
+	async def action_find(self) -> None:
+		findbox = self.query_one(FindBox)
+		self.search_mode = SearchMode.find
 		findbox.focus()
 
 	async def do_find(self, s: str):
@@ -242,6 +258,7 @@ class CRDVisApp(App):
 
 		if not all_results:
 			self.notify("No node found with the given label.")
+			return
 
 		cursor = self.query_one(Tree).cursor_node
 		try:
@@ -255,7 +272,15 @@ class CRDVisApp(App):
 		"""Find a node in the tree by its label."""
 		found = []
 
-		if match_label(s, cursor.label):
+		match self.search_mode:
+			case SearchMode.find:
+				search_predicate = match_any
+			case SearchMode.goto:
+				search_predicate = match_label
+			case _:
+				raise TypeError(f"Invalid search mode: {self.search_mode}")
+
+		if search_predicate(cursor, s):
 			found.append(cursor)
 
 		for child in cursor.children:
@@ -266,9 +291,21 @@ class CRDVisApp(App):
 		return found
 
 
-def match_label(label: str, s: str) -> bool:
+def match_label(node: TreeNode[OpenAPIV3], s: str) -> bool:
 	"""Check if a label matches a substring."""
-	return s.lower() in label.lower()
+	return s.lower() in node.label.plain.lower()
+
+
+def match_any(node: TreeNode[OpenAPIV3], s: str) -> bool:
+	"""Check if a given OpenAPI node matches a substring."""
+	if match_label(node, s):
+		return True
+	else:
+		data = node.data
+		if hasattr(data, "description"):
+			if data.description is not None:
+				return s.lower() in data.description.lower()
+	return False
 
 
 def main():
