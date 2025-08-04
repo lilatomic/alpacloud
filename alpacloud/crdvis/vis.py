@@ -10,6 +10,7 @@ import yaml
 from rich.text import Text
 from textual.app import App, ComposeResult
 from textual.binding import Binding
+from textual.containers import Vertical
 from textual.widgets import Footer, Header, Input, Static, Tree
 from textual.widgets.tree import TreeNode
 
@@ -44,17 +45,22 @@ class CRDVisApp(App):
 
 	TITLE = "CRD Visualizer"
 	CSS = """
+	Screen {
+		overflow-y: auto;
+	}
+	.derscription-box {
+        height: 25%;	
+        overflow-y: auto;
+	}
     .description-area {
-        height: 25%;
         background: $surface;
         color: $text;
         border-top: tall $primary;
         padding: 1 2;
     }
 	.find-box {
-		border: none;
+		border-top: none;
 		padding: 0 0;
-		dock: bottom;
 	}
     """
 
@@ -71,7 +77,7 @@ class CRDVisApp(App):
 		"""Create child widgets for the app."""
 		yield Header()
 		yield Tree("CRD Version")
-		yield Static(classes="description-area")
+		yield Vertical(Static(classes="description-area"), classes="derscription-box")
 		yield FindBox(placeholder="Find...", id="find-box", find_method=self.do_find)
 		yield Footer()
 
@@ -90,6 +96,12 @@ class CRDVisApp(App):
 				text += description
 			if pattern := getattr(data, "pattern", None):
 				text += Text(f"\nPattern: {pattern}", style="bold")
+
+			# add enum values
+			if isinstance(data, OpenAPIV3Enum):
+				text += Text("\nValues:", style="bold")
+				for enum_value in data.enum:
+					text += Text(f"\n- {enum_value}")
 
 		text_area.update(text)
 
@@ -224,8 +236,6 @@ class CRDVisApp(App):
 			case OpenAPIV3Enum():
 				k = f"{name}: {self.find_typename(openapi_node)}"
 				schema_item = parent_node.add(k)
-				for enum_value in openapi_node.enum:
-					self._add_leaf_node(schema_item, "Value", enum_value)
 
 			case OpenAPIV3Dict():
 				if self.is_simple(openapi_node):
