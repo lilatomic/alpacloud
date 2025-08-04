@@ -6,7 +6,7 @@ import os
 
 import yaml
 from textual.app import App, ComposeResult
-from textual.widgets import Footer, Header, Tree
+from textual.widgets import Footer, Header, Tree, TextArea
 from textual.widgets.tree import TreeNode
 
 from alpacloud.crdvis.models import CustomResourceDefinition, OpenAPIV3, OpenAPIV3Array, OpenAPIV3Enum, OpenAPIV3Schema, OpenAPIV3Union, OpenAPIV3Dict
@@ -16,13 +16,41 @@ class CRDVisApp(App):
 	"""A Textual app to visualize Kubernetes CRDs."""
 
 	TITLE = "CRD Visualizer"
+	CSS = """
+    .description-area {
+        height: 25%;
+        dock: bottom;
+        background: $surface;
+        color: $text;
+        border-top: tall $primary;
+        padding: 1 2;
+    }
+    """
+
 	CSS_PATH = None  # We're not using custom CSS for this skeleton
 
 	def compose(self) -> ComposeResult:
 		"""Create child widgets for the app."""
 		yield Header()
 		yield Tree("CRD Version")
+		yield TextArea(read_only=True, classes="description-area")
 		yield Footer()
+
+	def on_tree_node_selected(self, event: Tree.NodeSelected) -> None:
+		"""Handle node selection in the tree."""
+		text_area = self.query_one(TextArea)
+		node = event.node
+		# Check if this is an OpenAPI node that might have a description
+		if hasattr(node, "data"):
+			data = node.data
+			if hasattr(data, "description"):
+				description = node.data.description or ""
+				text_area.load_text(description)
+			else:
+				text_area.load_text("")
+		else:
+			text_area.load_text("")
+
 
 	def on_mount(self) -> None:
 		"""Load the CRD and populate the tree when the app starts."""
@@ -172,6 +200,8 @@ class CRDVisApp(App):
 			case _:
 				raise TypeError(f"Unexpected type: {type(openapi_node)}")
 
+
+		schema_item.data = openapi_node
 		return schema_item
 
 
