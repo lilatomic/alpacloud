@@ -6,6 +6,7 @@ import enum
 import os
 from typing import Callable
 
+import requests
 import yaml
 from rich.text import Text
 from textual.app import App, ComposeResult
@@ -147,12 +148,27 @@ class CRDVisApp(App):
 		current_dir = os.getcwd()
 		sample_crd_path = os.path.join(current_dir, "alpacloud", "crdvis", "test_resources", "podmonitor.yaml")
 
-		# Load and deserialize the CRD
-		with open(sample_crd_path, "r") as f:
-			crd_dict = yaml.safe_load(f)
+		crd = CustomResourceDefinition.parse_obj(self.read_path("file://" + sample_crd_path))
+		self.load_crd(crd)
 
-		crd = CustomResourceDefinition.parse_obj(crd_dict)
+	def read_path(self, path: str) -> str | None:
+		"""
+		Read a path-like object to fetch a CRD.
+		"""
+		if path.startswith("http://") or path.startswith("https://"):
+			response = requests.get(path, timeout=30)
+			response.raise_for_status()
+			content = response.text
+		elif path.startswith("file://") or os.path.exists(path):
+			disk_path = path.rsplit("://", 1)[-1]
+			with open(disk_path, "r", encoding="utf-8") as f:
+				content = f.read()
+		else:
+			content = path
 
+		return yaml.safe_load(content)
+
+	def load_crd(self, crd: CustomResourceDefinition) -> None:
 		# Get the first CRD version
 		if crd.spec.versions:
 			first_version = crd.spec.versions[0]
@@ -313,12 +329,12 @@ class CRDVisApp(App):
 	async def action_open_dialog(self) -> None:
 		"""Open the file open dialog."""
 		dialog = OpenDialog()
+
 		def o(path: str):
 			if path:
 				self.notify(f"Selected path: {path}")
 
 		await self.push_screen(dialog, o)
-
 
 	async def do_find(self, s: str):
 		all_results = self.find_all_nodes(s, self.query_one(Tree).root)
