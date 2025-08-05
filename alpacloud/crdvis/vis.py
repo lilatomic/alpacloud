@@ -13,11 +13,53 @@ from rich.text import Text
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Container, Horizontal, Vertical
+from textual.reactive import reactive
 from textual.screen import ModalScreen
+from textual.widget import Widget
 from textual.widgets import Button, Footer, Header, Input, Label, Static, Tree
 from textual.widgets.tree import TreeNode
 
 from alpacloud.crdvis.models import CustomResourceDefinition, OpenAPIV3, OpenAPIV3Array, OpenAPIV3Dict, OpenAPIV3Enum, OpenAPIV3Schema, OpenAPIV3Union
+
+
+class InfoBox(Widget):
+	crd = reactive(None)
+
+	def __init__(self) -> None:
+		super().__init__()
+
+	DEFAULT_CSS = """\
+	InfoBox {
+		width: 100%;
+		height: auto;
+		margin: 0 0 0 0;
+	}
+	InfoBox > Horizontal {
+		width: 100%;
+		height: auto;
+	}
+	InfoBox > Horizontal > Container {
+		height: auto;
+	}
+	.left {
+		align: left middle;
+	}
+	.right {
+		align: right middle;
+	}
+	"""
+
+	def watch_crd(self, crd: CustomResourceDefinition) -> None:
+		self.remove_children()
+		if not crd:
+			self.mount(Label("No CRD selected"))
+		else:
+			self.mount(
+				Horizontal(
+					Container(Label(crd.spec.names.kind), classes="left"),
+					Container(Label(crd.spec.group), classes="right"),
+				)
+			)
 
 
 class FindBox(Input):
@@ -53,7 +95,7 @@ class OpenDialog(ModalScreen):
 	OpenDialog {
 		align: center middle;
 	}
-	
+
 	OpenDialog > Container {
 		width: auto;
 		height: auto;
@@ -61,28 +103,28 @@ class OpenDialog(ModalScreen):
 		background: $surface;
 		margin: 1;
 	}
-	
+
 	OpenDialog > Container > Label {
 		width: 100%;
 		content-align-horizontal: center;
 		margin: 1;
 	}
-	
+
 	OpenDialog > Container > Input {
 		width: 100%;
 		content-align-horizontal: center;
 		margin: 1;
 	}
-	
+
 	OpenDialog > Container > Horizontal {
 		width: auto;
 		height: auto;
 		margin: 1 1;
 	}
-	
+
 	OpenDialog > Container > Horizontal > Button {
 		margin: 1 1;
-	}	
+	}
 	"""
 
 	def compose(self) -> ComposeResult:
@@ -122,7 +164,7 @@ class CRDVisApp(App):
 		overflow-y: auto;
 	}
 	.derscription-box {
-        height: 25%;	
+        height: 25%;
         overflow-y: auto;
 	}
     .description-area {
@@ -146,10 +188,12 @@ class CRDVisApp(App):
 	]
 
 	search_mode = SearchMode.find
+	crd: CustomResourceDefinition = None
 
 	def compose(self) -> ComposeResult:
 		"""Create child widgets for the app."""
 		yield Header()
+		yield InfoBox()
 		yield Tree("CRD Version")
 		yield Vertical(Static(classes="description-area"), classes="derscription-box")
 		yield FindBox(placeholder="Find...", id="find-box", find_method=self.do_find)
@@ -213,6 +257,9 @@ class CRDVisApp(App):
 		return CustomResourceDefinition.model_validate(doc)
 
 	def load_crd(self, crd: CustomResourceDefinition) -> None:
+		self.crd = crd
+		self.query_one(InfoBox).crd = crd
+
 		# Get the first CRD version
 		if crd.spec.versions:
 			first_version = crd.spec.versions[0]
@@ -445,8 +492,7 @@ def match_any(node: TreeNode[OpenAPIV3], s: str) -> bool:
 
 def main():
 	"""Run the CRD Visualizer app."""
-	app = CRDVisApp()
-	app.run()
+	CRDVisApp().run()
 
 
 if __name__ == "__main__":
