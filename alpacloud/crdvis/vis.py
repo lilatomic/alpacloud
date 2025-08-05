@@ -4,6 +4,9 @@ CRDVis visualization module for displaying Kubernetes CRD resources.
 
 import enum
 import os
+import shutil
+import subprocess
+from textwrap import dedent
 from typing import Any, Callable
 from urllib.parse import urlparse
 
@@ -16,7 +19,7 @@ from textual.containers import Container, Horizontal, Vertical
 from textual.reactive import Reactive, reactive
 from textual.screen import ModalScreen
 from textual.widget import Widget
-from textual.widgets import Button, Footer, Header, Input, Label, Static, Tree
+from textual.widgets import Button, Footer, Header, Input, Label, Static, TextArea, Tree
 from textual.widgets.tree import TreeNode
 
 from alpacloud.crdvis.models import CustomResourceDefinition, OpenAPIV3, OpenAPIV3Array, OpenAPIV3Dict, OpenAPIV3Enum, OpenAPIV3Schema, OpenAPIV3Union
@@ -119,8 +122,10 @@ class OpenDialog(ModalScreen):
 		margin: 1;
 	}
 
-	OpenDialog > Container > Input {
+	OpenDialog > Container > TextArea {
 		width: 100%;
+		height: auto;
+		max-height: 40%;
 		content-align-horizontal: center;
 		margin: 1;
 	}
@@ -140,15 +145,24 @@ class OpenDialog(ModalScreen):
 		"""Create child widgets for the modal."""
 		with Container():
 			yield Label("Open a CRD file")
-			yield Input(placeholder="Enter the path to the CRD file")
+			yield Static(
+				dedent("""\
+				supported sources:
+				- `file://` : a file (will also work for base paths that exist on disk)
+				- `http://` | `https://` : a URL to a CRD on the internet. (for GitHub, will automatically navigate to the raw file)
+				- `kubectl://` : a CRD in your cluster
+				- raw : just copypaste the CRD
+			""")
+			)
+			yield TextArea()
 			with Horizontal():
 				yield Button("Open", variant="primary", id="open-dialog-open")
 				yield Button("Cancel", variant="warning", id="open-dialog-cancel")
 
 	def _submit(self):
 		"""Return the target"""
-		input_widget = self.query_one(Input)
-		self.dismiss(input_widget.value)
+		input_widget = self.query_one(TextArea)
+		self.dismiss(input_widget.text)
 
 	def _cancel(self):
 		"""Cancel the dialog"""
@@ -242,9 +256,10 @@ class CRDVisApp(App):
 		sample_crd_path = os.path.join(current_dir, "alpacloud", "crdvis", "test_resources", "podmonitor.yaml")
 
 		crd = self.read_path("file://" + sample_crd_path)
-		self.load_crd(crd)
+		if crd:
+			self.load_crd(crd)
 
-	def read_path(self, path: str) -> CustomResourceDefinition:
+	def read_path(self, path: str) -> CustomResourceDefinition | None:
 		"""
 		Read a path-like object to fetch a CRD.
 		"""
@@ -256,15 +271,45 @@ class CRDVisApp(App):
 				req.params["raw"] = "true"
 
 			response = requests.Session().send(req.prepare(), timeout=30)
-			response.raise_for_status()
+
+			if not response.ok:
+				self.notify(f"Failed to fetch CRD from {path}: {response.status_code}", severity="error")
+				return None
 			content = response.text
 		elif path.startswith("file://") or os.path.exists(path):
 			disk_path = path.rsplit("://", 1)[-1]
+			if not os.path.exists(disk_path):
+				self.notify(f"File not found: {disk_path}", severity="error")
+				return None
+
 			with open(disk_path, "r", encoding="utf-8") as f:
 				content = f.read()
+
+		elif path.startswith("kubectl://"):
+			kubectl_crd = path.rsplit("://", 1)[-1]
+			kubectl_exe = shutil.which("kubectl")
+			if not kubectl_exe:
+				self.notify("kubectl is not installed.", severity="error")
+				return None
+
+			try:
+				content = subprocess.check_output([kubectl_exe, "get", "-o", "yaml", "crd", kubectl_crd], timeout=30).decode("utf-8")
+			except subprocess.SubprocessError as e:
+				try:
+					crds = subprocess.check_output([kubectl_exe, "get", "crd"], timeout=30)
+					if crds:
+						self.notify(f"crd is not available in cluster {kubectl_crd}", severity="error")
+					else:
+						self.notify(f"Failed to fetch CRDs {kubectl_crd}: {e}", severity="error")
+
+				except subprocess.SubprocessError as e:
+					self.notify(f"Failed to fetch CRDs {kubectl_crd}: {e}", severity="error")
+				return None
 		else:
 			content = path
 
+		if not content:
+			return None
 		doc = yaml.safe_load(content)
 		return CustomResourceDefinition.model_validate(doc)
 
@@ -440,7 +485,9 @@ class CRDVisApp(App):
 
 		def o(path: Any) -> None:
 			if path and isinstance(path, str):
-				self.load_crd(self.read_path(path))
+				crd = self.read_path(path)
+				if crd:
+					self.load_crd(crd)
 
 		await self.push_screen(dialog, o)
 
