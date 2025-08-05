@@ -5,6 +5,7 @@ CRDVis visualization module for displaying Kubernetes CRD resources.
 import enum
 import os
 from typing import Callable
+from urllib.parse import urlparse
 
 import requests
 import yaml
@@ -192,7 +193,13 @@ class CRDVisApp(App):
 		Read a path-like object to fetch a CRD.
 		"""
 		if path.startswith("http://") or path.startswith("https://"):
-			response = requests.get(path, timeout=30)
+			req = requests.Request("GET", path)
+
+			url = urlparse(req.url)
+			if url.netloc == "github.com":
+				req.params["raw"] = "true"
+
+			response = requests.Session().send(req.prepare(), timeout=30)
 			response.raise_for_status()
 			content = response.text
 		elif path.startswith("file://") or os.path.exists(path):
