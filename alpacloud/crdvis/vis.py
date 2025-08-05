@@ -4,7 +4,7 @@ CRDVis visualization module for displaying Kubernetes CRD resources.
 
 import enum
 import os
-from typing import Callable
+from typing import Any, Callable
 from urllib.parse import urlparse
 
 import requests
@@ -13,7 +13,7 @@ from rich.text import Text
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Container, Horizontal, Vertical
-from textual.reactive import reactive
+from textual.reactive import Reactive, reactive
 from textual.screen import ModalScreen
 from textual.widget import Widget
 from textual.widgets import Button, Footer, Header, Input, Label, Static, Tree
@@ -23,7 +23,9 @@ from alpacloud.crdvis.models import CustomResourceDefinition, OpenAPIV3, OpenAPI
 
 
 class InfoBox(Widget):
-	crd = reactive(None)
+	"""A widget to display information about the selected CRD."""
+
+	crd: Reactive[CustomResourceDefinition | None] = reactive(None)
 
 	def __init__(self) -> None:
 		super().__init__()
@@ -50,6 +52,7 @@ class InfoBox(Widget):
 	"""
 
 	def watch_crd(self, crd: CustomResourceDefinition) -> None:
+		"""Update the info box when the CRD changes."""
 		self.remove_children()
 		if not crd:
 			self.mount(Label("No CRD selected"))
@@ -63,6 +66,8 @@ class InfoBox(Widget):
 
 
 class FindBox(Input):
+	"""A widget to search for a node in the tree."""
+
 	BINDINGS = [
 		("enter", "search", "Search"),
 		Binding("ctrl+c", "clear", "clear", show=False),
@@ -81,11 +86,15 @@ class FindBox(Input):
 
 
 class SearchMode(enum.Enum):
+	"""How to search for fields in the CRD"""
+
 	find = "find"
 	goto = "goto"
 
 
 class OpenDialog(ModalScreen):
+	"""Modal to open a CRD from a variety of sources."""
+
 	BINDINGS = [
 		Binding("escape", "cancel", "Cancel", priority=True),
 		Binding("enter", "submit", "Submit", priority=True),
@@ -128,6 +137,7 @@ class OpenDialog(ModalScreen):
 	"""
 
 	def compose(self) -> ComposeResult:
+		"""Create child widgets for the modal."""
 		with Container():
 			yield Label("Open a CRD file")
 			yield Input(placeholder="Enter the path to the CRD file")
@@ -136,10 +146,12 @@ class OpenDialog(ModalScreen):
 				yield Button("Cancel", variant="warning", id="open-dialog-cancel")
 
 	def _submit(self):
+		"""Return the target"""
 		input_widget = self.query_one(Input)
 		self.dismiss(input_widget.value)
 
 	def _cancel(self):
+		"""Cancel the dialog"""
 		self.dismiss(None)
 
 	def action_submit(self) -> None:
@@ -188,7 +200,7 @@ class CRDVisApp(App):
 	]
 
 	search_mode = SearchMode.find
-	crd: CustomResourceDefinition = None
+	crd: CustomResourceDefinition | None = None
 
 	def compose(self) -> ComposeResult:
 		"""Create child widgets for the app."""
@@ -257,6 +269,7 @@ class CRDVisApp(App):
 		return CustomResourceDefinition.model_validate(doc)
 
 	def load_crd(self, crd: CustomResourceDefinition) -> None:
+		"""Load the CRD into the app."""
 		self.crd = crd
 		self.query_one(InfoBox).crd = crd
 
@@ -308,6 +321,7 @@ class CRDVisApp(App):
 		parent.add_leaf(f"{key}: {value}")
 
 	def is_simple(self, openapi_node: OpenAPIV3) -> bool:
+		"""Whether the given OpenAPI node is a simple (primitive) type whose representation we should inline"""
 		match openapi_node:
 			case OpenAPIV3Schema():
 				return openapi_node.type in ("string", "integer", "number", "boolean")
@@ -323,6 +337,7 @@ class CRDVisApp(App):
 				raise TypeError(f"Unexpected type: {type(openapi_node)}")
 
 	def find_typename(self, openapi_node: OpenAPIV3) -> str:
+		"""Identify what we should use for the type"""
 		match openapi_node:
 			case OpenAPIV3Schema():
 				if openapi_node.format:
@@ -344,6 +359,7 @@ class CRDVisApp(App):
 				raise TypeError(f"Unexpected type: {type(openapi_node)}")
 
 	def add_openapi_node(self, parent_node, name, openapi_node):
+		"""Add an OpenAPI node to the tree"""
 		match openapi_node:
 			case OpenAPIV3Schema():
 				k = f"{name}: {self.find_typename(openapi_node)}"
@@ -422,14 +438,24 @@ class CRDVisApp(App):
 		"""Open the file open dialog."""
 		dialog = OpenDialog()
 
-		def o(path: str):
-			if path:
-				self.notify(f"Selected path: {path}")
+		def o(path: Any) -> None:
+			if path and isinstance(path, str):
 				self.load_crd(self.read_path(path))
 
 		await self.push_screen(dialog, o)
 
 	async def do_find(self, s: str):
+		"""
+		Implementation of the search functionality.
+
+		The search proceeds in steps:
+		- find all matches
+		- find where our current cursor is
+		- focus to the next match
+
+		This allows mashing the find button to get the next result.
+		It _could_ allow for finding from the current position, but it does not.
+		"""
 		all_results = self.find_all_nodes(s, self.query_one(Tree).root)
 
 		if not all_results:
