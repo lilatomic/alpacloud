@@ -12,7 +12,7 @@ files(
 )
 
 docker_image(
-    name="docker",
-    repository="cmp",
-    image_tags=["latesttest"],
+	name="docker",
+	repository="cmp",
+	image_tags=["latesttest"],
 )
