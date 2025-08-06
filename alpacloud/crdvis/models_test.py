@@ -1,6 +1,7 @@
+import pytest
 import yaml
 
-from alpacloud.crdvis.models import CustomResourceDefinition
+from alpacloud.crdvis.models import CustomResourceDefinition, OpenAPIV3Array, OpenAPIV3Dict, OpenAPIV3Enum, OpenAPIV3Schema, OpenAPIV3Union, is_simple
 
 
 class TestCustomResourceDefinition:
@@ -85,3 +86,59 @@ spec:
 		assert version.additionalPrinterColumns[1].jsonPath == ".spec.size"
 		assert version.additionalPrinterColumns[1].name == "Size"
 		assert version.additionalPrinterColumns[1].type == "string"
+
+
+class TestIsSimple:
+	"""Test cases for the is_simple function."""
+
+	def test_schema_simple_types(self):
+		"""Test that OpenAPIV3Schema with simple types returns True."""
+		for simple_type in ["string", "integer", "number", "boolean"]:
+			schema = OpenAPIV3Schema(type=simple_type)
+			assert is_simple(schema) is True
+
+	def test_schema_non_simple_types(self):
+		"""Test that OpenAPIV3Schema with non-simple types returns False."""
+		for non_simple_type in ["object", "array"]:
+			schema = OpenAPIV3Schema(type=non_simple_type)
+			assert is_simple(schema) is False
+
+	def test_union_all_simple(self):
+		"""Test that OpenAPIV3Union with all simple elements returns True."""
+		union = OpenAPIV3Union(anyOf=[OpenAPIV3Schema(type="string"), OpenAPIV3Schema(type="integer")])
+		assert is_simple(union) is True
+
+	def test_union_some_non_simple(self):
+		"""Test that OpenAPIV3Union with some non-simple elements returns False."""
+		union = OpenAPIV3Union(anyOf=[OpenAPIV3Schema(type="string"), OpenAPIV3Schema(type="object")])
+		assert is_simple(union) is False
+
+	def test_enum_always_false(self):
+		"""Test that OpenAPIV3Enum always returns False."""
+		enum = OpenAPIV3Enum(enum=["value1", "value2"])
+		assert is_simple(enum) is False
+
+	def test_array_simple_items(self):
+		"""Test that OpenAPIV3Array with simple items returns True."""
+		array = OpenAPIV3Array(items=OpenAPIV3Schema(type="string"))
+		assert is_simple(array) is True
+
+	def test_array_non_simple_items(self):
+		"""Test that OpenAPIV3Array with non-simple items returns False."""
+		array = OpenAPIV3Array(items=OpenAPIV3Schema(type="object"))
+		assert is_simple(array) is False
+
+	def test_dict_simple_properties(self):
+		"""Test that OpenAPIV3Dict with simple additionalProperties returns True."""
+		dict_obj = OpenAPIV3Dict(additionalProperties=OpenAPIV3Schema(type="string"))
+		assert is_simple(dict_obj) is True
+
+	def test_dict_non_simple_properties(self):
+		"""Test that OpenAPIV3Dict with non-simple additionalProperties returns False."""
+		dict_obj = OpenAPIV3Dict(additionalProperties=OpenAPIV3Schema(type="object"))
+		assert is_simple(dict_obj) is False
+
+	def test_invalid_type(self):
+		"""Test that an invalid type raises TypeError."""
+		with pytest.raises(TypeError):
+			is_simple("not a valid OpenAPIV3 type")
