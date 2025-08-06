@@ -329,13 +329,14 @@ class CRDVisApp(App):
 			root.label = f"CRD Version: {first_version.name}"
 
 			# Add basic information (non-expandable)
-			self._add_leaf_node(root, "Name", first_version.name)
-			self._add_leaf_node(root, "Served", str(first_version.served))
-			self._add_leaf_node(root, "Storage", str(first_version.storage))
+			root.add_leaf(f"Name: {first_version.name}")
+			value = str(first_version.served)
+			root.add_leaf(f"Served: {value}")
+			value1 = str(first_version.storage)
+			root.add_leaf(f"Storage: {value1}")
 
 			# Add schema information
 			if first_version.openAPIV3Schema:
-				# schema_node = root.add("Schema")
 				openapi = first_version.openAPIV3Schema.openAPIV3Schema
 				self.add_openapi_node(root, "Schema", openapi)
 
@@ -343,27 +344,18 @@ class CRDVisApp(App):
 			if first_version.selectableFields:
 				fields_node = root.add("Selectable Fields")
 				for field in first_version.selectableFields:
-					self._add_node(fields_node, "JsonPath", field.jsonPath)
+					fields_node.add(f"JsonPath: {field.jsonPath}")
 
 			# Add printer columns
 			if first_version.additionalPrinterColumns:
 				columns_node = root.add("Additional Printer Columns")
 				for column in first_version.additionalPrinterColumns:
 					column_node = columns_node.add(column.name)
-					self._add_node(column_node, "JsonPath", column.jsonPath)
-					self._add_node(column_node, "Type", column.type)
+					column_node.add(f"JsonPath: {column.jsonPath}")
+					column_node.add(f"Type: {column.type}")
 
 			# Expand the tree
 			root.expand()
-
-	def _add_node(self, parent: TreeNode, key: str, value: str) -> TreeNode:
-		"""Helper method to add a key-value node to the tree."""
-		return parent.add(f"{key}: {value}")
-
-	def _add_leaf_node(self, parent: TreeNode, key: str, value: str) -> None:
-		"""Helper method to add a non-expandable key-value node to the tree."""
-		# Simply add the node without returning it, so no children can be added
-		parent.add_leaf(f"{key}: {value}")
 
 	def is_simple(self, openapi_node: OpenAPIV3) -> bool:
 		"""Whether the given OpenAPI node is a simple (primitive) type whose representation we should inline"""

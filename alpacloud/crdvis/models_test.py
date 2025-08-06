@@ -68,7 +68,7 @@ spec:
 		assert version.storage is True
 
 		# Check the schema
-		schema = version.schema["openAPIV3Schema"]
+		schema = version.openAPIV3Schema.openAPIV3Schema
 		assert schema.type == "object"
 		assert "spec" in schema.properties
 
