@@ -22,7 +22,7 @@ from textual.widget import Widget
 from textual.widgets import Button, Footer, Header, Input, Label, Static, TextArea, Tree
 from textual.widgets.tree import TreeNode
 
-from alpacloud.crdvis.models import CustomResourceDefinition, OpenAPIV3, OpenAPIV3Array, OpenAPIV3Dict, OpenAPIV3Enum, OpenAPIV3Schema, OpenAPIV3Union
+from alpacloud.crdvis.models import CustomResourceDefinition, OpenAPIV3, OpenAPIV3Array, OpenAPIV3Dict, OpenAPIV3Enum, OpenAPIV3Schema, OpenAPIV3Union, is_simple
 
 
 class InfoBox(Widget):
@@ -357,22 +357,6 @@ class CRDVisApp(App):
 			# Expand the tree
 			root.expand()
 
-	def is_simple(self, openapi_node: OpenAPIV3) -> bool:
-		"""Whether the given OpenAPI node is a simple (primitive) type whose representation we should inline"""
-		match openapi_node:
-			case OpenAPIV3Schema():
-				return openapi_node.type in ("string", "integer", "number", "boolean")
-			case OpenAPIV3Union():
-				return all(self.is_simple(e) for e in openapi_node.anyOf)
-			case OpenAPIV3Enum():
-				return False
-			case OpenAPIV3Array():
-				return self.is_simple(openapi_node.items)
-			case OpenAPIV3Dict():
-				return self.is_simple(openapi_node.additionalProperties)
-			case _:
-				raise TypeError(f"Unexpected type: {type(openapi_node)}")
-
 	def find_typename(self, openapi_node: OpenAPIV3) -> str:
 		"""Identify what we should use for the type"""
 		match openapi_node:
@@ -382,19 +366,19 @@ class CRDVisApp(App):
 				else:
 					return openapi_node.type
 			case OpenAPIV3Union():
-				if self.is_simple(openapi_node):
+				if is_simple(openapi_node):
 					return f"Union{[self.find_typename(e) for e in openapi_node.anyOf]}"
 				else:
 					return "Union"
 			case OpenAPIV3Enum():
 				return "Enum"
 			case OpenAPIV3Array():
-				if self.is_simple(openapi_node.items):
+				if is_simple(openapi_node.items):
 					return rf"Array\[{self.find_typename(openapi_node.items)}]"
 				else:
 					return r"Array\[object]"
 			case OpenAPIV3Dict():
-				if self.is_simple(openapi_node):
+				if is_simple(openapi_node):
 					return rf"Dict\[string, {self.find_typename(openapi_node.additionalProperties)}]"
 				else:
 					return "Dict"
@@ -416,7 +400,7 @@ class CRDVisApp(App):
 						self.add_openapi_node(schema_item, prop_name, prop)
 
 			case OpenAPIV3Union():
-				if self.is_simple(openapi_node):
+				if is_simple(openapi_node):
 					schema_item = parent_node.add_leaf(k)
 				else:
 					schema_item = parent_node.add(k)
@@ -424,7 +408,7 @@ class CRDVisApp(App):
 						self.add_openapi_node(schema_item, "Option", e)
 
 			case OpenAPIV3Array():
-				if self.is_simple(openapi_node.items):
+				if is_simple(openapi_node.items):
 					schema_item = parent_node.add_leaf(k)
 
 				else:
@@ -436,7 +420,7 @@ class CRDVisApp(App):
 				schema_item = parent_node.add(k)
 
 			case OpenAPIV3Dict():
-				if self.is_simple(openapi_node):
+				if is_simple(openapi_node):
 					schema_item = parent_node.add_leaf(k)
 
 				else:

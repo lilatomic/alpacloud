@@ -38,6 +38,22 @@ class OpenAPIV3Dict(BaseModel):
 
 OpenAPIV3 = Union[OpenAPIV3Array, OpenAPIV3Enum, OpenAPIV3Union, OpenAPIV3Dict, OpenAPIV3Schema]
 
+def is_simple(openapi_node: OpenAPIV3) -> bool:
+	"""Whether the given OpenAPI node is a simple (primitive) type whose representation we should inline"""
+	match openapi_node:
+		case OpenAPIV3Schema():
+			return openapi_node.type in ("string", "integer", "number", "boolean")
+		case OpenAPIV3Union():
+			return all(is_simple(e) for e in openapi_node.anyOf)
+		case OpenAPIV3Enum():
+			return False
+		case OpenAPIV3Array():
+			return is_simple(openapi_node.items)
+		case OpenAPIV3Dict():
+			return is_simple(openapi_node.additionalProperties)
+		case _:
+			raise TypeError(f"Unexpected type: {type(openapi_node)}")
+
 
 class Schema(BaseModel):
 	openAPIV3Schema: OpenAPIV3Schema
