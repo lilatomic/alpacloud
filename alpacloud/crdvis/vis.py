@@ -389,8 +389,11 @@ class CRDVisApp(App):
 					return openapi_node.format
 				else:
 					return openapi_node.type
-			# case OpenAPIV3Union():
-			# 	return "Union"
+			case OpenAPIV3Union():
+				if self.is_simple(openapi_node):
+					return f"Union{[self.find_typename(e) for e in openapi_node.anyOf]}"
+				else:
+					return "Union"
 			case OpenAPIV3Enum():
 				return "Enum"
 			case OpenAPIV3Array():
@@ -399,16 +402,18 @@ class CRDVisApp(App):
 				else:
 					return r"Array\[object]"
 			case OpenAPIV3Dict():
-				return "Dict"
+				if self.is_simple(openapi_node):
+					return rf"Dict\[string, {self.find_typename(openapi_node.additionalProperties)}]"
+				else:
+					return "Dict"
 			case _:
 				raise TypeError(f"Unexpected type: {type(openapi_node)}")
 
 	def add_openapi_node(self, parent_node, name, openapi_node):
 		"""Add an OpenAPI node to the tree"""
+		k = f"{name}: {self.find_typename(openapi_node)}"
 		match openapi_node:
 			case OpenAPIV3Schema():
-				k = f"{name}: {self.find_typename(openapi_node)}"
-
 				if openapi_node.type == "object":
 					schema_item = parent_node.add(k)
 				else:
@@ -420,16 +425,13 @@ class CRDVisApp(App):
 
 			case OpenAPIV3Union():
 				if self.is_simple(openapi_node):
-					k = f"{name}: Union{[self.find_typename(e) for e in openapi_node.anyOf]}"
 					schema_item = parent_node.add_leaf(k)
 				else:
-					k = f"{name}: Union"
 					schema_item = parent_node.add(k)
 					for e in openapi_node.anyOf:
 						self.add_openapi_node(schema_item, "Option", e)
 
 			case OpenAPIV3Array():
-				k = rf"{name}: {self.find_typename(openapi_node)}"
 				if self.is_simple(openapi_node.items):
 					schema_item = parent_node.add_leaf(k)
 
@@ -439,16 +441,13 @@ class CRDVisApp(App):
 					items_node.expand()
 
 			case OpenAPIV3Enum():
-				k = f"{name}: {self.find_typename(openapi_node)}"
 				schema_item = parent_node.add(k)
 
 			case OpenAPIV3Dict():
 				if self.is_simple(openapi_node):
-					k = rf"{name}: {self.find_typename(openapi_node)}\[string, {self.find_typename(openapi_node.additionalProperties)}]"
 					schema_item = parent_node.add_leaf(k)
 
 				else:
-					k = f"{name}: {self.find_typename(openapi_node)}"
 					schema_item = parent_node.add(k)
 					self.add_openapi_node(schema_item, "Items", openapi_node.additionalProperties)
 
