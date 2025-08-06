@@ -2,6 +2,8 @@
 CRDVis visualization module for displaying Kubernetes CRD resources.
 """
 
+from __future__ import annotations
+
 import enum
 import os
 import shutil
@@ -478,7 +480,7 @@ class CRDVisApp(App):
 		This allows mashing the find button to get the next result.
 		It _could_ allow for finding from the current position, but it does not.
 		"""
-		all_results = self.find_all_nodes(s, self.query_one(Tree).root)
+		all_results = find_all_nodes(s, self.query_one(Tree).root, self.search_mode)
 
 		if not all_results:
 			self.notify("No node found with the given label.")
@@ -495,27 +497,28 @@ class CRDVisApp(App):
 		found = all_results[(current + 1) % len(all_results)]
 		await self._focus_to_node(found)
 
-	def find_all_nodes(self, s: str, cursor: TreeNode) -> list[TreeNode]:
-		"""Find a node in the tree by its label."""
-		found = []
 
-		match self.search_mode:
-			case SearchMode.find:
-				search_predicate = match_any
-			case SearchMode.goto:
-				search_predicate = match_label
-			case _:
-				raise TypeError(f"Invalid search mode: {self.search_mode}")
+def find_all_nodes(s: str, cursor: TreeNode, search_mode: SearchMode) -> list[TreeNode]:
+	"""Find a node in the tree by its label."""
+	found = []
 
-		if search_predicate(cursor, s):
-			found.append(cursor)
+	match search_mode:
+		case SearchMode.find:
+			search_predicate = match_any
+		case SearchMode.goto:
+			search_predicate = match_label
+		case _:
+			raise TypeError(f"Invalid search mode: {search_mode}")
 
-		for child in cursor.children:
-			nodes = self.find_all_nodes(s, child)
-			if nodes:
-				found.extend(nodes)
+	if search_predicate(cursor, s):
+		found.append(cursor)
 
-		return found
+	for child in cursor.children:
+		nodes = find_all_nodes(s, child, search_mode)
+		if nodes:
+			found.extend(nodes)
+
+	return found
 
 
 def match_label(node: TreeNode[OpenAPIV3], s: str) -> bool:
