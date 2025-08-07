@@ -23,7 +23,7 @@ root_patterns = [
 [python]
 enable_resolves = true
 default_resolve = "tools"
-interpreter_constraints = [">3.10"]
+interpreter_constraints = [">=3.11"]
 
 [python.resolves]
 "tools" = "cicd/tools.lock"
@@ -36,12 +36,17 @@ install_from_resolve = "tools"
 
 [pytest]
 args = ["--doctest-modules", "--cov-append"]
+install_from_resolve="tools"
 
 [flake8]
 config = ".flake8"
 
 [test]
 use_coverage = true
+extra_env_vars = [
+	"DOCKER_HOST",
+	"KUBECONFIG",
+]
 
 [coverage-py]
 report = ["xml", "html"]
@@ -56,6 +61,3 @@ config = "pyproject.toml"
 [update-build-files]
 formatter = "ruff"
 
-[anonymous-telemetry]
-enabled = true
-repo_id = "aa6f686d-ffa7-35a8-99c9-37a1a61e8f67"

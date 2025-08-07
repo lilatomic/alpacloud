@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: guestbook
+  namespace: argocd
+spec:
+  destination:
+    namespace: aa-tgt
+    server: https://kubernetes.default.svc
+  project: default
+  sources:
+    - path: helm-guestbook
+      plugin:
+        env:
+          - name: foo
+            value: bar
+        name: helm-and-python-0.0.1
+        valueFiles:
+          - $values/alpacloud/argocdkit/test_resources/integration/my-values.yaml
+        parameters:
+          - array:
+              - /bin/my_postrenderer
+            name: postRenderers
+      repoURL: https://github.com/argoproj/argocd-example-apps.git
+    - repoURL: https://github.com/lilatomic/alpacloud.git
+      targetRevision: prod
+      ref: values
