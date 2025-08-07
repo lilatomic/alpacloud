@@ -66,11 +66,18 @@ class InfoBox(Widget):
 			)
 
 
+class SearchDirection(enum.Enum):
+	"""How to search for fields in the CRD"""
+
+	forward = "forward"
+	backward = "backward"
+
+
 class FindBox(Input):
 	"""A widget to search for a node in the tree."""
 
 	BINDINGS = [
-		("enter", "search", "Search"),
+		("enter", "search('forward')", "Search"),
 		Binding("ctrl+c", "clear", "clear", show=False),
 	]
 
@@ -78,8 +85,8 @@ class FindBox(Input):
 		self.find_method = find_method
 		super().__init__(placeholder, id=id)
 
-	async def action_search(self):
-		await self.find_method(self.value)
+	async def action_search(self, direction: str):
+		await self.find_method(self.value, SearchDirection(direction))
 
 	def action_clear(self) -> None:
 		"""Clear the text area."""
@@ -416,7 +423,7 @@ class CRDVisApp(App):
 
 		await self.push_screen(dialog, o)
 
-	async def do_find(self, s: str):
+	async def do_find(self, s: str, direction: SearchDirection) -> None:
 		"""
 		Implementation of the search functionality.
 
@@ -439,10 +446,24 @@ class CRDVisApp(App):
 			if cursor:
 				current = all_results.index(cursor)
 			else:
-				current = -1
+				current = None
 		except ValueError:
-			current = -1
-		found = all_results[(current + 1) % len(all_results)]
+			current = None
+
+		if direction == SearchDirection.forward:
+			if current is not None:
+				target = (current + 1) % len(all_results)
+			else:
+				target = 0
+		elif direction == SearchDirection.backward:
+			if current is not None:
+				target = (current - 1) % len(all_results)
+			else:
+				target = len(all_results) - 1
+		else:
+			raise TypeError(f"Invalid search direction: {direction}")
+
+		found = all_results[target]
 		await self._focus_to_node(found)
 
 
