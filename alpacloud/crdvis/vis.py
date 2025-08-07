@@ -218,6 +218,8 @@ class CRDVisApp(App):
 		Binding("ctrl+g", "goto", "goto", priority=True),
 		Binding("ctrl+f", "find", "find", priority=True),
 		Binding("ctrl+o", "open_dialog", "Open file", priority=True),
+		Binding("greater_than_sign", "expand_all", "Expand all", show=False),
+		Binding("less_than_sign", "collapse_all", "Collapse all", show=False),
 	]
 
 	search_mode = SearchMode.find
@@ -424,6 +426,17 @@ class CRDVisApp(App):
 				self.try_read_crd(path)
 
 		await self.push_screen(dialog, o)
+
+	def action_expand_all(self) -> None:
+		"""Expand all nodes in the tree."""
+		tree = self.query_one(Tree)
+		tree.root.expand_all()
+
+	def action_collapse_all(self) -> None:
+		"""Collapse all nodes in the tree."""
+		tree = self.query_one(Tree)
+		tree.root.collapse_all()
+
 
 	async def do_find(self, s: str, direction: SearchDirection) -> None:
 		"""
