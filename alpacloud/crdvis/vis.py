@@ -27,6 +27,11 @@ from textual.widgets.tree import TreeNode
 from alpacloud.crdvis.models import CustomResourceDefinition, OpenAPIV3, OpenAPIV3Array, OpenAPIV3Dict, OpenAPIV3Enum, OpenAPIV3Schema, OpenAPIV3Union, is_simple
 
 
+class CRDReadError(Exception):
+    """Exception raised when there is an error reading a CRD."""
+    pass
+
+
 class InfoBox(Widget):
 	"""A widget to display information about the selected CRD."""
 
@@ -257,13 +262,18 @@ class CRDVisApp(App):
 		current_dir = os.getcwd()
 		sample_crd_path = os.path.join(current_dir, "alpacloud", "crdvis", "test_resources", "podmonitor.yaml")
 
-		crd = self.read_path("file://" + sample_crd_path)
-		if crd:
+		try:
+			crd = self.read_path("file://" + sample_crd_path)
 			self.load_crd(crd)
+		except CRDReadError as e:
+			self.notify(str(e), severity="error")
 
-	def read_path(self, path: str) -> CustomResourceDefinition | None:
+	def read_path(self, path: str) -> CustomResourceDefinition:
 		"""
 		Read a path-like object to fetch a CRD.
+
+		Raises:
+			CRDReadError: If there is an error reading the CRD.
 		"""
 		if path.startswith("http://") or path.startswith("https://"):
 			req = requests.Request("GET", path)
@@ -275,14 +285,12 @@ class CRDVisApp(App):
 			response = requests.Session().send(req.prepare(), timeout=30)
 
 			if not response.ok:
-				self.notify(f"Failed to fetch CRD from {path}: {response.status_code}", severity="error")
-				return None
+				raise CRDReadError(f"Failed to fetch CRD from {path}: {response.status_code}")
 			content = response.text
 		elif path.startswith("file://") or os.path.exists(path):
 			disk_path = path.rsplit("://", 1)[-1]
 			if not os.path.exists(disk_path):
-				self.notify(f"File not found: {disk_path}", severity="error")
-				return None
+				raise CRDReadError(f"File not found: {disk_path}")
 
 			with open(disk_path, "r", encoding="utf-8") as f:
 				content = f.read()
@@ -291,8 +299,7 @@ class CRDVisApp(App):
 			kubectl_crd = path.rsplit("://", 1)[-1]
 			kubectl_exe = shutil.which("kubectl")
 			if not kubectl_exe:
-				self.notify("kubectl is not installed.", severity="error")
-				return None
+				raise CRDReadError("kubectl is not installed.")
 
 			try:
 				content = subprocess.check_output([kubectl_exe, "get", "-o", "yaml", "crd", kubectl_crd], timeout=30).decode("utf-8")
@@ -300,18 +307,18 @@ class CRDVisApp(App):
 				try:
 					crds = subprocess.check_output([kubectl_exe, "get", "crd"], timeout=30)
 					if crds:
-						self.notify(f"crd is not available in cluster {kubectl_crd}", severity="error")
+						error_msg = f"crd is not available in cluster {kubectl_crd}"
 					else:
-						self.notify(f"Failed to fetch CRDs {kubectl_crd}: {e}", severity="error")
+						error_msg = f"Failed to fetch CRDs {kubectl_crd}: {e}"
 
 				except subprocess.SubprocessError as e:
-					self.notify(f"Failed to fetch CRDs {kubectl_crd}: {e}", severity="error")
-				return None
+					error_msg = f"Failed to fetch CRDs {kubectl_crd}: {e}"
+				raise CRDReadError(error_msg)
 		else:
 			content = path
 
 		if not content:
-			return None
+			raise CRDReadError("Empty content")
 		doc = yaml.safe_load(content)
 		return CustomResourceDefinition.model_validate(doc)
 
@@ -462,9 +469,11 @@ class CRDVisApp(App):
 
 		def o(path: Any) -> None:
 			if path and isinstance(path, str):
-				crd = self.read_path(path)
-				if crd:
+				try:
+					crd = self.read_path(path)
 					self.load_crd(crd)
+				except CRDReadError as e:
+					self.notify(str(e), severity="error")
 
 		await self.push_screen(dialog, o)
 
