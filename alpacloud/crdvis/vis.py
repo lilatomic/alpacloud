@@ -77,7 +77,9 @@ class FindBox(Input):
 	"""A widget to search for a node in the tree."""
 
 	BINDINGS = [
-		("enter", "search('forward')", "Search"),
+		("enter", "search('forward')", "Search forward"),
+		("pageup", "search('backward')", "Search backward"),
+		("pagedown", "search('forward')", "Search forward"),
 		Binding("ctrl+c", "clear", "clear", show=False),
 	]
 
