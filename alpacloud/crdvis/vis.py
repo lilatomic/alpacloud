@@ -437,7 +437,6 @@ class CRDVisApp(App):
 		tree = self.query_one(Tree)
 		tree.root.collapse_all()
 
-
 	async def do_find(self, s: str, direction: SearchDirection) -> None:
 		"""
 		Implementation of the search functionality.

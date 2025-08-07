@@ -2,7 +2,7 @@ python_sources()
 
 python_tests(
 	name="tests",
-	dependencies=["./test_resources:k8s_objs"],
+	dependencies=["./test_resources:k8s_objs", "//:reqs1#pytest-asyncio"],
 )
 
 python_distribution(
