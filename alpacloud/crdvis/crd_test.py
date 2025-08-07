@@ -1,5 +1,5 @@
 import os
-import shutil
+import subprocess
 import unittest
 from unittest.mock import patch
 
@@ -47,9 +47,13 @@ class TestReadPath(unittest.TestCase):
 			read_path("https://example.com/nonexistent.yaml")
 		self.assertIn("Failed to fetch CRD", str(context.exception))
 
-	@pytest.mark.skipif(shutil.which("kubectl") is None, reason="kubectl is not installed")
+	@pytest.mark.skipif(subprocess.run(["kubectl", "get", "crd"], capture_output=True).returncode != 0, reason="kubectl is not installed or no CRDs available")
 	def test_read_path_from_kubectl(self):
 		"""Test reading a CRD using kubectl."""
+		# Check if any CRDs are available
+		if subprocess.run(["kubectl", "get", "crd"], capture_output=True).returncode != 0:
+			self.skipTest("No CRDs available in the cluster")
+
 		crd = read_path("kubectl://podmonitors.monitoring.coreos.com")
 		self.assertIsInstance(crd, CustomResourceDefinition)
 		self.assertEqual(crd.kind, "CustomResourceDefinition")
