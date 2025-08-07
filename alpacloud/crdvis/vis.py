@@ -6,14 +6,9 @@ from __future__ import annotations
 
 import enum
 import os
-import shutil
-import subprocess
 from textwrap import dedent
 from typing import Any, Callable
-from urllib.parse import urlparse
 
-import requests
-import yaml
 from rich.text import Text
 from textual.app import App, ComposeResult
 from textual.binding import Binding
@@ -24,12 +19,8 @@ from textual.widget import Widget
 from textual.widgets import Button, Footer, Header, Input, Label, Static, TextArea, Tree
 from textual.widgets.tree import TreeNode
 
+from alpacloud.crdvis.crd import CRDReadError, read_path
 from alpacloud.crdvis.models import CustomResourceDefinition, OpenAPIV3, OpenAPIV3Array, OpenAPIV3Dict, OpenAPIV3Enum, OpenAPIV3Schema, OpenAPIV3Union, is_simple
-
-
-class CRDReadError(Exception):
-    """Exception raised when there is an error reading a CRD."""
-    pass
 
 
 class InfoBox(Widget):
@@ -256,71 +247,23 @@ class CRDVisApp(App):
 
 		text_area.update(text)
 
+	def try_read_crd(self, path: str) -> None:
+		"""
+		Try to load a path-like object to fetch a CRD.
+		"""
+		try:
+			crd = read_path(path)
+			self.load_crd(crd)
+		except CRDReadError as e:
+			self.notify(str(e), severity="error")
+
 	def on_mount(self) -> None:
 		"""Load the CRD and populate the tree when the app starts."""
 		# Get the path to the sample CRD file
 		current_dir = os.getcwd()
 		sample_crd_path = os.path.join(current_dir, "alpacloud", "crdvis", "test_resources", "podmonitor.yaml")
 
-		try:
-			crd = self.read_path("file://" + sample_crd_path)
-			self.load_crd(crd)
-		except CRDReadError as e:
-			self.notify(str(e), severity="error")
-
-	def read_path(self, path: str) -> CustomResourceDefinition:
-		"""
-		Read a path-like object to fetch a CRD.
-
-		Raises:
-			CRDReadError: If there is an error reading the CRD.
-		"""
-		if path.startswith("http://") or path.startswith("https://"):
-			req = requests.Request("GET", path)
-
-			url = urlparse(req.url)
-			if url.netloc == "github.com":
-				req.params["raw"] = "true"
-
-			response = requests.Session().send(req.prepare(), timeout=30)
-
-			if not response.ok:
-				raise CRDReadError(f"Failed to fetch CRD from {path}: {response.status_code}")
-			content = response.text
-		elif path.startswith("file://") or os.path.exists(path):
-			disk_path = path.rsplit("://", 1)[-1]
-			if not os.path.exists(disk_path):
-				raise CRDReadError(f"File not found: {disk_path}")
-
-			with open(disk_path, "r", encoding="utf-8") as f:
-				content = f.read()
-
-		elif path.startswith("kubectl://"):
-			kubectl_crd = path.rsplit("://", 1)[-1]
-			kubectl_exe = shutil.which("kubectl")
-			if not kubectl_exe:
-				raise CRDReadError("kubectl is not installed.")
-
-			try:
-				content = subprocess.check_output([kubectl_exe, "get", "-o", "yaml", "crd", kubectl_crd], timeout=30).decode("utf-8")
-			except subprocess.SubprocessError as e:
-				try:
-					crds = subprocess.check_output([kubectl_exe, "get", "crd"], timeout=30)
-					if crds:
-						error_msg = f"crd is not available in cluster {kubectl_crd}"
-					else:
-						error_msg = f"Failed to fetch CRDs {kubectl_crd}: {e}"
-
-				except subprocess.SubprocessError as e:
-					error_msg = f"Failed to fetch CRDs {kubectl_crd}: {e}"
-				raise CRDReadError(error_msg)
-		else:
-			content = path
-
-		if not content:
-			raise CRDReadError("Empty content")
-		doc = yaml.safe_load(content)
-		return CustomResourceDefinition.model_validate(doc)
+		self.try_read_crd("file://" + sample_crd_path)
 
 	def load_crd(self, crd: CustomResourceDefinition) -> None:
 		"""Load the CRD into the app."""
@@ -469,11 +412,7 @@ class CRDVisApp(App):
 
 		def o(path: Any) -> None:
 			if path and isinstance(path, str):
-				try:
-					crd = self.read_path(path)
-					self.load_crd(crd)
-				except CRDReadError as e:
-					self.notify(str(e), severity="error")
+				self.try_read_crd(path)
 
 		await self.push_screen(dialog, o)
 
