@@ -23,7 +23,7 @@ root_patterns = [
 [python]
 enable_resolves = true
 default_resolve = "tools"
-interpreter_constraints = [">3.10"]
+interpreter_constraints = [">=3.11"]
 
 [python.resolves]
 "tools" = "cicd/tools.lock"
@@ -36,6 +36,7 @@ install_from_resolve = "tools"
 
 [pytest]
 args = ["--doctest-modules", "--cov-append"]
+install_from_resolve="tools"
 
 [flake8]
 config = ".flake8"
