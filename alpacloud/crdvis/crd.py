@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 
 import requests
 import yaml
+from pydantic import ValidationError
 
 from alpacloud.crdvis.models import CustomResourceDefinition
 
@@ -70,5 +71,15 @@ def read_path(path: str) -> CustomResourceDefinition:
 
 	if not content:
 		raise CRDReadError("Empty content")
-	doc = yaml.safe_load(content)
-	return CustomResourceDefinition.model_validate(doc)
+
+	try:
+		doc = yaml.safe_load(content)
+		return CustomResourceDefinition.model_validate(doc)
+	except yaml.YAMLError as e:
+		raise CRDReadError(f"CRD could not be loaded as YAML: {e}")
+	except ValidationError as e:
+		# escaping pydantic help message
+		# like "Input should be a valid dictionary or instance of CustomResourceDefinition [type=model_type, input_value='applications.argoproj.io', input_type=str]"
+		# for rich
+		msg = str(e).replace("[", r"\[")
+		raise CRDReadError(f"CRD could not be validated: {msg}")
