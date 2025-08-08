@@ -63,6 +63,8 @@ def read_path(path: str) -> CustomResourceDefinition:
 			except subprocess.SubprocessError as e:
 				error_msg = f"Failed to fetch CRDs {kubectl_crd}: {e}"
 			raise CRDReadError(error_msg)
+	elif "://" in path:
+		raise CRDReadError(f"Unsupported URL scheme: {path}")
 	else:
 		content = path
 
