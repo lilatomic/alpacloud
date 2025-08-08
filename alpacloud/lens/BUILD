@@ -28,5 +28,7 @@ python_distribution(
 			"Topic :: Utilities",
 			"Topic :: System :: Systems Administration",
 		],
+		license="Round Robin 2.0.0",
+		long_description_content_type="text/markdown",
 	),
 )
