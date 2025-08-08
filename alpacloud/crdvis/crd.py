@@ -74,10 +74,14 @@ def read_path(path: str) -> CustomResourceDefinition:
 
 	try:
 		doc = yaml.safe_load(content)
-		return CustomResourceDefinition.model_validate(doc)
 	except yaml.YAMLError as e:
 		raise CRDReadError(f"CRD could not be loaded as YAML: {e}")
+
+	try:
+		return CustomResourceDefinition.model_validate(doc)
 	except ValidationError as e:
+		if isinstance(doc, str) and doc.count(".") >= 3:
+			raise CRDReadError(f"CRD content looks like a name, did you mean `kubectl://{content}`")
 		# escaping pydantic help message
 		# like "Input should be a valid dictionary or instance of CustomResourceDefinition [type=model_type, input_value='applications.argoproj.io', input_type=str]"
 		# for rich
