@@ -405,7 +405,7 @@ class CRDVisApp(App):
 			parent.expand()
 			parent = parent.parent
 
-		tree.select_node(node)
+		tree.move_cursor(node)
 
 	async def action_goto(self) -> None:
 		findbox = self.query_one(FindBox)
