@@ -47,6 +47,12 @@ add_team_label = (labels / KeyLens("team", None)) @ Const("my_team")
 global_pipeline = set_namespace % add_team_label
 ```
 
+You can also prefix a BoundLens with another lens using the `//` (floordiv) operator.
+
+```python
+add_team_label_to_podspec = Lens()["spec"]["template"] // add_team_label
+```
+
 ## Usage
 
 Lenses can be built using either their classes or their helpers. The helpers are the most convenient, and look like
@@ -55,8 +61,7 @@ standard access:
 ```python
 # These are equivalent
 l = Lens()["my-key"][0].my_attribute / B64()
-l
-KeyLens("my-key").l_compose(IndexLens(0)).l_compose(AttrLens("my_attribute")).l_compose(B64())
+l = KeyLens("my-key").l_compose(IndexLens(0)).l_compose(AttrLens("my_attribute")).l_compose(B64())
 ```
 
 Lenses support 3 operations. They're all prefixed with "l_" to avoid conflicting with attributes that your objects might

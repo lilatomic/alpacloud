@@ -209,6 +209,20 @@ class TestBoundLens:
 		assert len(((l0 % l1) % CombinedBoundLens((l2,))).lenses) == 2
 
 
+class TestPrefix:
+	def test_prefix_boundlens(self):
+		l0 = BoundLensT.const(IndexLens(0), 9)
+		l = IndexLens(1) // l0
+
+		assert l.map(u) == ["a", [9, 1, 2], "c"]
+
+	def test_prefix_combinedboundlens(self):
+		l0 = (BoundLensT.const(IndexLens(0), 9) % BoundLensT.const(IndexLens(2), 8))
+		l = IndexLens(1) // l0
+
+		assert l.map(u) == ["a", [9, 1, 8], "c"]
+
+
 class TestHelpers:
 	v = [[1, "a"], [2, "b"], [3, C(9)], [4, [0, 1, 2]]]
 

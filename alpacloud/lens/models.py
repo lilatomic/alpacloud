@@ -134,6 +134,13 @@ class BoundLensT(Generic[S, T, A, B], ABC):
 		"""Combine these bound lenses in parallel."""
 		return CombinedBoundLens((self, other))
 
+	def __rfloordiv__(self, prebind_lens: LensT[C, U, S, T]) -> BoundLensT[C, U, A, B]:
+		return self.prefix(prebind_lens)
+
+	@abstractmethod
+	def prefix(self, lens: LensT):
+		"""Modify the lens to be prefixed by the argument"""
+
 	@abstractmethod
 	def map(self, s: S) -> T:
 		"""Modify the focus of this lens."""
@@ -162,6 +169,9 @@ class BoundLens(BoundLensT[S, T, A, B]):
 	def map(self, s: S) -> T:
 		return self.lens.l_map(s, self.f)
 
+	def prefix(self, lens: LensT):
+		return BoundLens(lens / self.lens, self.f)
+
 
 @dataclass
 class CombinedBoundLens(BoundLensT[S, S, A, B]):
@@ -185,6 +195,9 @@ class CombinedBoundLens(BoundLensT[S, S, A, B]):
 			return CombinedBoundLens((*self.lenses, other))
 		else:
 			return CombinedBoundLens((self, other))
+
+	def prefix(self, lens: LensT):
+		return CombinedBoundLens(tuple(lens // e for e in self.lenses))
 
 
 @dataclass
