@@ -21,7 +21,12 @@ class FetcherURL:
 
 
 class ParseError(Exception):
-	pass
+	def __init__(self, value, line: str):
+		self.line = line
+		super().__init__(value)
+
+	def __str__(self) -> str:
+		return super().__str__() + f" line={self.line}"
 
 
 class Parser:
@@ -61,6 +66,10 @@ class Parser:
 	def group_lines(self, lines: list[str]):
 		name2data = defaultdict(list)
 		for line in lines:
+			# escape empty lines
+			if not line.strip():
+				continue
+
 			is_data = not line.startswith("#")
 
 			if is_data:
@@ -130,9 +139,10 @@ class Parser:
 		help = None
 		type = None
 		for line in statements:
-			if line.kind == Parser.MetaKind.HELP:
-				help = line
-			elif line.kind == Parser.MetaKind.TYPE:
-				type = line
+			if isinstance(line, Parser.MetaLine):
+				if line.kind == Parser.MetaKind.HELP:
+					help = line.data
+				elif line.kind == Parser.MetaKind.TYPE:
+					type = line.data
 
-		return Metric(name, help.data, type.data)
+		return Metric(name, help, type)
