@@ -1,5 +1,4 @@
 from pathlib import Path
-from textwrap import dedent
 
 from alpacloud.lens.conftest import ResourceLoader
 from alpacloud.promls.fetch import Parser
@@ -57,6 +56,7 @@ class TestParserMetaLine:
 		r = Parser.parse_meta_line(l)
 		assert r == Parser.MetaLine("COMMENT", Parser.MetaKind.COMMENT, "Finally a summary, which has a pretty complex representation in the text format:")
 
+
 class TestParseAll:
 	def test_doc_sample(self):
 		# TODO: support for escaped values
@@ -66,7 +66,7 @@ class TestParseAll:
 		# # A weird metric from before the epoch:
 		# something_weird{problem="division by zero"} +Inf -3982045
 		# """
-		l = ("""\
+		l = """\
 # HELP api_http_request_count The total number of HTTP requests.
 # TYPE api_http_request_count counter
 http_request_count{method="post",code="200"} 1027 1395066363000
@@ -83,7 +83,7 @@ telemetry_requests_metrics_latency_microseconds{quantile="0.9"} 9001
 telemetry_requests_metrics_latency_microseconds{quantile="0.99"} 76656
 telemetry_requests_metrics_latency_microseconds_sum 1.7560473e+07
 telemetry_requests_metrics_latency_microseconds_count 2693
-		""")
+		"""
 		r = Parser().parse(l.split("\n"))
 		assert len(r) == 7
 

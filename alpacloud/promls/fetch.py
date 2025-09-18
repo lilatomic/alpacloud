@@ -9,6 +9,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
+import requests
+
 from alpacloud.promls.metrics import Metric
 
 
@@ -16,8 +18,14 @@ class Fetcher(ABC):
 	""""""
 
 
+@dataclass
 class FetcherURL:
 	"""Fetch metrics from Prometheus metrics endpoint."""
+
+	url: str
+
+	def fetch(self):
+		return requests.get(self.url).text.split("\n")
 
 
 class ParseError(Exception):
@@ -83,7 +91,11 @@ class Parser:
 	@staticmethod
 	def parse_data_line(line: str) -> DataLine:
 		# TODO: handle escaping in lines
-		name_and_labels, data = line.split(" ", 1)
+		x = line.split(" ", 1)
+		if len(x) != 2:
+			raise ParseError("Could not identify name in line", line)
+
+		name_and_labels, data = x
 		data = data.strip()
 
 		if line.count("{") != line.count("}"):
