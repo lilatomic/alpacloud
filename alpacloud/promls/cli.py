@@ -1,10 +1,13 @@
 import enum
+import itertools
 import re
 
 import click
 
-from alpacloud.promls.fetch import Parser, FetcherURL
+from alpacloud.promls.fetch import FetcherURL, Parser
 from alpacloud.promls.filter import MetricsTree, filter_name
+from alpacloud.promls.metrics import Metric
+from alpacloud.promls.util import paths_to_tree
 
 
 class PrintMode(enum.StrEnum):
@@ -46,14 +49,42 @@ def do_fetch(url: str):
 	return MetricsTree(Parser().parse(FetcherURL(url).fetch()))
 
 
+def mk_indent(i: int, s: str) -> str:
+	return "\t" * i + s
+
+
+def _print_nested(tree, indent=0) -> list[tuple[int, str]]:
+	o: list[tuple[int, str]] = []  # prevents this being accidentally quadratic
+
+	def render_metric(m: Metric) -> str:
+		return f"{v.name}"
+
+	for k, v in tree.items():
+		if k == "__value__":
+			o.append((indent, render_metric(v)))
+		else:
+			if isinstance(v, Metric):
+				o.append((indent, f"{k} : {render_metric(v)}"))
+			else:
+				o.append((indent, k))
+				o.extend(_print_nested(v, indent + 1))
+
+	return o
+
+
 def do_print(tree: MetricsTree, mode: PrintMode):
 	"""Format and print identified metrics."""
 
 	match mode:
 		case PrintMode.flat:
-			txt = "\n".join(k for k, v in tree.metrics.items())
-		case _:
-			txt = "halp"
+			txt = "\n".join(tree.metrics.keys())
+		case PrintMode.full:
+			metric_text = [[f"# HELP {v.name} {v.help}", f"# TYPE {v.name} {v.type}", v.name] for v in tree.metrics.values()]
+			txt = "\n".join(itertools.chain.from_iterable(metric_text))
+		case PrintMode.tree:
+			as_tree = paths_to_tree(tree.metrics, sep="_")
+			for_printing = _print_nested(as_tree)
+			txt = "\n".join([mk_indent(i, s) for i, s in for_printing])
 	click.echo(txt)
 
 
@@ -64,9 +95,11 @@ def search():
 
 @search.command()
 @common_args()
-def name(url, filter: str,
-		 display: PrintMode,
-		 ):
+def name(
+	url,
+	filter: str,
+	display: PrintMode,
+):
 	tree = do_fetch(url)
 	filtered = tree.filter(filter_name(re.compile(filter)))
 	do_print(filtered, display)
