@@ -5,7 +5,7 @@ import re
 import click
 
 from alpacloud.promls.fetch import FetcherURL, Parser
-from alpacloud.promls.filter import MetricsTree, filter_name
+from alpacloud.promls.filter import MetricsTree, filter_any, filter_name, filter_path
 from alpacloud.promls.metrics import Metric
 from alpacloud.promls.util import paths_to_tree
 
@@ -95,11 +95,26 @@ def search():
 
 @search.command()
 @common_args()
-def name(
-	url,
-	filter: str,
-	display: PrintMode,
-):
+def name(url, filter: str, display: PrintMode):
+	"""Filter metrics by their name"""
 	tree = do_fetch(url)
 	filtered = tree.filter(filter_name(re.compile(filter)))
+	do_print(filtered, display)
+
+
+@search.command()
+@common_args()
+def any(url, filter: str, display: PrintMode):
+	"""Filter metrics by any of their properties"""
+	tree = do_fetch(url)
+	filtered = tree.filter(filter_any(re.compile(filter)))
+	do_print(filtered, display)
+
+
+@search.command()
+@common_args()
+def path(url, filter: str, display: PrintMode):
+	"""filter metrics by their path"""
+	tree = do_fetch(url)
+	filtered = tree.filter(filter_path(filter.split("_")))
 	do_print(filtered, display)
