@@ -148,8 +148,8 @@ class Parser:
 		# TODO: label sets
 		# TODO: sample values
 
-		help = None
-		type = None
+		help = ""
+		type = ""
 		for line in statements:
 			if isinstance(line, Parser.MetaLine):
 				if line.kind == Parser.MetaKind.HELP:
