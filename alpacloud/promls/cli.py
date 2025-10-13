@@ -6,7 +6,7 @@ import re
 import click
 
 from alpacloud.promls.fetch import FetcherURL, Parser
-from alpacloud.promls.filter import MetricsTree, filter_any, filter_name, filter_path
+from alpacloud.promls.filter import MetricsTree, filter_any, filter_ish, filter_name, filter_path
 from alpacloud.promls.metrics import Metric
 from alpacloud.promls.util import paths_to_tree
 from alpacloud.promls.vis import PromlsVisApp
@@ -123,6 +123,15 @@ def path(url, filter: str, display: PrintMode):
 	"""Filter metrics by their path"""
 	tree = do_fetch(url)
 	filtered = tree.filter(filter_path(filter.split("_")))
+	do_print(filtered, display)
+
+
+@search.command()
+@common_args()
+def ish(url, filter: str, display: PrintMode):
+	"""Filter metrics using a fuzzy match"""
+	tree = do_fetch(url)
+	filtered = tree.filter(filter_ish(filter))
 	do_print(filtered, display)
 
 
