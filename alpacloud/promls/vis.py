@@ -2,7 +2,10 @@ import re
 
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.widgets import Footer, Header, Input, Tree
+from textual.containers import Container, Horizontal, Vertical
+from textual.reactive import Reactive, reactive
+from textual.widget import Widget
+from textual.widgets import Footer, Header, Input, Label, Static, Tree
 
 from alpacloud.promls.filter import MetricsTree, filter_any
 from alpacloud.promls.metrics import Metric
@@ -26,6 +29,22 @@ class FindBox(Input):
 		self.clear()
 
 
+class MetricInfoBox(Widget):
+	"""A widget to display information about the selected Metric."""
+
+	metric: Reactive[Metric | None] = reactive(None, recompose=True)
+
+	def compose(self) -> ComposeResult:
+		with Vertical():
+			if not self.metric:
+				yield Label("Metric Info")
+			else:
+				with Horizontal():
+					yield Container(Label(self.metric.name, variant="accent"), classes="left")
+					yield Container(Label(self.metric.type, variant="accent"), classes="right")
+				yield Static(self.metric.help)
+
+
 class PromlsVisApp(App):
 	"""A Textual app to visualize Prometheus Metrics."""
 
@@ -41,15 +60,28 @@ class PromlsVisApp(App):
 	def compose(self) -> ComposeResult:
 		yield Header()
 		yield Tree("Prometheus Metrics")
+		yield MetricInfoBox()
 		yield FindBox(placeholder="Find...", id="find-box")
 		yield Footer()
 
 	def on_mount(self) -> None:
 		self.load_metrics(self.metrics)
 
+	def on_tree_node_selected(self, event: Tree.NodeSelected) -> None:
+		"""Handle node selection in the tree."""
+		text_area = self.query_one(MetricInfoBox)
+		node = event.node
+
+		if hasattr(node, "data"):
+			data = node.data
+			text_area.metric = data
+		else:
+			text_area.metric = None
+
 	def _add_node(self, parent_node, m: MetricsTree | Metric):
 		if isinstance(m, Metric):
-			parent_node.add(m.name)
+			new_node = parent_node.add(m.name)
+			new_node.data = m
 		else:
 			for k, v in m.items():
 				self._add_node(parent_node.add(k), v)
