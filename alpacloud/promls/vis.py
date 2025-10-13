@@ -54,6 +54,12 @@ class PromlsVisApp(App):
 	TITLE = "Promls"
 	CSS_PATH = "promls.css"
 
+	BINDINGS = [
+		Binding("ctrl+f", "find", "find", priority=True),
+		Binding("greater_than_sign", "expand_all", "Expand all", show=False),
+		Binding("less_than_sign", "collapse_all", "Collapse all", show=False),
+	]
+
 	def __init__(self, metrics: MetricsTree, query: str, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 		self.metrics = metrics
@@ -72,6 +78,20 @@ class PromlsVisApp(App):
 	async def do_find(self, s: str):
 		self.query = s
 		self.load_metrics(self.metrics)
+
+	async def action_find(self) -> None:
+		findbox = self.query_one(FindBox)
+		findbox.focus()
+
+	def action_expand_all(self) -> None:
+		"""Expand all nodes in the tree."""
+		tree = self.query_one(Tree)
+		tree.root.expand_all()
+
+	def action_collapse_all(self) -> None:
+		"""Collapse all nodes in the tree."""
+		tree = self.query_one(Tree)
+		tree.root.collapse_all()
 
 	def on_tree_node_selected(self, event: Tree.NodeSelected) -> None:
 		"""Handle node selection in the tree."""
