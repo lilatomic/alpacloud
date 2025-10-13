@@ -9,6 +9,7 @@ from alpacloud.promls.fetch import FetcherURL, Parser
 from alpacloud.promls.filter import MetricsTree, filter_any, filter_name, filter_path
 from alpacloud.promls.metrics import Metric
 from alpacloud.promls.util import paths_to_tree
+from alpacloud.promls.vis import PromlsVisApp
 
 
 class PrintMode(enum.StrEnum):
@@ -54,8 +55,10 @@ def do_fetch(url: str):
 def mk_indent(i: int, s: str) -> str:
 	return "\t" * i + s
 
+
 def render_metric(m: Metric) -> str:
 	return f"{m.name} ({m.type}) {m.help or ''}"
+
 
 def _print_nested(tree, indent=0) -> list[tuple[int, str]]:
 	o: list[tuple[int, str]] = []  # prevents this being accidentally quadratic
@@ -87,7 +90,7 @@ def do_print(tree: MetricsTree, mode: PrintMode):
 			for_printing = _print_nested(as_tree)
 			txt = "\n".join([mk_indent(i, s) for i, s in for_printing])
 		case PrintMode.json:
-			txt = json.dumps({k:v.__dict__ for k,v in tree.metrics.items()}, indent=2)
+			txt = json.dumps({k: v.__dict__ for k, v in tree.metrics.items()}, indent=2)
 	click.echo(txt)
 
 
@@ -117,7 +120,15 @@ def any(url, filter: str, display: PrintMode):
 @search.command()
 @common_args()
 def path(url, filter: str, display: PrintMode):
-	"""filter metrics by their path"""
+	"""Filter metrics by their path"""
 	tree = do_fetch(url)
 	filtered = tree.filter(filter_path(filter.split("_")))
 	do_print(filtered, display)
+
+
+@search.command()
+@arg_url
+@opt_filter
+def browse(url, filter):
+	"""Browse metrics in an interactive visualizer"""
+	PromlsVisApp(do_fetch(url), filter or "").run()
