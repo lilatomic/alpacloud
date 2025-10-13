@@ -1,5 +1,6 @@
 import enum
 import itertools
+import json
 import re
 
 import click
@@ -14,6 +15,7 @@ class PrintMode(enum.StrEnum):
 	flat = "flat"
 	tree = "tree"
 	full = "full"
+	json = "json"
 
 	@staticmethod
 	def parse(ctx, param, value):
@@ -52,12 +54,11 @@ def do_fetch(url: str):
 def mk_indent(i: int, s: str) -> str:
 	return "\t" * i + s
 
+def render_metric(m: Metric) -> str:
+	return f"{m.name} ({m.type}) {m.help or ''}"
 
 def _print_nested(tree, indent=0) -> list[tuple[int, str]]:
 	o: list[tuple[int, str]] = []  # prevents this being accidentally quadratic
-
-	def render_metric(m: Metric) -> str:
-		return f"{v.name}"
 
 	for k, v in tree.items():
 		if k == "__value__":
@@ -77,7 +78,7 @@ def do_print(tree: MetricsTree, mode: PrintMode):
 
 	match mode:
 		case PrintMode.flat:
-			txt = "\n".join(tree.metrics.keys())
+			txt = "\n".join([render_metric(v) for v in tree.metrics.values()])
 		case PrintMode.full:
 			metric_text = [[f"# HELP {v.name} {v.help}", f"# TYPE {v.name} {v.type}", v.name] for v in tree.metrics.values()]
 			txt = "\n".join(itertools.chain.from_iterable(metric_text))
@@ -85,6 +86,8 @@ def do_print(tree: MetricsTree, mode: PrintMode):
 			as_tree = paths_to_tree(tree.metrics, sep="_")
 			for_printing = _print_nested(as_tree)
 			txt = "\n".join([mk_indent(i, s) for i, s in for_printing])
+		case PrintMode.json:
+			txt = json.dumps({k:v.__dict__ for k,v in tree.metrics.items()}, indent=2)
 	click.echo(txt)
 
 
