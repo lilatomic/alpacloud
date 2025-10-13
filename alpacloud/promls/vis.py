@@ -30,8 +30,8 @@ class PromlsVisApp(App):
 	"""A Textual app to visualize Prometheus Metrics."""
 
 	TITLE = "Promls"
-	CSS = """
-	"""
+
+	CSS_PATH = "promls.css"
 
 	def __init__(self, metrics: MetricsTree, query: str, *args, **kwargs):
 		self.metrics = metrics
