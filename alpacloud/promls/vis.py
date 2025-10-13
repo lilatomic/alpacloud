@@ -8,7 +8,7 @@ from textual.reactive import Reactive, reactive
 from textual.widget import Widget
 from textual.widgets import Footer, Header, Input, Label, Static, Tree
 
-from alpacloud.promls.filter import MetricsTree, filter_any
+from alpacloud.promls.filter import MetricsTree, Predicate, filter_any, filter_ish, filter_name
 from alpacloud.promls.metrics import Metric
 from alpacloud.promls.util import paths_to_tree
 
@@ -56,14 +56,17 @@ class PromlsVisApp(App):
 
 	BINDINGS = [
 		Binding("ctrl+f", "find", "find", priority=True),
+		Binding("ctrl+g", "goto", "goto", priority=True),
+		Binding("ctrl+z", "fuzzy_find", "fuzzy find", priority=True),
 		Binding("greater_than_sign", "expand_all", "Expand all", show=False),
 		Binding("less_than_sign", "collapse_all", "Collapse all", show=False),
 	]
 
-	def __init__(self, metrics: MetricsTree, query: str, *args, **kwargs):
+	def __init__(self, metrics: MetricsTree, query: str, predicate: Predicate, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 		self.metrics = metrics
 		self.query = query
+		self.predicate = predicate
 
 	def compose(self) -> ComposeResult:
 		yield Header()
@@ -80,6 +83,16 @@ class PromlsVisApp(App):
 		self.load_metrics(self.metrics)
 
 	async def action_find(self) -> None:
+		self.handle_find_mode_change(filter_any(re.compile(self.query)))
+
+	async def action_fuzzy_find(self) -> None:
+		self.handle_find_mode_change(filter_ish(self.query))
+
+	async def action_goto(self):
+		self.handle_find_mode_change(filter_name(re.compile(self.query)))
+
+	def handle_find_mode_change(self, predicate: Predicate):
+		self.predicate = predicate
 		findbox = self.query_one(FindBox)
 		findbox.focus()
 
@@ -117,7 +130,7 @@ class PromlsVisApp(App):
 		tree.clear()
 		root = tree.root
 
-		filtered = metrics.filter(filter_any(re.compile(self.query)))
+		filtered = metrics.filter(self.predicate)
 		self._add_node(root, paths_to_tree(filtered.metrics, sep="_"))
 
 		root.expand_all()

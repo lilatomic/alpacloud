@@ -138,6 +138,7 @@ def ish(url, filter: str, display: PrintMode):
 @search.command()
 @arg_url
 @opt_filter
-def browse(url, filter):
+def browse(url, filter: str):
 	"""Browse metrics in an interactive visualizer"""
-	PromlsVisApp(do_fetch(url), filter or "").run()
+	real_filter = filter or ".*"
+	PromlsVisApp(do_fetch(url), real_filter, filter_any(re.compile(real_filter))).run()
