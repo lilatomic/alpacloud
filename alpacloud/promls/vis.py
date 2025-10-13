@@ -1,4 +1,5 @@
 import re
+from typing import Callable
 
 from textual.app import App, ComposeResult
 from textual.binding import Binding
@@ -16,14 +17,16 @@ class FindBox(Input):
 	"""A widget to search for a node in the tree."""
 
 	BINDINGS = [
-		("enter", "search('forward')", "Search forward"),
-		("pageup", "search('backward')", "Search backward"),
-		("pagedown", "search('forward')", "Search forward"),
+		("enter", "search", "Search forward"),
 		Binding("ctrl+c", "clear", "clear", show=False),
 	]
 
-	def __init__(self, placeholder: str, id: str = "find-box") -> None:
+	def __init__(self, placeholder: str, find_method: Callable, id: str = "find-box") -> None:
+		self.find_method = find_method
 		super().__init__(placeholder=placeholder, id=id)
+
+	async def action_search(self):
+		await self.find_method(self.value)
 
 	def action_clear(self):
 		self.clear()
@@ -49,22 +52,25 @@ class PromlsVisApp(App):
 	"""A Textual app to visualize Prometheus Metrics."""
 
 	TITLE = "Promls"
-
 	CSS_PATH = "promls.css"
 
 	def __init__(self, metrics: MetricsTree, query: str, *args, **kwargs):
+		super().__init__(*args, **kwargs)
 		self.metrics = metrics
 		self.query = query
-		super().__init__(*args, **kwargs)
 
 	def compose(self) -> ComposeResult:
 		yield Header()
 		yield Tree("Prometheus Metrics")
 		yield MetricInfoBox()
-		yield FindBox(placeholder="Find...", id="find-box")
+		yield FindBox(placeholder="Find...", find_method=self.do_find, id="find-box")
 		yield Footer()
 
 	def on_mount(self) -> None:
+		self.load_metrics(self.metrics)
+
+	async def do_find(self, s: str):
+		self.query = s
 		self.load_metrics(self.metrics)
 
 	def on_tree_node_selected(self, event: Tree.NodeSelected) -> None:
