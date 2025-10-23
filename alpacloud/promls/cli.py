@@ -141,4 +141,4 @@ def ish(url, filter: str, display: PrintMode):
 def browse(url, filter: str):
 	"""Browse metrics in an interactive visualizer"""
 	real_filter = filter or ".*"
-	PromlsVisApp(do_fetch(url), real_filter, filter_any(re.compile(real_filter))).run()
+	PromlsVisApp(do_fetch(url), real_filter, lambda s: filter_any(re.compile(s))).run()

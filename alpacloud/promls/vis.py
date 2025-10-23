@@ -17,16 +17,11 @@ class FindBox(Input):
 	"""A widget to search for a node in the tree."""
 
 	BINDINGS = [
-		("enter", "search", "Search forward"),
 		Binding("ctrl+c", "clear", "clear", show=False),
 	]
 
-	def __init__(self, placeholder: str, find_method: Callable, id: str = "find-box") -> None:
-		self.find_method = find_method
+	def __init__(self, placeholder: str, id: str = "find-box") -> None:
 		super().__init__(placeholder=placeholder, id=id)
-
-	async def action_search(self):
-		await self.find_method(self.value)
 
 	def action_clear(self):
 		self.clear()
@@ -72,24 +67,27 @@ class PromlsVisApp(App):
 		yield Header()
 		yield Tree("Prometheus Metrics")
 		yield MetricInfoBox()
-		yield FindBox(placeholder="Find...", find_method=self.do_find, id="find-box")
+		yield FindBox(placeholder="Find...", id="find-box")
 		yield Footer()
 
 	def on_mount(self) -> None:
 		self.load_metrics(self.metrics)
 
-	async def do_find(self, s: str):
-		self.query = s
+	def on_input_changed(self, event: Input.Changed) -> None:
+		self.query = event.value
 		self.load_metrics(self.metrics)
 
 	async def action_find(self) -> None:
-		self.handle_find_mode_change(filter_any(re.compile(self.query)))
+		self.predicate = lambda s: filter_any(re.compile(s))
+		self.load_metrics(self.metrics)
 
 	async def action_fuzzy_find(self) -> None:
-		self.handle_find_mode_change(filter_ish(self.query))
+		self.predicate = filter_ish
+		self.load_metrics(self.metrics)
 
 	async def action_goto(self):
-		self.handle_find_mode_change(filter_name(re.compile(self.query)))
+		self.predicate = lambda s: filter_name(re.compile(s))
+		self.load_metrics(self.metrics)
 
 	def handle_find_mode_change(self, predicate: Predicate):
 		self.predicate = predicate
@@ -130,7 +128,7 @@ class PromlsVisApp(App):
 		tree.clear()
 		root = tree.root
 
-		filtered = metrics.filter(self.predicate)
+		filtered = metrics.filter(self.predicate(self.query))
 		self._add_node(root, paths_to_tree(filtered.metrics, sep="_"))
 
 		root.expand_all()
