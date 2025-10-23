@@ -128,7 +128,10 @@ class PromlsVisApp(App):
 		tree.clear()
 		root = tree.root
 
-		filtered = metrics.filter(self.predicate(self.query))
+		if self.query:
+			filtered = metrics.filter(self.predicate(self.query))
+		else:
+			filtered = metrics
 		self._add_node(root, paths_to_tree(filtered.metrics, sep="_"))
 
 		root.expand_all()
