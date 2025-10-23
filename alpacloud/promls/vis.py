@@ -72,6 +72,10 @@ class PromlsVisApp(App):
 
 	def on_mount(self) -> None:
 		self.load_metrics(self.metrics)
+		self.focus_findbox()
+
+	def focus_findbox(self):
+		self.query_one(FindBox).focus()
 
 	def on_input_changed(self, event: Input.Changed) -> None:
 		self.query = event.value
@@ -80,19 +84,18 @@ class PromlsVisApp(App):
 	async def action_find(self) -> None:
 		self.predicate = lambda s: filter_any(re.compile(s))
 		self.load_metrics(self.metrics)
+		self.focus_findbox()
 
 	async def action_fuzzy_find(self) -> None:
 		self.predicate = filter_ish
 		self.load_metrics(self.metrics)
+		self.focus_findbox()
 
 	async def action_goto(self):
 		self.predicate = lambda s: filter_name(re.compile(s))
 		self.load_metrics(self.metrics)
+		self.focus_findbox()
 
-	def handle_find_mode_change(self, predicate: Predicate):
-		self.predicate = predicate
-		findbox = self.query_one(FindBox)
-		findbox.focus()
 
 	def action_expand_all(self) -> None:
 		"""Expand all nodes in the tree."""
