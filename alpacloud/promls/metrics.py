@@ -1,3 +1,5 @@
+"""Definitions for Prometheus metrics."""
+
 from dataclasses import dataclass
 
 

@@ -29,6 +29,8 @@ class FetcherURL:
 
 
 class ParseError(Exception):
+	"""Error parsing Prometheus metrics endpoint."""
+
 	def __init__(self, value, line: str):
 		self.line = line
 		super().__init__(value)
@@ -40,10 +42,6 @@ class ParseError(Exception):
 class Parser:
 	"""Parse metrics from Prometheus metrics endpoint."""
 
-	class State(Enum):
-		metadata = "metadata"
-		data = "data"
-
 	@dataclass
 	class DataLine:
 		"""Data line from Prometheus metrics endpoint."""
@@ -54,6 +52,8 @@ class Parser:
 		timestamp: int | None = None
 
 	class MetaKind(Enum):
+		"""Kind of the line of metadata."""
+
 		HELP = "HELP"
 		TYPE = "TYPE"
 		COMMENT = "COMMENT"
@@ -72,6 +72,7 @@ class Parser:
 		return {k: self.parse_metric(k, v) for k, v in name2data.items()}
 
 	def group_lines(self, lines: list[str]):
+		"""Group lines by the metric name."""
 		name2data = defaultdict(list)
 		for line in lines:
 			# escape empty lines
@@ -90,6 +91,7 @@ class Parser:
 
 	@staticmethod
 	def parse_data_line(line: str) -> DataLine:
+		"""Subparser for a line of data."""
 		# TODO: handle escaping in lines
 		x = line.split(" ", 1)
 		if len(x) != 2:
@@ -125,6 +127,7 @@ class Parser:
 
 	@staticmethod
 	def parse_meta_line(line: str) -> MetaLine:
+		"""Subparser for a line of metadata."""
 		if not line.startswith("#"):
 			raise ParseError(r"Invalid metadata line, did not start with #")
 
@@ -145,6 +148,7 @@ class Parser:
 
 	@staticmethod
 	def parse_metric(name, statements: list[Parser.DataLine | Parser.MetaLine]) -> Metric:
+		"""Subpaarser for an actual metric."""
 		# TODO: label sets
 		# TODO: sample values
 

@@ -1,3 +1,5 @@
+"""CLI interface for promls."""
+
 import enum
 import itertools
 import json
@@ -13,6 +15,8 @@ from alpacloud.promls.vis import PromlsVisApp
 
 
 class PrintMode(enum.StrEnum):
+	"""Output format"""
+
 	flat = "flat"
 	tree = "tree"
 	full = "full"
@@ -20,6 +24,7 @@ class PrintMode(enum.StrEnum):
 
 	@staticmethod
 	def parse(ctx, param, value):
+		"""Parse from click"""
 		# Normalize and map to the enum so command handlers receive PrintMode
 		if value is None:
 			return None
@@ -39,6 +44,8 @@ opt_filter = click.option("--filter")
 
 
 def common_args():
+	"""Common arguments for search commands"""
+
 	def decorator(f):
 		f = opt_filter(f)
 		f = opt_mode(f)
@@ -49,14 +56,17 @@ def common_args():
 
 
 def do_fetch(url: str):
+	"""Do the fetch and parse."""
 	return MetricsTree(Parser().parse(FetcherURL(url).fetch()))
 
 
 def mk_indent(i: int, s: str) -> str:
+	"""Indent a line"""
 	return "\t" * i + s
 
 
 def render_metric(m: Metric) -> str:
+	"""Render a metric in a human-readable format."""
 	return f"{m.name} ({m.type}) {m.help or ''}"
 
 

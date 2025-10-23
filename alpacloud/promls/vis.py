@@ -1,5 +1,4 @@
 import re
-from typing import Callable
 
 from textual.app import App, ComposeResult
 from textual.binding import Binding
@@ -95,7 +94,6 @@ class PromlsVisApp(App):
 		self.predicate = lambda s: filter_name(re.compile(s))
 		self.load_metrics(self.metrics)
 		self.focus_findbox()
-
 
 	def action_expand_all(self) -> None:
 		"""Expand all nodes in the tree."""
