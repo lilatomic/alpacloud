@@ -40,6 +40,10 @@ class ResourceLoader:
 	def _load_file(self, p: Path):
 		return yaml.safe_load(p.open())
 
+	def load_raw(self, p: Path):
+		with (self.base_path / p).open() as f:
+			return f.read()
+
 	def load_case(self, path, name: str):
 		"""Load a test case"""
 

@@ -196,7 +196,7 @@ class CRDVisApp(App):
 	Screen {
 		overflow-y: auto;
 	}
-	.derscription-box {
+	.description-box {
         height: 25%;
         overflow-y: auto;
 	}
@@ -230,7 +230,7 @@ class CRDVisApp(App):
 		yield Header()
 		yield InfoBox()
 		yield Tree("CRD Version")
-		yield Vertical(Static(classes="description-area"), classes="derscription-box")
+		yield Vertical(Static(classes="description-area"), classes="description-box")
 		yield FindBox(placeholder="Find...", id="find-box", find_method=self.do_find)
 		yield Footer()
 
@@ -240,9 +240,9 @@ class CRDVisApp(App):
 
 		text_area = self.query_one(Static)
 		node = event.node
-		# Check if this is an OpenAPI node that might have a description
 		text = Text("")
 
+		# Check if this is an OpenAPI node that might have a description
 		if hasattr(node, "data"):
 			data = node.data
 			if description := getattr(data, "description", None):
