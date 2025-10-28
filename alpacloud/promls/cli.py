@@ -101,7 +101,7 @@ def do_print(tree: MetricsTree, mode: PrintMode):
 			txt = "\n".join([mk_indent(i, s) for i, s in for_printing])
 		case PrintMode.json:
 			txt = json.dumps({k: v.__dict__ for k, v in tree.metrics.items()}, indent=2)
-	click.echo(txt)
+	return txt
 
 
 @click.group()
@@ -115,7 +115,7 @@ def name(url, filter: str, display: PrintMode):
 	"""Filter metrics by their name"""
 	tree = do_fetch(url)
 	filtered = tree.filter(filter_name(re.compile(filter)))
-	do_print(filtered, display)
+	click.echo(do_print(filtered, display))
 
 
 @search.command()
@@ -124,7 +124,7 @@ def any(url, filter: str, display: PrintMode):
 	"""Filter metrics by any of their properties"""
 	tree = do_fetch(url)
 	filtered = tree.filter(filter_any(re.compile(filter)))
-	do_print(filtered, display)
+	click.echo(do_print(filtered, display))
 
 
 @search.command()
@@ -133,7 +133,7 @@ def path(url, filter: str, display: PrintMode):
 	"""Filter metrics by their path"""
 	tree = do_fetch(url)
 	filtered = tree.filter(filter_path(filter.split("_")))
-	do_print(filtered, display)
+	click.echo(do_print(filtered, display))
 
 
 @search.command()
