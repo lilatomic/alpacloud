@@ -2,14 +2,7 @@
 
 from __future__ import annotations
 
-import functools
 from typing import Any, Dict, Mapping, Optional, TypeAlias, TypeVar
-
-
-def compose(*funcs):
-	"""Sequentially compose functions."""
-	return functools.reduce(lambda f, g: lambda x: f(g(x)), funcs)
-
 
 T = TypeVar("T")
 TreeT: TypeAlias = Dict[str, "TreeT" | T]

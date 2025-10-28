@@ -4,6 +4,7 @@ resources(name="css", sources=["*.css"])
 
 python_tests(
 	name="tests",
+	dependencies=["./test_resources:objs"],
 )
 
 python_distribution(
