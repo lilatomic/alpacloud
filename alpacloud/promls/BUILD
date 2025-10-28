@@ -13,7 +13,7 @@ python_distribution(
 	dependencies=[":promls"],
 	long_description_path="alpacloud/promls/readme.md",
 	provides=python_artifact(
-		name="alpacloud.promls",
+		name="alpacloud_promls",
 		version="0.2.0",
 		description="A visualiser for available Prometheus metrics",
 		author="Daniel Goldman",
