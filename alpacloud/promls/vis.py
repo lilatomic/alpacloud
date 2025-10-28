@@ -7,7 +7,7 @@ from textual.reactive import Reactive, reactive
 from textual.widget import Widget
 from textual.widgets import Footer, Header, Input, Label, Static, Tree
 
-from alpacloud.promls.filter import MetricsTree, PredicateFactory, filter_any, filter_ish, filter_name
+from alpacloud.promls.filter import MetricsTree, PredicateFactory, filter_any, filter_name
 from alpacloud.promls.metrics import Metric
 from alpacloud.promls.util import TreeT, paths_to_tree
 
@@ -51,7 +51,6 @@ class PromlsVisApp(App):
 	BINDINGS = [
 		Binding("ctrl+f", "find", "find", priority=True),
 		Binding("ctrl+g", "goto", "goto", priority=True),
-		Binding("ctrl+z", "fuzzy_find", "fuzzy find", priority=True),
 		Binding("greater_than_sign", "expand_all", "Expand all", show=False),
 		Binding("less_than_sign", "collapse_all", "Collapse all", show=False),
 	]
@@ -82,11 +81,6 @@ class PromlsVisApp(App):
 
 	async def action_find(self) -> None:
 		self.predicate_factory = lambda s: filter_any(re.compile(s))
-		self.load_metrics()
-		self.focus_findbox()
-
-	async def action_fuzzy_find(self) -> None:
-		self.predicate_factory = filter_ish
 		self.load_metrics()
 		self.focus_findbox()
 
