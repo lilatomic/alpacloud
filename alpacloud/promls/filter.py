@@ -10,6 +10,7 @@ from typing import Callable
 from alpacloud.promls.metrics import Metric
 
 Predicate = Callable[[Metric], bool]
+PredicateFactory = Callable[[str], Predicate]
 EPSILON = 1e-3
 l = logging.getLogger(__name__)
 
@@ -87,7 +88,7 @@ def letter_mismatch(s, q):
 	"""Quickly eliminate metrics that will never match."""
 
 	def letter_dict(v: str) -> dict[str, int]:
-		d = {}
+		d: dict[str, int] = {}
 		for c in v:
 			d[c] = d.get(c, 0) + 1
 		return d

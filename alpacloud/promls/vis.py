@@ -7,9 +7,9 @@ from textual.reactive import Reactive, reactive
 from textual.widget import Widget
 from textual.widgets import Footer, Header, Input, Label, Static, Tree
 
-from alpacloud.promls.filter import MetricsTree, Predicate, filter_any, filter_ish, filter_name
+from alpacloud.promls.filter import MetricsTree, PredicateFactory, filter_any, filter_ish, filter_name
 from alpacloud.promls.metrics import Metric
-from alpacloud.promls.util import paths_to_tree
+from alpacloud.promls.util import TreeT, paths_to_tree
 
 
 class FindBox(Input):
@@ -56,11 +56,11 @@ class PromlsVisApp(App):
 		Binding("less_than_sign", "collapse_all", "Collapse all", show=False),
 	]
 
-	def __init__(self, metrics: MetricsTree, query: str, predicate: Predicate, *args, **kwargs):
+	def __init__(self, metrics: MetricsTree, query: str, predicate_factory: PredicateFactory, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 		self.metrics = metrics
-		self.query = query
-		self.predicate = predicate
+		self.query_str = query
+		self.predicate_factory = predicate_factory
 
 	def compose(self) -> ComposeResult:
 		yield Header()
@@ -70,29 +70,29 @@ class PromlsVisApp(App):
 		yield Footer()
 
 	def on_mount(self) -> None:
-		self.load_metrics(self.metrics)
+		self.load_metrics()
 		self.focus_findbox()
 
 	def focus_findbox(self):
 		self.query_one(FindBox).focus()
 
 	def on_input_changed(self, event: Input.Changed) -> None:
-		self.query = event.value
-		self.load_metrics(self.metrics)
+		self.query_str = event.value
+		self.load_metrics()
 
 	async def action_find(self) -> None:
-		self.predicate = lambda s: filter_any(re.compile(s))
-		self.load_metrics(self.metrics)
+		self.predicate_factory = lambda s: filter_any(re.compile(s))
+		self.load_metrics()
 		self.focus_findbox()
 
 	async def action_fuzzy_find(self) -> None:
-		self.predicate = filter_ish
-		self.load_metrics(self.metrics)
+		self.predicate_factory = filter_ish
+		self.load_metrics()
 		self.focus_findbox()
 
 	async def action_goto(self):
-		self.predicate = lambda s: filter_name(re.compile(s))
-		self.load_metrics(self.metrics)
+		self.predicate_factory = lambda s: filter_name(re.compile(s))
+		self.load_metrics()
 		self.focus_findbox()
 
 	def action_expand_all(self) -> None:
@@ -116,7 +116,7 @@ class PromlsVisApp(App):
 		else:
 			text_area.metric = None
 
-	def _add_node(self, parent_node, m: MetricsTree | Metric):
+	def _add_node(self, parent_node, m: TreeT | Metric):
 		if isinstance(m, Metric):
 			new_node = parent_node.add(m.name)
 			new_node.data = m
@@ -124,15 +124,15 @@ class PromlsVisApp(App):
 			for k, v in m.items():
 				self._add_node(parent_node.add(k), v)
 
-	def load_metrics(self, metrics: MetricsTree):
+	def load_metrics(self):
 		tree = self.query_one(Tree)
 		tree.clear()
 		root = tree.root
 
-		if self.query:
-			filtered = metrics.filter(self.predicate(self.query))
+		if self.query_str:
+			filtered = self.metrics.filter(self.predicate_factory(self.query_str))
 		else:
-			filtered = metrics
+			filtered = self.metrics
 		self._add_node(root, paths_to_tree(filtered.metrics, sep="_"))
 
 		root.expand_all()

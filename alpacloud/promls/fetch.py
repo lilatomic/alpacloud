@@ -81,6 +81,7 @@ class Parser:
 
 			is_data = not line.startswith("#")
 
+			d: Parser.DataLine | Parser.MetaLine
 			if is_data:
 				d = self.parse_data_line(line)
 			else:
@@ -101,12 +102,12 @@ class Parser:
 		data = data.strip()
 
 		if line.count("{") != line.count("}"):
-			raise ParseError(r"Invalid data line, unmatched `{}` pair")
+			raise ParseError(r"Invalid data line, unmatched `{}` pair", line)
 
 		pieces = list(filter(None, re.split(r"[{}]", name_and_labels)))
 		if len(pieces) > 2:
 			# TODO: better error
-			raise ParseError(f"Invalid data line, split into incorrect number of pieces pieces: {len(pieces)}")
+			raise ParseError(f"Invalid data line, split into incorrect number of pieces pieces: {len(pieces)}", line)
 
 		name = pieces[0].strip()
 
@@ -118,8 +119,8 @@ class Parser:
 
 		if " " in data:
 			# if it's a counter, it will also contain a timestamp
-			value, timestamp = data.split(" ", 1)
-			timestamp = int(timestamp.strip())
+			value, timestamp_raw = data.split(" ", 1)
+			timestamp = int(timestamp_raw.strip())
 		else:
 			value, timestamp = data, None
 
@@ -129,7 +130,7 @@ class Parser:
 	def parse_meta_line(line: str) -> MetaLine:
 		"""Subparser for a line of metadata."""
 		if not line.startswith("#"):
-			raise ParseError(r"Invalid metadata line, did not start with #")
+			raise ParseError(r"Invalid metadata line, did not start with #", line)
 
 		line = line.strip("#").strip()
 		maybe_kind = line.split(" ", maxsplit=1)

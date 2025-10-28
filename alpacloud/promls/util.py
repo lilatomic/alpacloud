@@ -1,7 +1,9 @@
 """Generic utilities."""
 
+from __future__ import annotations
+
 import functools
-from typing import Any, Dict, Mapping, Optional, TypeVar
+from typing import Any, Dict, Mapping, Optional, TypeAlias, TypeVar
 
 
 def compose(*funcs):
@@ -10,6 +12,7 @@ def compose(*funcs):
 
 
 T = TypeVar("T")
+TreeT: TypeAlias = Dict[str, "TreeT" | T]
 
 
 def paths_to_tree(
@@ -17,7 +20,7 @@ def paths_to_tree(
 	*,
 	sep: str = "/",
 	leaf_key: Optional[str] = "__value__",
-) -> Dict[str, Any]:
+) -> TreeT[T]:
 	"""
 	Convert a mapping of path strings to a tree of nested dicts.
 
