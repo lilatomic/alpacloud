@@ -1,5 +1,8 @@
 from dataclasses import dataclass
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Literal
+
+from alpacloud.eztag import logic
+from alpacloud.eztag.logic import Exp
 
 
 @dataclass
@@ -25,9 +28,19 @@ class ParseState:
 
 
 @dataclass
+class StringLiteral:
+	value: str
+
+
+@dataclass
 class FunctionCall:
 	name: str
-	args: List[Union[str, 'FunctionCall']]
+	args: List[Union[str, StringLiteral, 'FunctionCall']]
+
+
+@dataclass
+class StringLiteral:
+	value: str
 
 
 class Parser:
@@ -57,7 +70,7 @@ class Parser:
 	def _parse_identifier(self) -> str:
 		return self.state.consume_while(lambda c: c.isalnum() or c == '_')
 
-	def _parse_arguments(self) -> List[Union[str, FunctionCall]]:
+	def _parse_arguments(self) -> List[Union[str, StringLiteral, FunctionCall]]:
 		args = []
 		while True:
 			self.state.consume_while(str.isspace)
@@ -76,10 +89,10 @@ class Parser:
 
 		return args
 
-	def _parse_argument(self) -> Union[str, FunctionCall]:
+	def _parse_argument(self) -> Union[str, StringLiteral, FunctionCall]:
 		self.state.consume_while(str.isspace)
 		
-		# Check if this argument is a function call
+		# Check if this argument is a function call or string literal
 		start_pos = self.state.pos
 		identifier = self._parse_identifier()
 		
@@ -87,6 +100,14 @@ class Parser:
 			# It's a nested function call - parse it recursively
 			self.state.pos = start_pos  # Reset position
 			return self._parse_function_call()
+		elif identifier:
+			# It's a string literal (identifier not followed by '(')
+			# Check that we're at a valid stopping point
+			self.state.consume_while(str.isspace)
+			next_char = self.state.peek()
+			if next_char not in (',', ')', None):
+				raise ValueError("Expected comma or closing parenthesis")
+			return StringLiteral(identifier)
 		else:
 			# It's a plain argument - reset and parse as string
 			self.state.pos = start_pos
@@ -133,3 +154,38 @@ class Parser:
 			result.append(self.state.consume())
 
 		return ''.join(result).strip()
+
+
+@dataclass
+class TokenTransformation:
+	name: str
+	function: type[Exp]
+	args: list[str] | Literal["variadic"]
+
+@dataclass
+class TokenTransformer:
+	transformations: dict[str, TokenTransformation]
+
+	def transform(self, token: FunctionCall | StringLiteral) -> Exp | str:
+		if isinstance(token, StringLiteral):
+			return token.value
+
+		transformer = self.transformations[token.name]
+		if transformer.args == "variadic":
+			return transformer.function([self.transform(e) for e in token.args])
+		else:
+			raw_kwargs = dict(zip(transformer.args, token.args))
+			kwargs = {k: self.transform(v) for k, v in raw_kwargs.items()}
+			return transformer.function(**kwargs)
+
+transformer = TokenTransformer({
+	e.name:e for e in [
+		TokenTransformation("NOT", logic.Not_, ["cond"]),
+		TokenTransformation("AND", logic.And_, "variadic"),
+		TokenTransformation("OR", logic.Or_, "variadic"),
+		TokenTransformation("HAS", logic.TagHas, ["k"]),
+		TokenTransformation("MATCH", logic.TagMatch, ["k", "v"]),
+		TokenTransformation("RE", logic.TagRematch, ["k", "v"]),
+		TokenTransformation("CONTAINS", logic.TagContains, ["k", "v"]),
+	]
+})
