@@ -1,5 +1,6 @@
+import abc
 from dataclasses import dataclass
-from typing import List, Literal, Optional, Union
+from typing import List, Literal, Optional
 
 from alpacloud.eztag import logic
 from alpacloud.eztag.logic import Exp
@@ -23,28 +24,29 @@ class ParseState:
 	def consume_while(self, predicate) -> str:
 		result = []
 		while self.peek() and predicate(self.peek()):
-			result.append(self.consume())
+			next_result = self.consume()
+			if next_result is not None:
+				result.append(next_result)
 		return "".join(result)
 
 
+class ASTNode(abc.ABC):
+	pass
+
+
 @dataclass
-class StringLiteral:
+class StringLiteral(ASTNode):
 	value: str
 
 
 @dataclass
-class FunctionCall:
+class FunctionCall(ASTNode):
 	name: str
-	args: List[Union[str, StringLiteral, "FunctionCall"]]
+	args: List[ASTNode]
 
 
 @dataclass
-class StringLiteral:
-	value: str
-
-
-@dataclass
-class RegexLiteral:
+class RegexLiteral(ASTNode):
 	value: str
 
 
@@ -77,8 +79,8 @@ class Parser:
 	def _parse_identifier(self) -> str:
 		return self.state.consume_while(lambda c: c not in self.reserved_chars and not c.isspace())
 
-	def _parse_arguments(self) -> List[Union[str, StringLiteral, FunctionCall]]:
-		args = []
+	def _parse_arguments(self) -> List[ASTNode]:
+		args: List[ASTNode] = []
 		while True:
 			self.state.consume_while(str.isspace)
 
@@ -104,7 +106,7 @@ class Parser:
 		self.state.consume()
 		return v
 
-	def _parse_argument(self) -> Union[str, StringLiteral, FunctionCall]:
+	def _parse_argument(self) -> ASTNode:
 		self.state.consume_while(str.isspace)
 
 		# Check if this argument is a function call or string literal
@@ -124,51 +126,7 @@ class Parser:
 				raise ValueError("Expected comma or closing parenthesis")
 			return StringLiteral(identifier)
 		else:
-			# It's a plain argument - reset and parse as string
-			self.state.pos = start_pos
-			return self._parse_plain_argument()
-
-	def _parse_plain_argument(self) -> str:
-		depth = 0
-		result = []
-		has_content = False
-
-		while self.state.peek():
-			char = self.state.peek()
-
-			if char == "(":
-				depth += 1
-			elif char == ")":
-				if depth == 0:
-					break
-				depth -= 1
-			elif char == "," and depth == 0:
-				break
-			elif str.isspace(char) and depth == 0 and has_content:
-				# Check if there's more non-whitespace content after this space
-				# Save position to potentially restore
-				space_start = self.state.pos
-				self.state.consume_while(str.isspace)
-
-				# If we hit a comma or closing paren, the spaces are trailing - OK
-				if self.state.peek() in (",", ")", None):
-					break
-
-				# Otherwise, there's more content after spaces without a comma - ERROR
-				# But we need to check if it's another identifier (which would be invalid)
-				next_char = self.state.peek()
-				if next_char and (next_char.isalnum() or next_char == "_"):
-					raise ValueError("Expected comma or closing parenthesis")
-
-				# Reset and continue consuming (for special chars in args)
-				self.state.pos = space_start
-
-			if not str.isspace(char):
-				has_content = True
-
-			result.append(self.state.consume())
-
-		return "".join(result).strip()
+			raise ValueError("Expected identifier")
 
 
 @dataclass
@@ -182,17 +140,22 @@ class TokenTransformation:
 class TokenTransformer:
 	transformations: dict[str, TokenTransformation]
 
-	def transform(self, token: FunctionCall | StringLiteral) -> Exp | str:
-		if isinstance(token, StringLiteral):
-			return token.value
-
-		transformer = self.transformations[token.name]
-		if transformer.args == "variadic":
-			return transformer.function([self.transform(e) for e in token.args])
-		else:
-			raw_kwargs = dict(zip(transformer.args, token.args))
-			kwargs = {k: self.transform(v) for k, v in raw_kwargs.items()}
-			return transformer.function(**kwargs)
+	def transform(self, token: ASTNode) -> Exp | str:
+		match token:
+			case StringLiteral():
+				return token.value
+			case RegexLiteral():
+				return token.value
+			case FunctionCall():
+				transformer = self.transformations[token.name]
+				if transformer.args == "variadic":
+					return transformer.function([self.transform(e) for e in token.args])  # type: ignore # the typesafety is done by the TokenTransformation
+				else:
+					raw_kwargs = dict(zip(transformer.args, token.args))
+					kwargs = {k: self.transform(v) for k, v in raw_kwargs.items()}
+					return transformer.function(**kwargs)
+			case _:
+				raise ValueError(f"Unexpected token: {token} of type {type(token)}")
 
 
 transformer = TokenTransformer(

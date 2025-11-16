@@ -65,7 +65,7 @@ class TagMatch(Exp):
 @dataclass(frozen=True, slots=True)
 class TagRematch(Exp):
 	k: str
-	v: str | None
+	v: str
 
 	def check(self, tags: TagSet) -> bool:
 		return tags.rematch(self.k, self.v)

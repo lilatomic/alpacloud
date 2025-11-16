@@ -163,9 +163,8 @@ class TestParser:
 
 	def test_function_with_empty_arg_between_commas(self):
 		parser = Parser("func(arg1, , arg2)")
-		result = parser.parse()
-		# Empty string is a valid argument
-		assert result == FunctionCall("func", [StringLiteral("arg1"), "", StringLiteral("arg2")])
+		with pytest.raises(ValueError, match="Expected identifier"):
+			parser.parse()
 
 	def test_complex_nested_example(self):
 		parser = Parser("outer(inner1(a, b), inner2(c), d)")
