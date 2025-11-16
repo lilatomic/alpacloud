@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import pytest
 
 from alpacloud.eztag import logic
-from alpacloud.eztag.parser import Parser, FunctionCall, ParseState, StringLiteral, transformer, TokenTransformation, TokenTransformer, RegexLiteral
+from alpacloud.eztag.parser import FunctionCall, Parser, ParseState, RegexLiteral, StringLiteral, TokenTransformation, TokenTransformer, transformer
 
 
 class TestParseState:
@@ -11,7 +11,7 @@ class TestParseState:
 
 	def test_peek_at_beginning(self):
 		state = ParseState("hello")
-		assert state.peek() == 'h'
+		assert state.peek() == "h"
 		assert state.pos == 0  # peek doesn't advance
 
 	def test_peek_at_end(self):
@@ -20,9 +20,9 @@ class TestParseState:
 
 	def test_consume_advances_position(self):
 		state = ParseState("hello")
-		assert state.consume() == 'h'
+		assert state.consume() == "h"
 		assert state.pos == 1
-		assert state.consume() == 'e'
+		assert state.consume() == "e"
 		assert state.pos == 2
 
 	def test_consume_at_end_returns_none(self):
@@ -53,11 +53,7 @@ class TestStringLiteral:
 	def test_multiple_string_literals(self):
 		parser = Parser("func(arg1, arg2, arg3)")
 		result = parser.parse()
-		assert result == FunctionCall("func", [
-			StringLiteral("arg1"),
-			StringLiteral("arg2"),
-			StringLiteral("arg3")
-		])
+		assert result == FunctionCall("func", [StringLiteral("arg1"), StringLiteral("arg2"), StringLiteral("arg3")])
 
 	def test_string_literal_with_numbers(self):
 		parser = Parser("func(arg123)")
@@ -77,27 +73,17 @@ class TestStringLiteral:
 	def test_mixed_string_literals_and_function_calls(self):
 		parser = Parser("func(arg1, nested(), arg2)")
 		result = parser.parse()
-		assert result == FunctionCall("func", [
-			StringLiteral("arg1"),
-			FunctionCall("nested", []),
-			StringLiteral("arg2")
-		])
+		assert result == FunctionCall("func", [StringLiteral("arg1"), FunctionCall("nested", []), StringLiteral("arg2")])
 
 	def test_string_literal_in_nested_function(self):
 		parser = Parser("outer(inner(literal))")
 		result = parser.parse()
-		assert result == FunctionCall("outer", [
-			FunctionCall("inner", [StringLiteral("literal")])
-		])
+		assert result == FunctionCall("outer", [FunctionCall("inner", [StringLiteral("literal")])])
 
 	def test_multiple_string_literals_nested(self):
 		parser = Parser("func(a, b(c, d), e)")
 		result = parser.parse()
-		assert result == FunctionCall("func", [
-			StringLiteral("a"),
-			FunctionCall("b", [StringLiteral("c"), StringLiteral("d")]),
-			StringLiteral("e")
-		])
+		assert result == FunctionCall("func", [StringLiteral("a"), FunctionCall("b", [StringLiteral("c"), StringLiteral("d")]), StringLiteral("e")])
 
 
 class TestParser:
@@ -116,11 +102,7 @@ class TestParser:
 	def test_function_with_multiple_args(self):
 		parser = Parser("func(arg1, arg2, arg3)")
 		result = parser.parse()
-		assert result == FunctionCall("func", [
-			StringLiteral("arg1"),
-			StringLiteral("arg2"),
-			StringLiteral("arg3")
-		])
+		assert result == FunctionCall("func", [StringLiteral("arg1"), StringLiteral("arg2"), StringLiteral("arg3")])
 
 	def test_function_with_numeric_args(self):
 		parser = Parser("add(123, 456)")
@@ -130,28 +112,19 @@ class TestParser:
 	def test_function_with_nested_function_call(self):
 		parser = Parser("func(nested(inner), arg2)")
 		result = parser.parse()
-		expected = FunctionCall("func", [
-			FunctionCall("nested", [StringLiteral("inner")]),
-			StringLiteral("arg2")
-		])
+		expected = FunctionCall("func", [FunctionCall("nested", [StringLiteral("inner")]), StringLiteral("arg2")])
 		assert result == expected
 
 	def test_function_with_deeply_nested_function_calls(self):
 		parser = Parser("func(a(b(c)), d)")
 		result = parser.parse()
-		expected = FunctionCall("func", [
-			FunctionCall("a", [FunctionCall("b", [StringLiteral("c")])]),
-			StringLiteral("d")
-		])
+		expected = FunctionCall("func", [FunctionCall("a", [FunctionCall("b", [StringLiteral("c")])]), StringLiteral("d")])
 		assert result == expected
 
 	def test_function_with_spaces(self):
 		parser = Parser("func( arg1 , arg2 )")
 		result = parser.parse()
-		assert result == FunctionCall("func", [
-			StringLiteral("arg1"),
-			StringLiteral("arg2")
-		])
+		assert result == FunctionCall("func", [StringLiteral("arg1"), StringLiteral("arg2")])
 
 	def test_function_with_leading_trailing_spaces(self):
 		parser = Parser("  func(arg)  ")
@@ -192,38 +165,23 @@ class TestParser:
 		parser = Parser("func(arg1, , arg2)")
 		result = parser.parse()
 		# Empty string is a valid argument
-		assert result == FunctionCall("func", [
-			StringLiteral("arg1"),
-			"",
-			StringLiteral("arg2")
-		])
+		assert result == FunctionCall("func", [StringLiteral("arg1"), "", StringLiteral("arg2")])
 
 	def test_complex_nested_example(self):
 		parser = Parser("outer(inner1(a, b), inner2(c), d)")
 		result = parser.parse()
-		expected = FunctionCall("outer", [
-			FunctionCall("inner1", [StringLiteral("a"), StringLiteral("b")]),
-			FunctionCall("inner2", [StringLiteral("c")]),
-			StringLiteral("d")
-		])
+		expected = FunctionCall("outer", [FunctionCall("inner1", [StringLiteral("a"), StringLiteral("b")]), FunctionCall("inner2", [StringLiteral("c")]), StringLiteral("d")])
 		assert result == expected
 
 	def test_function_with_special_chars_in_args(self):
 		parser = Parser("func(arg-1, arg.2, arg@3)")
 		result = parser.parse()
-		assert result == FunctionCall("func", [StringLiteral(value='arg-1'), StringLiteral(value='arg.2'), StringLiteral(value='arg@3')])
+		assert result == FunctionCall("func", [StringLiteral(value="arg-1"), StringLiteral(value="arg.2"), StringLiteral(value="arg@3")])
 
 	def test_multiple_nested_levels(self):
 		parser = Parser("f1(f2(f3(f4())), x)")
 		result = parser.parse()
-		expected = FunctionCall("f1", [
-			FunctionCall("f2", [
-				FunctionCall("f3", [
-					FunctionCall("f4", [])
-				])
-			]),
-			StringLiteral("x")
-		])
+		expected = FunctionCall("f1", [FunctionCall("f2", [FunctionCall("f3", [FunctionCall("f4", [])])]), StringLiteral("x")])
 		assert result == expected
 
 	def test_nested_function_with_no_args(self):
@@ -235,33 +193,19 @@ class TestParser:
 	def test_multiple_nested_functions_as_args(self):
 		parser = Parser("func(a(), b(), c())")
 		result = parser.parse()
-		expected = FunctionCall("func", [
-			FunctionCall("a", []),
-			FunctionCall("b", []),
-			FunctionCall("c", [])
-		])
+		expected = FunctionCall("func", [FunctionCall("a", []), FunctionCall("b", []), FunctionCall("c", [])])
 		assert result == expected
 
 	def test_nested_with_mixed_args(self):
 		parser = Parser("outer(x, inner(y), z)")
 		result = parser.parse()
-		expected = FunctionCall("outer", [
-			StringLiteral("x"),
-			FunctionCall("inner", [StringLiteral("y")]),
-			StringLiteral("z")
-		])
+		expected = FunctionCall("outer", [StringLiteral("x"), FunctionCall("inner", [StringLiteral("y")]), StringLiteral("z")])
 		assert result == expected
 
 	def test_deeply_nested_with_multiple_args(self):
 		parser = Parser("a(b(c(d, e), f), g)")
 		result = parser.parse()
-		expected = FunctionCall("a", [
-			FunctionCall("b", [
-				FunctionCall("c", [StringLiteral("d"), StringLiteral("e")]),
-				StringLiteral("f")
-			]),
-			StringLiteral("g")
-		])
+		expected = FunctionCall("a", [FunctionCall("b", [FunctionCall("c", [StringLiteral("d"), StringLiteral("e")]), StringLiteral("f")]), StringLiteral("g")])
 		assert result == expected
 
 	def test_string_literal_starts_with_number(self):
@@ -273,10 +217,7 @@ class TestParser:
 	def test_all_string_literals_in_complex_expr(self):
 		parser = Parser("and(or(a, b), not(c))")
 		result = parser.parse()
-		expected = FunctionCall("and", [
-			FunctionCall("or", [StringLiteral("a"), StringLiteral("b")]),
-			FunctionCall("not", [StringLiteral("c")])
-		])
+		expected = FunctionCall("and", [FunctionCall("or", [StringLiteral("a"), StringLiteral("b")]), FunctionCall("not", [StringLiteral("c")])])
 		assert result == expected
 
 	def test_regex_literal(self):
@@ -309,9 +250,7 @@ class TestTransformer:
 		assert transformer.transform(FunctionCall("MATCH", [StringLiteral("k"), StringLiteral("v")])) == logic.TagMatch("k", "v")
 
 	def test_multiple_with_default(self):
-		assert TokenTransformer({
-			"TEST": TokenTransformation("TEST", FakeItem, ["k", "v"])
-		}).transform(FunctionCall("TEST", [StringLiteral("k")])) == FakeItem("k")
+		assert TokenTransformer({"TEST": TokenTransformation("TEST", FakeItem, ["k", "v"])}).transform(FunctionCall("TEST", [StringLiteral("k")])) == FakeItem("k")
 
 	def test_recursive(self):
 		assert transformer.transform(FunctionCall("AND", [FunctionCall("NOT", [StringLiteral("x")])])) == logic.And_([logic.Not_("x")])
