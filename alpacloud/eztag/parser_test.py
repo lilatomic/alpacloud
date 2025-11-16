@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import pytest
 
 from alpacloud.eztag import logic
-from alpacloud.eztag.parser import Parser, FunctionCall, ParseState, StringLiteral, transformer, TokenTransformation, TokenTransformer
+from alpacloud.eztag.parser import Parser, FunctionCall, ParseState, StringLiteral, transformer, TokenTransformation, TokenTransformer, RegexLiteral
 
 
 class TestParseState:
@@ -211,7 +211,7 @@ class TestParser:
 	def test_function_with_special_chars_in_args(self):
 		parser = Parser("func(arg-1, arg.2, arg@3)")
 		result = parser.parse()
-		assert result == FunctionCall("func", ["arg-1", "arg.2", "arg@3"])
+		assert result == FunctionCall("func", [StringLiteral(value='arg-1'), StringLiteral(value='arg.2'), StringLiteral(value='arg@3')])
 
 	def test_multiple_nested_levels(self):
 		parser = Parser("f1(f2(f3(f4())), x)")
@@ -278,6 +278,16 @@ class TestParser:
 			FunctionCall("not", [StringLiteral("c")])
 		])
 		assert result == expected
+
+	def test_regex_literal(self):
+		parser = Parser("match(k, /v/)")
+		result = parser.parse()
+		assert result == FunctionCall("match", [StringLiteral("k"), RegexLiteral("v")])
+
+	def test_regex_literal_with_nesting(self):
+		parser = Parser("match(k, /match(k, v)/)")
+		result = parser.parse()
+		assert result == FunctionCall("match", [StringLiteral("k"), RegexLiteral("match(k, v)")])
 
 
 @dataclass

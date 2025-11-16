@@ -43,7 +43,13 @@ class StringLiteral:
 	value: str
 
 
+@dataclass
+class RegexLiteral:
+	value: str
+
 class Parser:
+	reserved_chars = set("(),/")
+
 	def __init__(self, text: str):
 		self.state = ParseState(text.strip())
 
@@ -68,7 +74,7 @@ class Parser:
 		return FunctionCall(name, args)
 
 	def _parse_identifier(self) -> str:
-		return self.state.consume_while(lambda c: c.isalnum() or c == '_')
+		return self.state.consume_while(lambda c: c not in self.reserved_chars and not c.isspace())
 
 	def _parse_arguments(self) -> List[Union[str, StringLiteral, FunctionCall]]:
 		args = []
@@ -78,8 +84,10 @@ class Parser:
 			if self.state.peek() == ')':
 				break
 
-			arg = self._parse_argument()
-			args.append(arg)
+			if self.state.peek() == '/':
+				args.append(self._parse_regex())
+			else:
+				args.append(self._parse_argument())
 
 			self.state.consume_while(str.isspace)
 			if self.state.peek() == ',':
@@ -88,6 +96,12 @@ class Parser:
 				raise ValueError("Expected comma or closing parenthesis")
 
 		return args
+
+	def _parse_regex(self) -> RegexLiteral:
+		self.state.consume()
+		v = RegexLiteral(self.state.consume_while(lambda c: c != '/'))
+		self.state.consume()
+		return v
 
 	def _parse_argument(self) -> Union[str, StringLiteral, FunctionCall]:
 		self.state.consume_while(str.isspace)
