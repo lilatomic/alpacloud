@@ -12,7 +12,7 @@ python_test_utils(
 python_distribution(
 	name="alpacloud.eztag",
 	repositories=["@alpacloud.eztag"],
-	dependencies=[":lens"],
+	dependencies=[":eztag"],
 	long_description_path="alpacloud/eztag/readme.md",
 	provides=python_artifact(
 		name="alpacloud_eztag",
