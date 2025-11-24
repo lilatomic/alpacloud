@@ -1,3 +1,5 @@
+"""Expressions for tag filtering"""
+
 from abc import ABC
 from dataclasses import dataclass
 from typing import Callable
@@ -15,6 +17,8 @@ class Expr(ABC):
 
 @dataclass(frozen=True, slots=True)
 class Cond_(Expr):
+	"""A condition that checks if a tag set satisfies a predicate"""
+
 	f: Callable[[TagSet], bool]
 
 	def check(self, tags: TagSet) -> bool:
@@ -23,6 +27,8 @@ class Cond_(Expr):
 
 @dataclass(frozen=True, slots=True)
 class And_(Expr):
+	"""AND of multiple conditions"""
+
 	conds: list[Cond_]
 
 	def check(self, tags: TagSet) -> bool:
@@ -31,6 +37,8 @@ class And_(Expr):
 
 @dataclass(frozen=True, slots=True)
 class Or_(Expr):
+	"""OR of multiple conditions"""
+
 	conds: list[Cond_]
 
 	def check(self, tags: TagSet) -> bool:
@@ -39,6 +47,8 @@ class Or_(Expr):
 
 @dataclass(frozen=True, slots=True)
 class Not_(Expr):
+	"""Negation of a condition"""
+
 	cond: Cond_
 
 	def check(self, tags: TagSet) -> bool:
@@ -47,6 +57,8 @@ class Not_(Expr):
 
 @dataclass(frozen=True, slots=True)
 class TagHas(Expr):
+	"""Check if a tag set has a given tag, with any value"""
+
 	k: str
 
 	def check(self, tags: TagSet) -> bool:
@@ -55,6 +67,8 @@ class TagHas(Expr):
 
 @dataclass(frozen=True, slots=True)
 class TagMatch(Expr):
+	"""Check if a tag set has a given tag with a specific value"""
+
 	k: str
 	v: str | None
 
@@ -64,6 +78,8 @@ class TagMatch(Expr):
 
 @dataclass(frozen=True, slots=True)
 class TagRematch(Expr):
+	"""Check if a tag set has a given tag with value matching a regular expression"""
+
 	k: str
 	v: str
 
@@ -73,6 +89,8 @@ class TagRematch(Expr):
 
 @dataclass(frozen=True, slots=True)
 class TagContains(Expr):
+	"""Check if a tag set has a given tag with a specific value"""
+
 	k: str
 	v: str
 

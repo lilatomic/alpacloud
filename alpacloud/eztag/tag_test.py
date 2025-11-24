@@ -1,3 +1,5 @@
+"""Tests for TagSet class"""
+
 from __future__ import annotations
 
 import re

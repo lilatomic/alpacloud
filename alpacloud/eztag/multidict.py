@@ -1,3 +1,5 @@
+"""Generic multidict implementation. A multidict allows multiple values for the same key."""
+
 from __future__ import annotations
 
 from typing import Iterable, TypeAlias, TypeGuard
@@ -24,6 +26,7 @@ class MultiDict:
 
 	@classmethod
 	def from_dict(cls, d: dict[K, V]) -> MultiDict:
+		"""Create a multidict from a dict of key-value pairs"""
 		md = cls()
 		for k, v in d.items():
 			md[k] = {v}
@@ -31,6 +34,9 @@ class MultiDict:
 
 	@classmethod
 	def create(cls, d: dict[K, Iterable[V] | V]) -> MultiDict:
+		"""
+		Create a multidict from a dict of key-value pairs or key-list of values pairs
+		"""
 		md = cls()
 		for k, vs in d.items():
 			n: set[V]

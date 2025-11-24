@@ -1,3 +1,13 @@
+"""
+Parse filter expressions into predicates for filtering tags.
+
+The grammar is as follows:
+regex_literal := "/" regex "/"
+string_literal := any characters except "(),/" and spaces
+expr := identifier(expr [, expr])* | regex_literal | string_literal
+identifier := "and" | "or" | "not" | "has" | "match" | "re" | "contains"
+"""
+
 from __future__ import annotations
 
 import abc
@@ -10,13 +20,17 @@ from alpacloud.eztag.logic import Expr
 
 @dataclass
 class ParseState:
+	"""State of the parser"""
+
 	text: str
 	pos: int = 0
 
 	def peek(self) -> Optional[str]:
+		"""Look at the next character in the input text without consuming it"""
 		return self.text[self.pos] if self.pos < len(self.text) else None
 
 	def consume(self) -> Optional[str]:
+		"""Consume the next character from the input text"""
 		if self.pos >= len(self.text):
 			return None
 		char = self.text[self.pos]
@@ -24,6 +38,9 @@ class ParseState:
 		return char
 
 	def consume_while(self, predicate) -> str:
+		"""
+		Consume characters from the input text while the predicate is True
+		"""
 		result = []
 		while self.peek() and predicate(self.peek()):
 			next_result = self.consume()
@@ -33,32 +50,43 @@ class ParseState:
 
 
 class ASTNode(abc.ABC):
-	pass
+	"""Abstract base class for AST nodes"""
 
 
 @dataclass
 class StringLiteral(ASTNode):
+	"""AST node representing a string literal"""
+
 	value: str
 
 
 @dataclass
 class FunctionCall(ASTNode):
+	"""AST node representing a function call. Everything that isn't a literal is a function call."""
+
 	name: str
-	args: List[ASTNode]
+	args: list[ASTNode]
 
 
 @dataclass
 class RegexLiteral(ASTNode):
+	"""AST node representing a regex literal"""
+
 	value: str
 
 
 class Parser:
+	"""Parses a filter expression into an AST"""
+
 	reserved_chars = set("(),/")
 
 	def __init__(self, text: str):
 		self.state = ParseState(text.strip())
 
 	def parse(self) -> FunctionCall:
+		"""
+		Parse a filter expression into an AST
+		"""
 		return self._parse_function_call()
 
 	def _parse_function_call(self) -> FunctionCall:
@@ -147,6 +175,8 @@ class TokenTransformation:
 
 
 class TokenTransformer:
+	"""Transforms AST nodes into Exprs"""
+
 	def __init__(self, transformations: dict[str, TokenTransformation], case_sensitive_tokens: bool = False):
 		self.case_sensitive_tokens = case_sensitive_tokens
 		if case_sensitive_tokens:
@@ -155,6 +185,7 @@ class TokenTransformer:
 			self.transformations = {k.lower(): v for k, v in transformations.items()}
 
 	def transform(self, token: ASTNode) -> Expr | str:
+		"""Transform an AST node into an Expr"""
 		match token:
 			case StringLiteral():
 				return token.value
@@ -162,21 +193,22 @@ class TokenTransformer:
 				return token.value
 			case FunctionCall():
 				if self.case_sensitive_tokens:
-					transformer = self.transformations[token.name]
+					transformation = self.transformations[token.name]
 				else:
-					transformer = self.transformations[token.name.lower()]
+					transformation = self.transformations[token.name.lower()]
 
-				if transformer.args == "variadic":
-					return transformer.function([self.transform(e) for e in token.args])  # type: ignore # the typesafety is done by the TokenTransformation
+				if transformation.args == "variadic":
+					return transformation.function([self.transform(e) for e in token.args])  # type: ignore # the typesafety is done by the TokenTransformation
 				else:
-					raw_kwargs = dict(zip(transformer.args, token.args))
+					raw_kwargs = dict(zip(transformation.args, token.args))
 					kwargs = {k: self.transform(v) for k, v in raw_kwargs.items()}
-					return transformer.function(**kwargs)
+					return transformation.function(**kwargs)
 			case _:
 				raise ValueError(f"Unexpected token: {token} of type {type(token)}")
 
 	def extended(self, more_transformers: dict[str, TokenTransformation]) -> TokenTransformer:
-		return TokenTransformer(dict(**self.transformations, **more_transformers), self.case_sensitive_tokens)
+		"""Make a new TokenTransformer with additional transformations. New transformations take precedence over existing ones."""
+		return TokenTransformer({**self.transformations, **more_transformers}, self.case_sensitive_tokens)
 
 
 transformer = TokenTransformer(

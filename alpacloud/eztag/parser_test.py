@@ -1,9 +1,11 @@
+"""Tests for parser module."""
+
 from dataclasses import dataclass
 
 import pytest
 
 from alpacloud.eztag import logic
-from alpacloud.eztag.logic import TagRematch, TagMatch, And_
+from alpacloud.eztag.logic import And_, TagMatch, TagRematch
 from alpacloud.eztag.parser import FunctionCall, Parser, ParseState, RegexLiteral, StringLiteral, TokenTransformation, TokenTransformer, transformer
 
 
@@ -167,6 +169,10 @@ class TestParser:
 		with pytest.raises(ValueError, match="Expected identifier"):
 			parser.parse()
 
+
+class TestParserNested:
+	"""Tests for Parser class with nested function calls."""
+
 	def test_complex_nested_example(self):
 		parser = Parser("outer(inner1(a, b), inner2(c), d)")
 		result = parser.parse()
@@ -230,8 +236,11 @@ class TestParser:
 		result = parser.parse()
 		assert result == FunctionCall("match", [StringLiteral("k"), RegexLiteral("match(k, v)")])
 
+
 @dataclass
 class FakeItem:
+	"""Fake item for testing transformer."""
+
 	k: str
 	v: str = "default"
 
@@ -256,8 +265,9 @@ class TestTransformer:
 
 
 class TestIntegration:
-	def test_example(self):
+	"""Integration tests for Parser and Transformer."""
 
-		filter = "and(match(env, prd), re(name, /grafana.*/))"
-		result = transformer.transform(Parser(filter).parse())
-		assert result == And_(conds=[TagMatch(k='env', v='prd'), TagRematch(k='name', v='grafana.*')])
+	def test_example(self):
+		filter_str = "and(match(env, prd), re(name, /grafana.*/))"
+		result = transformer.transform(Parser(filter_str).parse())
+		assert result == And_(conds=[TagMatch(k="env", v="prd"), TagRematch(k="name", v="grafana.*")])

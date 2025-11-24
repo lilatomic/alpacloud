@@ -76,9 +76,30 @@ Then you can invoke it like this:
 task-run --filter 'and(match(env, prd), re(name, /cert.*/)'
 ```
 
+## CLI filter usage
+
+Filter syntax is:
+```
+regex_literal := "/" regex "/"
+string_literal := any characters except "(),/" and spaces
+expr := identifier(expr [, expr])* | regex_literal | string_literal
+identifier := "and" | "or" | "not" | "has" | "match" | "re" | "contains"
+```
+
+the operations are:
+- `and` : logical AND
+- `or` : logical OR
+- `not` : logical NOT
+- `has` : check if a tag has a key
+- `match` : check if a tag has a key with a value
+- `re` : check if a tag has a key with a value that matches a regex
+- `contains` : check if a tag has a key whose value contains a substring
+
 ## Advanced usage
 
 ### Adding custom filters or operators
+
+You can add your own filters or operators to streamline your usecase. For example, if you shard your tasks, you can add a filter to run only on a specific shard and then filter with `AND(MATCH(env, prd), SHARD(5))` for example.
 
 1. Implement your filter as a subclass of `alpacloud.eztag.logic.Expr`
 
