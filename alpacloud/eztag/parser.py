@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import abc
 from dataclasses import dataclass
 from typing import List, Literal, Optional
 
 from alpacloud.eztag import logic
-from alpacloud.eztag.logic import Exp
+from alpacloud.eztag.logic import Expr
 
 
 @dataclass
@@ -132,7 +134,7 @@ class Parser:
 @dataclass
 class TokenTransformation:
 	name: str
-	function: type[Exp]
+	function: type[Expr]
 	args: list[str] | Literal["variadic"]
 
 
@@ -140,7 +142,7 @@ class TokenTransformation:
 class TokenTransformer:
 	transformations: dict[str, TokenTransformation]
 
-	def transform(self, token: ASTNode) -> Exp | str:
+	def transform(self, token: ASTNode) -> Expr | str:
 		match token:
 			case StringLiteral():
 				return token.value

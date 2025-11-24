@@ -5,7 +5,7 @@ from typing import Callable
 from alpacloud.eztag.tag import TagSet
 
 
-class Exp(ABC):
+class Expr(ABC):
 	"""A predicate"""
 
 	def check(self, tags: TagSet) -> bool:
@@ -14,7 +14,7 @@ class Exp(ABC):
 
 
 @dataclass(frozen=True, slots=True)
-class Cond_(Exp):
+class Cond_(Expr):
 	f: Callable[[TagSet], bool]
 
 	def check(self, tags: TagSet) -> bool:
@@ -22,7 +22,7 @@ class Cond_(Exp):
 
 
 @dataclass(frozen=True, slots=True)
-class And_(Exp):
+class And_(Expr):
 	conds: list[Cond_]
 
 	def check(self, tags: TagSet) -> bool:
@@ -30,7 +30,7 @@ class And_(Exp):
 
 
 @dataclass(frozen=True, slots=True)
-class Or_(Exp):
+class Or_(Expr):
 	conds: list[Cond_]
 
 	def check(self, tags: TagSet) -> bool:
@@ -38,7 +38,7 @@ class Or_(Exp):
 
 
 @dataclass(frozen=True, slots=True)
-class Not_(Exp):
+class Not_(Expr):
 	cond: Cond_
 
 	def check(self, tags: TagSet) -> bool:
@@ -46,7 +46,7 @@ class Not_(Exp):
 
 
 @dataclass(frozen=True, slots=True)
-class TagHas(Exp):
+class TagHas(Expr):
 	k: str
 
 	def check(self, tags: TagSet) -> bool:
@@ -54,7 +54,7 @@ class TagHas(Exp):
 
 
 @dataclass(frozen=True, slots=True)
-class TagMatch(Exp):
+class TagMatch(Expr):
 	k: str
 	v: str | None
 
@@ -63,7 +63,7 @@ class TagMatch(Exp):
 
 
 @dataclass(frozen=True, slots=True)
-class TagRematch(Exp):
+class TagRematch(Expr):
 	k: str
 	v: str
 
@@ -72,7 +72,7 @@ class TagRematch(Exp):
 
 
 @dataclass(frozen=True, slots=True)
-class TagContains(Exp):
+class TagContains(Expr):
 	k: str
 	v: str
 
