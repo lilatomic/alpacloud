@@ -3,6 +3,7 @@ from dataclasses import dataclass
 import pytest
 
 from alpacloud.eztag import logic
+from alpacloud.eztag.logic import TagRematch, TagMatch, And_
 from alpacloud.eztag.parser import FunctionCall, Parser, ParseState, RegexLiteral, StringLiteral, TokenTransformation, TokenTransformer, transformer
 
 
@@ -229,7 +230,6 @@ class TestParser:
 		result = parser.parse()
 		assert result == FunctionCall("match", [StringLiteral("k"), RegexLiteral("match(k, v)")])
 
-
 @dataclass
 class FakeItem:
 	k: str
@@ -253,3 +253,11 @@ class TestTransformer:
 
 	def test_recursive(self):
 		assert transformer.transform(FunctionCall("AND", [FunctionCall("NOT", [StringLiteral("x")])])) == logic.And_([logic.Not_("x")])
+
+
+class TestIntegration:
+	def test_example(self):
+
+		filter = "and(match(env, prd), re(name, /grafana.*/))"
+		result = transformer.transform(Parser(filter).parse())
+		assert result == And_(conds=[TagMatch(k='env', v='prd'), TagRematch(k='name', v='grafana.*')])

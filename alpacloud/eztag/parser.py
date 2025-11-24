@@ -133,6 +133,14 @@ class Parser:
 
 @dataclass
 class TokenTransformation:
+	"""
+	Associates the name of a function with the Expr implementing functionality.
+
+	The `args` field associates positional arguments in the raw filter expression with the function's keyword arguments.
+	For example, MATCH takes a key (k) and a value (v), so `args = ["k", "v"]`.
+	For functions that take a variable number of arguments, such as AND and OR, `args = "variadic"`.
+	"""
+
 	name: str
 	function: type[Expr]
 	args: list[str] | Literal["variadic"]
@@ -166,6 +174,9 @@ class TokenTransformer:
 					return transformer.function(**kwargs)
 			case _:
 				raise ValueError(f"Unexpected token: {token} of type {type(token)}")
+
+	def extended(self, more_transformers: dict[str, TokenTransformation]) -> TokenTransformer:
+		return TokenTransformer(dict(**self.transformations, **more_transformers), self.case_sensitive_tokens)
 
 
 transformer = TokenTransformer(

@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-from alpacloud.eztag.multidict import MultiDict
+from alpacloud.eztag.multidict import MultiDict, V, K
 
 
 @dataclass
@@ -11,6 +11,14 @@ class TagSet:
 	"""A set of tags"""
 
 	ts: MultiDict
+
+	@classmethod
+	def from_dict(cls, d: dict[K, V]) -> TagSet:
+		return cls(MultiDict.from_dict(d))
+
+	@classmethod
+	def create(cls, d: dict[K, V | list[V]]) -> TagSet:
+		return cls(MultiDict.create(d))
 
 	def has(self, k: str) -> bool:
 		"""Check if the key exists in the tagset"""
