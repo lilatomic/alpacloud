@@ -138,9 +138,13 @@ class TokenTransformation:
 	args: list[str] | Literal["variadic"]
 
 
-@dataclass
 class TokenTransformer:
-	transformations: dict[str, TokenTransformation]
+	def __init__(self, transformations: dict[str, TokenTransformation], case_sensitive_tokens: bool = False):
+		self.case_sensitive_tokens = case_sensitive_tokens
+		if case_sensitive_tokens:
+			self.transformations = transformations
+		else:
+			self.transformations = {k.lower(): v for k, v in transformations.items()}
 
 	def transform(self, token: ASTNode) -> Expr | str:
 		match token:
@@ -149,7 +153,11 @@ class TokenTransformer:
 			case RegexLiteral():
 				return token.value
 			case FunctionCall():
-				transformer = self.transformations[token.name]
+				if self.case_sensitive_tokens:
+					transformer = self.transformations[token.name]
+				else:
+					transformer = self.transformations[token.name.lower()]
+
 				if transformer.args == "variadic":
 					return transformer.function([self.transform(e) for e in token.args])  # type: ignore # the typesafety is done by the TokenTransformation
 				else:
