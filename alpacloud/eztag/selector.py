@@ -1,6 +1,6 @@
 """Selector items based on their tags. Useful for when tags are external to the data."""
 
-from typing import TypeVar
+from typing import Generic, TypeVar
 
 from alpacloud.eztag.logic import Expr
 from alpacloud.eztag.tag import TagSet
@@ -8,7 +8,7 @@ from alpacloud.eztag.tag import TagSet
 Data = TypeVar("Data")
 
 
-class Selector:
+class Selector(Generic[Data]):
 	"""Select items based on their tags"""
 
 	def __init__(self, items: list[tuple[TagSet, Data]]):

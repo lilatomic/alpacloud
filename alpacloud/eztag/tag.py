@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from typing import Iterable
 
 from alpacloud.eztag.multidict import K, MultiDict, V
 
@@ -20,7 +21,7 @@ class TagSet:
 		return cls(MultiDict.from_dict(d))
 
 	@classmethod
-	def create(cls, d: dict[K, V | list[V]]) -> TagSet:
+	def create(cls, d: dict[K, Iterable[V] | V]) -> TagSet:
 		"""Create a tagset from a dict of key-value pairs or key-list of values pairs"""
 		return cls(MultiDict.create(d))
 
