@@ -172,10 +172,14 @@ class Parser:
 			if isinstance(line, Parser.MetaLine):
 				meta[line.name].append(line)
 
-		metrics = []
+		data = defaultdict(list)
 		for line in lines:
 			if isinstance(line, Parser.DataLine):
-				metrics.append(Parser.parse_metric(line.name, meta[line.name], line))
+				data[line.name].append(line)
+
+		metrics = []
+		for k, vs in data.items():
+			metrics.append(Parser.build_metric(k, meta[k], vs))
 
 		return metrics
 
@@ -248,9 +252,8 @@ class Parser:
 		return name, value
 
 	@staticmethod
-	def parse_metric(name, meta: list[Parser.MetaLine], data: Parser.DataLine) -> Metric:
+	def build_metric(name, meta: list[Parser.MetaLine], data: list[Parser.DataLine]) -> Metric:
 		"""Subpaarser for an actual metric."""
-		# TODO: label sets
 		# TODO: sample values
 
 		help = ""
@@ -261,4 +264,8 @@ class Parser:
 			elif line.kind == Parser.MetaKind.TYPE:
 				type = line.data
 
-		return Metric(name, help, type)
+		label_sets = []
+		for line in data:
+			label_sets.append(line.labels)
+
+		return Metric(name, help, type, label_sets)

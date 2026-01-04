@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from alpacloud.lens.conftest import ResourceLoader
-from alpacloud.promls.fetch import LineReader, Parser, Parser
+from alpacloud.promls.fetch import LineReader, Parser
 from alpacloud.promls.metrics import Metric
 
 
@@ -38,7 +38,7 @@ class TestParserDataline:
 	def test_histogram_sum(self):
 		l = LineReader(r"telemetry_requests_metrics_latency_microseconds_sum 1.7560473e+07")
 		r = Parser(l).p_metric()
-		assert r == Parser.DataLine("telemetry_requests_metrics_latency_microseconds_sum", {}, 1.7560473e+07)
+		assert r == Parser.DataLine("telemetry_requests_metrics_latency_microseconds_sum", {}, 1.7560473e07)
 
 
 class TestParserMetaLine:
@@ -64,9 +64,9 @@ class TestParseAll:
 		# # A weird metric from before the epoch:
 		# something_weird{problem="division by zero"} +Inf -3982045
 		# """
-		l = """\
+		l = r"""
 # Escaping in label values:
-msdos_file_access_time_ms{path="C:\\\\DIR\\\\FILE.TXT",error="Cannot find file:\\n\\"FILE.TXT\\""} 1.234e3
+msdos_file_access_time_ms{path="C:\\DIR\\FILE.TXT",error="Cannot find file:\n\"FILE.TXT\""} 1.234e3
 # HELP api_http_request_count The total number of HTTP requests.
 # TYPE api_http_request_count counter
 api_http_request_count{method="post",code="200"} 1027 1395066363000
@@ -86,21 +86,26 @@ telemetry_requests_metrics_latency_microseconds_count 2693
 		"""
 		r = Parser.parse_all(l)
 		assert r == [
-			Metric(name="msdos_file_access_time_ms", help="", type=""),
-			Metric(name="api_http_request_count", help="The total number of HTTP requests.", type="counter"),
-			Metric(name="api_http_request_count", help="The total number of HTTP requests.", type="counter"),
-			Metric(name="metric_without_timestamp_and_labels", help="", type=""),
-			Metric(name="telemetry_requests_metrics_latency_microseconds", help="A histogram of the response latency.", type="summary"),
-			Metric(name="telemetry_requests_metrics_latency_microseconds", help="A histogram of the response latency.", type="summary"),
-			Metric(name="telemetry_requests_metrics_latency_microseconds", help="A histogram of the response latency.", type="summary"),
-			Metric(name="telemetry_requests_metrics_latency_microseconds", help="A histogram of the response latency.", type="summary"),
-			Metric(name="telemetry_requests_metrics_latency_microseconds", help="A histogram of the response latency.", type="summary"),
-			Metric(name="telemetry_requests_metrics_latency_microseconds_sum", help="", type=""),
-			Metric(name="telemetry_requests_metrics_latency_microseconds_count", help="", type=""),
+			Metric(name="msdos_file_access_time_ms", help="", type="", labels=[{"path": "C:\\DIR\\FILE.TXT", "error": 'Cannot find file:\n"FILE.TXT"'}]),
+			Metric(
+				name="api_http_request_count",
+				help="The total number of HTTP requests.",
+				type="counter",
+				labels=[{"method": "post", "code": "200"}, {"method": "post", "code": "400"}],
+			),
+			Metric(name="metric_without_timestamp_and_labels", help="", type="", labels=[{}]),
+			Metric(
+				name="telemetry_requests_metrics_latency_microseconds",
+				help="A histogram of the response latency.",
+				type="summary",
+				labels=[{"quantile": "0.01"}, {"quantile": "0.05"}, {"quantile": "0.5"}, {"quantile": "0.9"}, {"quantile": "0.99"}],
+			),
+			Metric(name="telemetry_requests_metrics_latency_microseconds_sum", help="", type="", labels=[{}]),
+			Metric(name="telemetry_requests_metrics_latency_microseconds_count", help="", type="", labels=[{}]),
 		]
 
 	def test_certmanager_sample(self):
 		l = ResourceLoader(Path(__file__).parent / "test_resources").load_raw("certmanager.prom")
 		r = Parser.parse_all(l)
 
-		assert len(r) == 61
+		assert len(r) == 48
