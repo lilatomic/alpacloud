@@ -7,7 +7,7 @@ import re
 
 import click
 
-from alpacloud.promls.fetch import FetcherURL, Parser
+from alpacloud.promls.fetch import FetcherURL, Parser, ParseError
 from alpacloud.promls.filter import MetricsTree, filter_any, filter_name, filter_path
 from alpacloud.promls.metrics import Metric
 from alpacloud.promls.util import paths_to_tree
@@ -57,7 +57,9 @@ def common_args():
 
 def do_fetch(url: str):
 	"""Do the fetch and parse."""
-	return MetricsTree({e.name: e for e in Parser.parse_all(FetcherURL(url).fetch())})
+	values, errors = Parser.parse_all(FetcherURL(url).fetch())
+
+	return MetricsTree({e.name: e for e in values}), errors
 
 
 def mk_indent(i: int, s: str) -> str:
@@ -104,6 +106,14 @@ def do_print(tree: MetricsTree, mode: PrintMode):
 	return txt
 
 
+def print_errors(errors: list[ParseError]):
+	if not errors:
+		return
+	click.echo(f"warning: parse errors: {len(errors)}", err=True)
+	for err in errors:
+		click.echo(str(err), err=True)
+
+
 @click.group()
 def search():
 	"""Search metrics"""
@@ -113,7 +123,8 @@ def search():
 @common_args()
 def name(url, filter: str, display: PrintMode):
 	"""Filter metrics by their name"""
-	tree = do_fetch(url)
+	tree, errors = do_fetch(url)
+	print_errors(errors)
 	filtered = tree.filter(filter_name(re.compile(filter)))
 	click.echo(do_print(filtered, display))
 
@@ -122,7 +133,8 @@ def name(url, filter: str, display: PrintMode):
 @common_args()
 def any(url, filter: str, display: PrintMode):
 	"""Filter metrics by any of their properties"""
-	tree = do_fetch(url)
+	tree, errors = do_fetch(url)
+	print_errors(errors)
 	filtered = tree.filter(filter_any(re.compile(filter)))
 	click.echo(do_print(filtered, display))
 
@@ -131,7 +143,8 @@ def any(url, filter: str, display: PrintMode):
 @common_args()
 def path(url, filter: str, display: PrintMode):
 	"""Filter metrics by their path"""
-	tree = do_fetch(url)
+	tree, errors = do_fetch(url)
+	print_errors(errors)
 	filtered = tree.filter(filter_path(filter.split("_")))
 	click.echo(do_print(filtered, display))
 
@@ -142,4 +155,5 @@ def path(url, filter: str, display: PrintMode):
 def browse(url, filter: str):
 	"""Browse metrics in an interactive visualizer"""
 	real_filter = filter or ".*"
-	PromlsVisApp(do_fetch(url), real_filter, lambda s: filter_any(re.compile(s))).run()
+	results, errors = do_fetch(url)
+	PromlsVisApp(results, errors, real_filter, lambda s: filter_any(re.compile(s))).run()

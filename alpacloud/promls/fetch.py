@@ -31,15 +31,20 @@ class FetcherURL:
 class ParseError(Exception):
 	"""Error parsing Prometheus metrics endpoint."""
 
-	def __init__(self, value, line: str, cursor: int | None = None):
+	def __init__(self, value, line: str, cursor: int | None = None, line_number: int | None = None):
 		self.line = line
 		self.cursor = cursor
+		self.line_number = line_number
 		super().__init__(value)
 
 	def __str__(self) -> str:
-		msg = super().__str__() + f" line={self.line}"
+		msg = super().__str__()
+		if self.line_number is not None:
+			msg += f" line_number={self.line_number}"
+		msg += f" line={self.line}"
 		if self.cursor is not None:
 			msg += f" cursor={self.cursor}"
+
 		return msg
 
 
@@ -48,12 +53,13 @@ name = re.compile(r"[a-zA-Z_][a-zA-Z0-9_]*")
 
 
 class LineReader:
-	def __init__(self, line: str):
+	def __init__(self, line: str, line_number: int | None = None):
 		self.line = line
 		self.cursor = 0
+		self.line_number = line_number
 
 	def err(self, msg: str) -> None:
-		raise ParseError(msg, self.line, self.cursor)
+		raise ParseError(msg, self.line, self.cursor, self.line_number)
 
 	def peek(self):
 		return self.line[self.cursor]
@@ -157,11 +163,19 @@ class Parser:
 		self.r = r
 
 	@classmethod
-	def parse_all(cls, text: list[str]) -> list[Metric]:
-		r = [Parser(LineReader(l)).p_anyline() for l in text]
-		r = list(filter(None, r))
-		r = Parser.assemble(r)
-		return r
+	def parse_all(cls, text: list[str]) -> tuple[list[Metric], list[ParseError]]:
+		o = []
+		errs = []
+		for i, line in enumerate(text):
+			if not line.strip():
+				continue
+			try:
+				o.append(Parser(LineReader(line, i)).p_anyline())
+			except ParseError as e:
+				errs.append(e)
+
+		r = Parser.assemble(o)
+		return r, errs
 
 	@staticmethod
 	def assemble(lines: list[Parser.DataLine | Parser.MetaLine]):

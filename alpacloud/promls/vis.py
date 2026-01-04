@@ -4,9 +4,11 @@ from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Container, Horizontal, Vertical, VerticalScroll
 from textual.reactive import Reactive, reactive
+from textual.screen import Screen
 from textual.widget import Widget
 from textual.widgets import Collapsible, Footer, Header, Input, Label, Static, Tree
 
+from alpacloud.promls.fetch import ParseError
 from alpacloud.promls.filter import MetricsTree, PredicateFactory, filter_any, filter_name
 from alpacloud.promls.metrics import Metric
 from alpacloud.promls.util import TreeT, paths_to_tree
@@ -25,6 +27,29 @@ class FindBox(Input):
 	def action_clear(self):
 		self.clear()
 
+
+class ErrorsModal(Screen):
+	"""A modal widget to display errors."""
+
+	BINDINGS = [
+		Binding("ctrl+e", "dismiss", "Close", show=False),
+		Binding("escape", "dismiss", "Close", show=False),
+	]
+
+	def __init__(self, errors: list[ParseError], *args, **kwargs):
+		super().__init__(*args, **kwargs)
+		self.errors = errors
+
+	def compose(self):
+		with Vertical():
+			yield Label("Parse Errors")
+			for i, err in enumerate(self.errors):
+				yield Static(f"error {i}: {str(err)}", classes="error")
+
+	def action_dismiss(self):
+		"""Dismiss the modal."""
+		self.dismiss()
+	
 
 class MetricInfoBox(Widget):
 	"""A widget to display information about the selected Metric."""
@@ -62,13 +87,15 @@ class PromlsVisApp(App):
 	BINDINGS = [
 		Binding("ctrl+f", "find", "find", priority=True),
 		Binding("ctrl+g", "goto", "goto", priority=True),
+		Binding("ctrl+e", "errors", "Errors", show=False),
 		Binding("greater_than_sign", "expand_all", "Expand all", show=False),
 		Binding("less_than_sign", "collapse_all", "Collapse all", show=False),
 	]
 
-	def __init__(self, metrics: MetricsTree, query: str, predicate_factory: PredicateFactory, *args, **kwargs):
+	def __init__(self, metrics: MetricsTree, errors: list[ParseError], query: str, predicate_factory: PredicateFactory, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 		self.metrics = metrics
+		self.errors = errors
 		self.query_str = query
 		self.predicate_factory = predicate_factory
 
@@ -78,6 +105,9 @@ class PromlsVisApp(App):
 		yield MetricInfoBox()
 		yield FindBox(placeholder="Find...", id="find-box")
 		yield Footer()
+		if self.errors:
+			self.notify(f"Warning: {len(self.errors)} parse errors. use `ctrl+e` to show errors", severity="warning")
+
 
 	def on_mount(self) -> None:
 		self.load_metrics()
@@ -141,3 +171,10 @@ class PromlsVisApp(App):
 		self._add_node(root, paths_to_tree(filtered.metrics, sep="_"))
 
 		root.expand_all()
+
+	def action_errors(self):
+		"""Show errors modal."""
+		if not self.errors:
+			self.notify("No errors to show", severity="information")
+			return
+		self.push_screen(ErrorsModal(self.errors))
