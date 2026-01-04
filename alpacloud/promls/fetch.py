@@ -150,6 +150,13 @@ class Parser:
 	def __init__(self, r: LineReader):
 		self.r = r
 
+	@classmethod
+	def parse_all(cls, text: str) -> list[Metric]:
+		r = [Parser(LineReader(l)).p_anyline() for l in text.split("\n")]
+		r = list(filter(None, r))
+		r = Parser.assemble(r)
+		return r
+
 	@staticmethod
 	def assemble(lines: list[Parser.DataLine | Parser.MetaLine]):
 		"""Assemble parsed lines into metrics"""
