@@ -57,7 +57,7 @@ def common_args():
 
 def do_fetch(url: str):
 	"""Do the fetch and parse."""
-	return MetricsTree(Parser().parse(FetcherURL(url).fetch()))
+	return MetricsTree({e.name: e for e in Parser.parse_all(FetcherURL(url).fetch())})
 
 
 def mk_indent(i: int, s: str) -> str:

@@ -157,8 +157,8 @@ class Parser:
 		self.r = r
 
 	@classmethod
-	def parse_all(cls, text: str) -> list[Metric]:
-		r = [Parser(LineReader(l)).p_anyline() for l in text.split("\n")]
+	def parse_all(cls, text: list[str]) -> list[Metric]:
+		r = [Parser(LineReader(l)).p_anyline() for l in text]
 		r = list(filter(None, r))
 		r = Parser.assemble(r)
 		return r
