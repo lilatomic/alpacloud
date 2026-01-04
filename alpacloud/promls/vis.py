@@ -2,10 +2,10 @@ import re
 
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.containers import Container, Horizontal, Vertical
+from textual.containers import Container, Horizontal, Vertical, VerticalScroll
 from textual.reactive import Reactive, reactive
 from textual.widget import Widget
-from textual.widgets import Footer, Header, Input, Label, Static, Tree
+from textual.widgets import Collapsible, Footer, Header, Input, Label, Static, Tree
 
 from alpacloud.promls.filter import MetricsTree, PredicateFactory, filter_any, filter_name
 from alpacloud.promls.metrics import Metric
@@ -41,12 +41,23 @@ class MetricInfoBox(Widget):
 					yield Container(Label(self.metric.type, variant="accent"), classes="right")
 				yield Static(self.metric.help)
 
+				with Collapsible(title="Labels"):
+					for labels in self.metric.labels:
+						yield Static(str(labels))
+
 
 class PromlsVisApp(App):
 	"""A Textual app to visualize Prometheus Metrics."""
 
 	TITLE = "Promls"
 	CSS_PATH = "promls.css"
+
+	# Add inline CSS for labels container height constraint
+	CSS = """
+	.labels-scroll {
+		max-height: 33vh;
+	}
+	"""
 
 	BINDINGS = [
 		Binding("ctrl+f", "find", "find", priority=True),
