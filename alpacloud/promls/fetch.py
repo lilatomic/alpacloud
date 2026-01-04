@@ -162,7 +162,7 @@ class Parser:
 		metrics = []
 		for line in lines:
 			if isinstance(line, Parser.DataLine):
-				metrics.append(Parser.parse_metric(line.name, [line, *meta[line.name]]))
+				metrics.append(Parser.parse_metric(line.name, meta[line.name], line))
 
 		return metrics
 
@@ -170,13 +170,14 @@ class Parser:
 		if not self.r.line.strip():
 			return None
 
-		if self.r.consume_for("#"):
+		if self.r.peek_for("#"):
 			return self.p_comment()
 		else:
 			return self.p_metric()
 
 	def p_comment(self):
 		"""Parse a comment line"""
+		self.r.consume_for("#")
 		self.r.consume_whitespace()
 		restore_cursor = self.r.cursor
 		kind = self.r.read_name()
@@ -234,18 +235,17 @@ class Parser:
 		return name, value
 
 	@staticmethod
-	def parse_metric(name, statements: list[Parser.DataLine | Parser.MetaLine]) -> Metric:
+	def parse_metric(name, meta: list[Parser.MetaLine], data: Parser.DataLine) -> Metric:
 		"""Subpaarser for an actual metric."""
 		# TODO: label sets
 		# TODO: sample values
 
 		help = ""
 		type = ""
-		for line in statements:
-			if isinstance(line, Parser.MetaLine):
-				if line.kind == Parser.MetaKind.HELP:
-					help = line.data
-				elif line.kind == Parser.MetaKind.TYPE:
-					type = line.data
+		for line in meta:
+			if line.kind == Parser.MetaKind.HELP:
+				help = line.data
+			elif line.kind == Parser.MetaKind.TYPE:
+				type = line.data
 
 		return Metric(name, help, type)

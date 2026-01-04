@@ -1,60 +1,60 @@
 from pathlib import Path
 
 from alpacloud.lens.conftest import ResourceLoader
-from alpacloud.promls.fetch import LineReader, Parser, Parser2
+from alpacloud.promls.fetch import LineReader, Parser, Parser
 from alpacloud.promls.metrics import Metric
 
 
 class TestParserDataline:
 	def test_counter(self):
-		l = r'http_request_count{method="post",code="200"} 1027 1395066363000'
-		r = Parser.parse_data_line(l)
+		l = LineReader(r'http_request_count{method="post",code="200"} 1027 1395066363000')
+		r = Parser(l).p_metric()
 		assert r == Parser.DataLine(
 			"http_request_count",
 			{
 				"method": "post",
 				"code": "200",
 			},
-			"1027",
+			1027.0,
 			1395066363000,
 		)
 
 	def test_no_labels(self):
-		l = r"metric_without_timestamp_and_labels 12.47"
-		r = Parser.parse_data_line(l)
-		assert r == Parser.DataLine("metric_without_timestamp_and_labels", {}, "12.47")
+		l = LineReader(r"metric_without_timestamp_and_labels 12.47")
+		r = Parser(l).p_metric()
+		assert r == Parser.DataLine("metric_without_timestamp_and_labels", {}, 12.47)
 
 	def test_histogram_quantile(self):
-		l = r'telemetry_requests_metrics_latency_microseconds{quantile="0.05"} 3272'
-		r = Parser.parse_data_line(l)
+		l = LineReader(r'telemetry_requests_metrics_latency_microseconds{quantile="0.05"} 3272')
+		r = Parser(l).p_metric()
 		assert r == Parser.DataLine(
 			"telemetry_requests_metrics_latency_microseconds",
 			{
 				"quantile": "0.05",
 			},
-			"3272",
+			3272,
 		)
 
 	def test_histogram_sum(self):
-		l = r"telemetry_requests_metrics_latency_microseconds_sum 1.7560473e+07"
-		r = Parser.parse_data_line(l)
-		assert r == Parser.DataLine("telemetry_requests_metrics_latency_microseconds_sum", {}, "1.7560473e+07")
+		l = LineReader(r"telemetry_requests_metrics_latency_microseconds_sum 1.7560473e+07")
+		r = Parser(l).p_metric()
+		assert r == Parser.DataLine("telemetry_requests_metrics_latency_microseconds_sum", {}, 1.7560473e+07)
 
 
 class TestParserMetaLine:
 	def test_help(self):
-		l = "# HELP telemetry_requests_metrics_latency_microseconds A histogram of the response latency."
-		r = Parser.parse_meta_line(l)
+		l = LineReader("# HELP telemetry_requests_metrics_latency_microseconds A histogram of the response latency.")
+		r = Parser(l).p_comment()
 		assert r == Parser.MetaLine("telemetry_requests_metrics_latency_microseconds", Parser.MetaKind.HELP, "A histogram of the response latency.")
 
 	def test_type(self):
-		l = "# TYPE telemetry_requests_metrics_latency_microseconds summary"
-		r = Parser.parse_meta_line(l)
+		l = LineReader("# TYPE telemetry_requests_metrics_latency_microseconds summary")
+		r = Parser(l).p_comment()
 		assert r == Parser.MetaLine("telemetry_requests_metrics_latency_microseconds", Parser.MetaKind.TYPE, "summary")
 
 	def test_comment(self):
-		l = "# Finally a summary, which has a pretty complex representation in the text format:"
-		r = Parser.parse_meta_line(l)
+		l = LineReader("# Finally a summary, which has a pretty complex representation in the text format:")
+		r = Parser(l).p_comment()
 		assert r == Parser.MetaLine("COMMENT", Parser.MetaKind.COMMENT, "Finally a summary, which has a pretty complex representation in the text format:")
 
 
@@ -84,9 +84,9 @@ telemetry_requests_metrics_latency_microseconds{quantile="0.99"} 76656
 telemetry_requests_metrics_latency_microseconds_sum 1.7560473e+07
 telemetry_requests_metrics_latency_microseconds_count 2693
 		"""
-		r = [Parser2(LineReader(l)).p_anyline() for l in l.split("\n")]
+		r = [Parser(LineReader(l)).p_anyline() for l in l.split("\n")]
 		r = list(filter(None, r))
-		r = Parser2.assemble(r)
+		r = Parser.assemble(r)
 		assert r == [
 			Metric(name="msdos_file_access_time_ms", help="", type=""),
 			Metric(name="api_http_request_count", help="The total number of HTTP requests.", type="counter"),
@@ -102,5 +102,9 @@ telemetry_requests_metrics_latency_microseconds_count 2693
 		]
 
 	def test_certmanager_sample(self):
-		r = ResourceLoader(Path(__file__).parent / "test_resources").load_raw("certmanager.prom")
-		assert len(Parser().parse(r.split("\n"))) == 48
+		l = ResourceLoader(Path(__file__).parent / "test_resources").load_raw("certmanager.prom")
+		r = [Parser(LineReader(l)).p_anyline() for l in l.split("\n")]
+		r = list(filter(None, r))
+		r = Parser.assemble(r)
+
+		assert len(r) == 61
