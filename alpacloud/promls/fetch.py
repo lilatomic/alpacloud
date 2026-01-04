@@ -89,8 +89,8 @@ class LineReader:
 		while self.line[self.cursor] != until:
 			# TODO: can optimise to add in slices until escaped char is reached
 			if self.line[self.cursor] == "\\":
-				self.cursor += 2
 				char_at = self.line[(self.cursor + 1)]
+				self.cursor += 2
 				if char_at == "n":
 					out += "\n"
 				elif char_at == "\\":
