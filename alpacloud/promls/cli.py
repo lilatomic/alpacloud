@@ -41,6 +41,7 @@ opt_mode = click.option(
 	help=f"Display mode: {', '.join(m.value for m in PrintMode)}",
 )
 opt_filter = click.option("--filter")
+opt_combine = click.option("--combine-submetrics", is_flag=True, help="Combine submetrics into their parent. For example, combine a histogram's `sum` and `count` into the main histogram metric.", default=True)
 
 
 def common_args():
@@ -50,15 +51,16 @@ def common_args():
 		f = opt_filter(f)
 		f = opt_mode(f)
 		f = arg_url(f)
+		f = opt_combine(f)
 		return f
 
 	return decorator
 
 
-def do_fetch(url: str):
+def do_fetch(url: str, combine_submetrics: bool):
 	"""Do the fetch and parse."""
 	lines, errors = Parser.parse_all(FetcherURL(url).fetch())
-	values = Collector(lines).assemble()
+	values = Collector(lines, combine_submetrics).assemble()
 
 	return MetricsTree({e.name: e for e in values}), errors
 
@@ -122,9 +124,9 @@ def search():
 
 @search.command()
 @common_args()
-def name(url, filter: str, display: PrintMode):
+def name(url, filter: str, display: PrintMode, combine_submetrics: bool):
 	"""Filter metrics by their name"""
-	tree, errors = do_fetch(url)
+	tree, errors = do_fetch(url, combine_submetrics)
 	print_errors(errors)
 	filtered = tree.filter(filter_name(re.compile(filter)))
 	click.echo(do_print(filtered, display))
@@ -132,9 +134,9 @@ def name(url, filter: str, display: PrintMode):
 
 @search.command()
 @common_args()
-def any(url, filter: str, display: PrintMode):
+def any(url, filter: str, display: PrintMode, combine_submetrics: bool):
 	"""Filter metrics by any of their properties"""
-	tree, errors = do_fetch(url)
+	tree, errors = do_fetch(url, combine_submetrics)
 	print_errors(errors)
 	filtered = tree.filter(filter_any(re.compile(filter)))
 	click.echo(do_print(filtered, display))
@@ -142,9 +144,9 @@ def any(url, filter: str, display: PrintMode):
 
 @search.command()
 @common_args()
-def path(url, filter: str, display: PrintMode):
+def path(url, filter: str, display: PrintMode, combine_submetrics: bool):
 	"""Filter metrics by their path"""
-	tree, errors = do_fetch(url)
+	tree, errors = do_fetch(url, combine_submetrics)
 	print_errors(errors)
 	filtered = tree.filter(filter_path(filter.split("_")))
 	click.echo(do_print(filtered, display))
@@ -153,8 +155,9 @@ def path(url, filter: str, display: PrintMode):
 @search.command()
 @arg_url
 @opt_filter
-def browse(url, filter: str):
+@opt_combine
+def browse(url, filter: str, combine_submetrics: bool):
 	"""Browse metrics in an interactive visualizer"""
 	real_filter = filter or ".*"
-	results, errors = do_fetch(url)
+	results, errors = do_fetch(url, combine_submetrics)
 	PromlsVisApp(results, errors, real_filter, lambda s: filter_any(re.compile(s))).run()
