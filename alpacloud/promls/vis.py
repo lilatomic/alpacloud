@@ -55,6 +55,7 @@ class MetricInfoBox(Widget):
 	"""A widget to display information about the selected Metric."""
 
 	metric: Reactive[Metric | None] = reactive(None, recompose=True)
+	expand_labels: bool = False
 
 	def compose(self) -> ComposeResult:
 		with Vertical():
@@ -66,10 +67,15 @@ class MetricInfoBox(Widget):
 					yield Container(Label(self.metric.type, variant="accent"), classes="right")
 				yield Static(self.metric.help)
 
-				with Collapsible(title="Labels"):
+				with Collapsible(title="Labels", collapsed=not self.expand_labels):
 					for labels in self.metric.labels:
 						yield Static(str(labels))
 
+	def on_collapsible_collapsed(self, event: Collapsible.Collapsed) -> None:
+		self.expand_labels = False
+
+	def on_collapsible_expanded(self, event: Collapsible.Expanded) -> None:
+		self.expand_labels = True
 
 class PromlsVisApp(App):
 	"""A Textual app to visualize Prometheus Metrics."""
