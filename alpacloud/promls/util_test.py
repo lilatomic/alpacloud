@@ -41,7 +41,7 @@ class TestPathsToTree:
 		"""Test with empty input."""
 		mapping = {}
 		tree = paths_to_tree(mapping)
-		assert tree == {}
+		assert tree == {}  # pylint: disable=use-implicit-booleaness-not-comparison
 
 	def test_custom_separator(self):
 		"""Test with custom separator."""

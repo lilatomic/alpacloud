@@ -10,3 +10,4 @@ class Metric:
 	name: str
 	help: str
 	type: str
+	labels: list[dict[str, str]]

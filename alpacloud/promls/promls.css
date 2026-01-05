@@ -15,6 +15,11 @@ MetricInfoBox Label{
     height: auto;
 }
 
+MetricInfoBox Collapsible{
+    max-height: 30vh;
+    overflow-y: auto;
+}
+
 .left {
     align: left middle;
 }

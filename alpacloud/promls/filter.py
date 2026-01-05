@@ -47,8 +47,11 @@ def filter_name(pattern: re.Pattern) -> Predicate:
 def filter_any(pattern: re.Pattern) -> Predicate:
 	"""Filter metrics for any field"""
 
+	def _match_label_set(labels: dict[str, str]) -> bool:
+		return any(pattern.search(k) or pattern.search(v) for k, v in labels.items())
+
 	def predicate(metric: Metric) -> bool:
-		return pattern.search(metric.name) is not None or pattern.search(metric.help) is not None
+		return pattern.search(metric.name) is not None or pattern.search(metric.help) is not None or any(_match_label_set(labels) for labels in metric.labels)
 
 	return predicate
 

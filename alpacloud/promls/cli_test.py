@@ -1,4 +1,5 @@
 """Tests for CLI functions."""
+# pylint: disable=redefined-outer-name,
 
 import json
 
@@ -13,11 +14,11 @@ from alpacloud.promls.metrics import Metric
 def test_metrics():
 	"""Common test data for all PrintMode tests."""
 	return [
-		Metric(name="http_requests_total", help="Total HTTP requests", type="counter"),
-		Metric(name="http_requests_failed", help="Failed HTTP requests", type="counter"),
-		Metric(name="http_response_time_seconds", help="HTTP response time", type="histogram"),
-		Metric(name="database_connections_active", help="Active database connections", type="gauge"),
-		Metric(name="database_queries_total", help="Total database queries", type="counter"),
+		Metric(name="http_requests_total", help="Total HTTP requests", type="counter", labels=[]),
+		Metric(name="http_requests_failed", help="Failed HTTP requests", type="counter", labels=[]),
+		Metric(name="http_response_time_seconds", help="HTTP response time", type="histogram", labels=[]),
+		Metric(name="database_connections_active", help="Active database connections", type="gauge", labels=[]),
+		Metric(name="database_queries_total", help="Total database queries", type="counter", labels=[]),
 	]
 
 
@@ -72,7 +73,7 @@ class TestPrintModeFlat:
 
 	def test_flat_metric_without_help(self):
 		"""Test flat mode with metric without help text."""
-		metric = Metric(name="test_metric", help="", type="counter")
+		metric = Metric(name="test_metric", help="", type="counter", labels=[])
 		tree = MetricsTree.mk_tree([metric])
 		result = do_print(tree, PrintMode.flat)
 
@@ -121,7 +122,7 @@ class TestPrintModeFull:
 
 	def test_full_metric_without_help(self):
 		"""Test full mode with metric without help text."""
-		metric = Metric(name="test_metric", help="", type="counter")
+		metric = Metric(name="test_metric", help="", type="counter", labels=[])
 		tree = MetricsTree.mk_tree([metric])
 		result = do_print(tree, PrintMode.full)
 
@@ -178,7 +179,7 @@ class TestPrintModeTree:
 
 	def test_tree_metric_without_underscore(self):
 		"""Test tree mode with metric without underscore."""
-		metric = Metric(name="simplemetric", help="A simple metric", type="gauge")
+		metric = Metric(name="simplemetric", help="A simple metric", type="gauge", labels=[])
 		tree = MetricsTree.mk_tree([metric])
 		result = do_print(tree, PrintMode.tree)
 
@@ -234,7 +235,7 @@ class TestPrintModeJson:
 
 	def test_json_metric_structure(self):
 		"""Test json mode metric structure."""
-		metric = Metric(name="test_metric", help="Test help", type="counter")
+		metric = Metric(name="test_metric", help="Test help", type="counter", labels=[])
 		tree = MetricsTree.mk_tree([metric])
 		result = do_print(tree, PrintMode.json)
 		parsed = json.loads(result)
