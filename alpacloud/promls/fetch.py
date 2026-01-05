@@ -112,9 +112,8 @@ class LineReader:
 				else:
 					self.err(f"Invalid escape sequence \\{char_at}")
 			else:
-				char_at = self.cursor
+				out += self.line[self.cursor]
 				self.cursor += 1
-				out += self.line[char_at]
 
 			if self.cursor >= len(self.line):
 				self.err("Unterminated string literal")
@@ -301,11 +300,11 @@ class Collector:
 
 		help = ""
 		type = ""
-		for line in meta:
-			if line.kind == Parser.MetaKind.HELP:
-				help = line.data
-			elif line.kind == Parser.MetaKind.TYPE:
-				type = line.data
+		for meta_line in meta:
+			if meta_line.kind == Parser.MetaKind.HELP:
+				help = meta_line.data
+			elif meta_line.kind == Parser.MetaKind.TYPE:
+				type = meta_line.data
 
 		label_sets = []
 		for line in data:
