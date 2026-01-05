@@ -138,6 +138,10 @@ class BoundLensT(Generic[S, T, A, B], ABC):
 	def map(self, s: S) -> T:
 		"""Modify the focus of this lens."""
 
+	def __call__(self, s: S) -> T:
+		"""Modify the focus of this lens."""
+		return self.map(s)
+
 	@staticmethod
 	def const(l: LensT[S, T, A, B], v: B) -> BoundLens[S, T, A, B]:
 		"""Set the focus of this lens to a constant value."""
@@ -160,6 +164,9 @@ class BoundLens(BoundLensT[S, T, A, B]):
 		return self.lens.l_get(s)
 
 	def map(self, s: S) -> T:
+		return self.lens.l_map(s, self.f)
+
+	def __call__(self, s: S) -> T:
 		return self.lens.l_map(s, self.f)
 
 
