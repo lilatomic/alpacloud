@@ -2,11 +2,19 @@
 
 `promls` lets you explore prometheus metrics for your services. Target the metrics endpoint of your service and search for relevant metrics.
 
+## Installation
+
+The `promls` cli is available in a Python package. You can install it directly with pipx: 
+
+```shell
+pipx install alpacloud-promls
+```
+
 ## Usage
 
 ### CLI
 
-`promls` has cli modes. Filter for metrics by name, path, any field, or a fuzzy match.
+`promls` has cli modes. Filter for metrics by name, path, or any field.
 
 ```shell
 > promls name --filter cpu http://localhost:9402/metrics
@@ -46,8 +54,9 @@ You can output the metrics in several formats:
 ### TUI
 
 Interactively filter and explore the metrics.
-![browse.png](browse.png)
+![browse.svg](browse.svg)
 
 ## Bibliography
 
-- [Prometheus metric format](https://docs.google.com/document/d/1ZjyKiKxZV83VI9ZKAXRGKaUKK2BIWCT7oiGBKDBpjEY/mobilebasic) : Actual grammar for Prometheus metrics
+- [Prometheus metric format](https://docs.google.com/document/d/1ZjyKiKxZV83VI9ZKAXRGKaUKK2BIWCT7oiGBKDBpjEY/mobilebasic) : Old  grammar for Prometheus metrics
+- [Prometheus metric format](https://github.com/prometheus/docs/blob/main/docs/instrumenting/exposition_formats.md#text-format-details) : the actual grammar
