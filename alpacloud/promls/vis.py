@@ -162,7 +162,10 @@ class PromlsVisApp(App):
 			new_node.data = m
 		else:
 			for k, v in m.items():
-				self._add_node(parent_node.add(k), v)
+				if k == "__value__":
+					self._add_node(parent_node, v)
+				else:
+					self._add_node(parent_node.add(k), v)
 
 	def load_metrics(self):
 		tree = self.query_one(Tree)
