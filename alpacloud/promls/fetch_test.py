@@ -1,3 +1,5 @@
+# pylint: disable=missing-module-docstring,missing-class-docstring
+
 from pathlib import Path
 
 from alpacloud.lens.conftest import ResourceLoader
@@ -8,7 +10,7 @@ from alpacloud.promls.metrics import Metric
 class TestParserDataline:
 	def test_counter(self):
 		l = LineReader(r'http_request_count{method="post",code="200"} 1027 1395066363000')
-		r = Parser(l).p_metric()
+		r = Parser(l).p_dataline()
 		assert r == Parser.DataLine(
 			"http_request_count",
 			{
@@ -21,12 +23,12 @@ class TestParserDataline:
 
 	def test_no_labels(self):
 		l = LineReader(r"metric_without_timestamp_and_labels 12.47")
-		r = Parser(l).p_metric()
+		r = Parser(l).p_dataline()
 		assert r == Parser.DataLine("metric_without_timestamp_and_labels", {}, 12.47)
 
 	def test_histogram_quantile(self):
 		l = LineReader(r'telemetry_requests_metrics_latency_microseconds{quantile="0.05"} 3272')
-		r = Parser(l).p_metric()
+		r = Parser(l).p_dataline()
 		assert r == Parser.DataLine(
 			"telemetry_requests_metrics_latency_microseconds",
 			{
@@ -37,24 +39,24 @@ class TestParserDataline:
 
 	def test_histogram_sum(self):
 		l = LineReader(r"telemetry_requests_metrics_latency_microseconds_sum 1.7560473e+07")
-		r = Parser(l).p_metric()
+		r = Parser(l).p_dataline()
 		assert r == Parser.DataLine("telemetry_requests_metrics_latency_microseconds_sum", {}, 1.7560473e07)
 
 
 class TestParserMetaLine:
 	def test_help(self):
 		l = LineReader("# HELP telemetry_requests_metrics_latency_microseconds A histogram of the response latency.")
-		r = Parser(l).p_comment()
+		r = Parser(l).p_metaline()
 		assert r == Parser.MetaLine("telemetry_requests_metrics_latency_microseconds", Parser.MetaKind.HELP, "A histogram of the response latency.")
 
 	def test_type(self):
 		l = LineReader("# TYPE telemetry_requests_metrics_latency_microseconds summary")
-		r = Parser(l).p_comment()
+		r = Parser(l).p_metaline()
 		assert r == Parser.MetaLine("telemetry_requests_metrics_latency_microseconds", Parser.MetaKind.TYPE, "summary")
 
 	def test_comment(self):
 		l = LineReader("# Finally a summary, which has a pretty complex representation in the text format:")
-		r = Parser(l).p_comment()
+		r = Parser(l).p_metaline()
 		assert r == Parser.MetaLine("COMMENT", Parser.MetaKind.COMMENT, "Finally a summary, which has a pretty complex representation in the text format:")
 
 

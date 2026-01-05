@@ -1,10 +1,12 @@
+"""Promls metrics visualizer."""
+
 import re
 
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Container, Horizontal, Vertical
 from textual.reactive import Reactive, reactive
-from textual.screen import Screen
+from textual.screen import Screen, ScreenResultType
 from textual.widget import Widget
 from textual.widgets import Collapsible, Footer, Header, Input, Label, Static, Tree
 
@@ -25,6 +27,7 @@ class FindBox(Input):
 		super().__init__(placeholder=placeholder, id=id)
 
 	def action_clear(self):
+		"""Clear the text area."""
 		self.clear()
 
 
@@ -41,14 +44,15 @@ class ErrorsModal(Screen):
 		self.errors = errors
 
 	def compose(self):
+		"""Textual compose"""
 		with Vertical():
 			yield Label("Parse Errors")
 			for i, err in enumerate(self.errors):
 				yield Static(f"error {i}: {str(err)}", classes="error")
 
-	def action_dismiss(self):
+	async def action_dismiss(self, result: ScreenResultType | None = None):
 		"""Dismiss the modal."""
-		self.dismiss()
+		await self.dismiss()
 
 
 class MetricInfoBox(Widget):
@@ -58,6 +62,7 @@ class MetricInfoBox(Widget):
 	expand_labels: bool = False
 
 	def compose(self) -> ComposeResult:
+		"""Textual compose"""
 		with Vertical():
 			if not self.metric:
 				yield Label("Metric Info")
@@ -72,10 +77,13 @@ class MetricInfoBox(Widget):
 						yield Static(str(labels))
 
 	def on_collapsible_collapsed(self, event: Collapsible.Collapsed) -> None:
+		"""Synchronise expand_labels state"""
 		self.expand_labels = False
 
 	def on_collapsible_expanded(self, event: Collapsible.Expanded) -> None:
+		"""Synchronise expand_labels state"""
 		self.expand_labels = True
+
 
 class PromlsVisApp(App):
 	"""A Textual app to visualize Prometheus Metrics."""
@@ -106,6 +114,7 @@ class PromlsVisApp(App):
 		self.predicate_factory = predicate_factory
 
 	def compose(self) -> ComposeResult:
+		"""Textual compose"""
 		yield Header()
 		yield Tree("Prometheus Metrics")
 		yield MetricInfoBox()
@@ -115,22 +124,27 @@ class PromlsVisApp(App):
 			self.notify(f"Warning: {len(self.errors)} parse errors. use `ctrl+e` to show errors", severity="warning")
 
 	def on_mount(self) -> None:
+		"""Textual on_mount"""
 		self.load_metrics()
 		self.focus_findbox()
 
 	def focus_findbox(self):
+		"""Focus the find box."""
 		self.query_one(FindBox).focus()
 
 	def on_input_changed(self, event: Input.Changed) -> None:
+		"""Filter the tree when the query changes."""
 		self.query_str = event.value
 		self.load_metrics()
 
 	async def action_find(self) -> None:
+		"""Filter with `filter_any`"""
 		self.predicate_factory = lambda s: filter_any(re.compile(s))
 		self.load_metrics()
 		self.focus_findbox()
 
 	async def action_goto(self):
+		"""Filter with `filter_name`"""
 		self.predicate_factory = lambda s: filter_name(re.compile(s))
 		self.load_metrics()
 		self.focus_findbox()
@@ -168,6 +182,7 @@ class PromlsVisApp(App):
 					self._add_node(parent_node.add(k), v)
 
 	def load_metrics(self):
+		"""Load metrics into the tree."""
 		tree = self.query_one(Tree)
 		tree.clear()
 		root = tree.root

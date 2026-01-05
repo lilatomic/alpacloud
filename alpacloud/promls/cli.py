@@ -41,7 +41,12 @@ opt_mode = click.option(
 	help=f"Display mode: {', '.join(m.value for m in PrintMode)}",
 )
 opt_filter = click.option("--filter")
-opt_combine = click.option("--combine-submetrics", is_flag=True, help="Combine submetrics into their parent. For example, combine a histogram's `sum` and `count` into the main histogram metric.", default=True)
+opt_combine = click.option(
+	"--combine-submetrics",
+	is_flag=True,
+	help="Combine submetrics into their parent. For example, combine a histogram's `sum` and `count` into the main histogram metric.",
+	default=True,
+)
 
 
 def common_args():
@@ -110,6 +115,7 @@ def do_print(tree: MetricsTree, mode: PrintMode):
 
 
 def print_errors(errors: list[ParseError]):
+	"""Print parse errors"""
 	if not errors:
 		return
 	click.echo(f"warning: parse errors: {len(errors)}", err=True)

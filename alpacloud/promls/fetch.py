@@ -3,19 +3,14 @@
 from __future__ import annotations
 
 import re
-from abc import ABC
 from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any
+from typing import Any, NoReturn
 
 import requests
 
 from alpacloud.promls.metrics import Metric
-
-
-class Fetcher(ABC):
-	""""""
 
 
 @dataclass
@@ -25,7 +20,8 @@ class FetcherURL:
 	url: str
 
 	def fetch(self):
-		return requests.get(self.url).text.split("\n")
+		"""Fetch metrics from url"""
+		return requests.get(self.url, timeout=10).text.split("\n")
 
 
 class ParseError(Exception):
@@ -48,52 +44,62 @@ class ParseError(Exception):
 		return msg
 
 
-whitespace = re.compile(r"\s+")
-name = re.compile(r"[a-zA-Z_][a-zA-Z0-9_]*")
+tok_whitespace = re.compile(r"\s+")
+tok_name = re.compile(r"[a-zA-Z_][a-zA-Z0-9_]*")
 
 
 class LineReader:
+	"""Parse elements from a line of Prometheus metrics text."""
+
 	def __init__(self, line: str, line_number: int | None = None):
 		self.line = line
 		self.cursor = 0
 		self.line_number = line_number
 
-	def err(self, msg: str) -> None:
+	def err(self, msg: str) -> NoReturn:
+		"""Raise an error with the current state"""
 		raise ParseError(msg, self.line, self.cursor, self.line_number)
 
-	def peek(self):
+	def peek(self) -> str:
+		"""Peek at the next character"""
 		return self.line[self.cursor]
 
 	def peek_for(self, char: str) -> bool:
+		"""Peek to check for a specific character"""
 		return self.peek() == char
 
 	def consume_for(self, char: str) -> str:
+		"""Consume a character if it matches, otherwise return empty string"""
 		if self.peek_for(char):
 			self.cursor += 1
 			return char
 		return ""
 
 	def restore(self, cursor: int):
+		"""Restore the cursor to a previous position"""
 		self.cursor = cursor
 
 	def consume_whitespace(self) -> bool:
-		match = whitespace.match(self.line, self.cursor)
+		"""Consume whitespace and return True if there was any"""
+		match = tok_whitespace.match(self.line, self.cursor)
 		if match:
 			self.cursor = match.end()
 			return True
 		return False
 
-	def read_name(self):
-		match = name.match(self.line, self.cursor)
+	def read_name(self) -> str | None:
+		"""Read a name token from the input line"""
+		match = tok_name.match(self.line, self.cursor)
 		if match:
 			self.cursor = match.end()
 			return match.group()
 		return None
 
 	def read_escaped(self, until: str):
+		"""Read an escaped string literal"""
 		out = ""
 		while self.line[self.cursor] != until:
-			# TODO: can optimise to add in slices until escaped char is reached
+			# there's an optimisation opportunity to add in slices until escaped char is reached
 			if self.line[self.cursor] == "\\":
 				char_at = self.line[(self.cursor + 1)]
 				self.cursor += 2
@@ -112,11 +118,8 @@ class LineReader:
 
 			if self.cursor >= len(self.line):
 				self.err("Unterminated string literal")
-		self.cursor += 1  # TODO: use consume_for?
+		self.consume_for('"')
 		return out
-
-	def read_label_value(self):
-		return self.read_escaped('"')
 
 	def read_value(self):
 		"""Read a value from the line. Value must be a valid float, or NaN or Inf."""
@@ -131,10 +134,13 @@ class LineReader:
 			self.err("Invalid numeric value")
 
 	def read_remaining(self):
+		"""Read the remaining characters on the line"""
 		return self.line[self.cursor :]
 
 
 class Parser:
+	"""Extract meaningful lines from Prometheus metrics text."""
+
 	@dataclass
 	class DataLine:
 		"""Data line from Prometheus metrics endpoint."""
@@ -164,6 +170,7 @@ class Parser:
 
 	@classmethod
 	def parse_all(cls, text: list[str]) -> tuple[list[Parser.DataLine | Parser.MetaLine | None], list[ParseError]]:
+		"""Parse all lines from Prometheus metrics endpoint"""
 		o = []
 		errs = []
 		for i, line in enumerate(text):
@@ -177,15 +184,16 @@ class Parser:
 		return o, errs
 
 	def p_anyline(self) -> Parser.DataLine | Parser.MetaLine | None:
+		"""Parse any kind of line from Prometheus metrics endpoint. Returns None for blank lines."""
 		if not self.r.line.strip():
 			return None
 
 		if self.r.peek_for("#"):
-			return self.p_comment()
+			return self.p_metaline()
 		else:
-			return self.p_metric()
+			return self.p_dataline()
 
-	def p_comment(self):
+	def p_metaline(self) -> Parser.MetaLine:
 		"""Parse a comment line"""
 		self.r.consume_for("#")
 		self.r.consume_whitespace()
@@ -203,7 +211,7 @@ class Parser:
 			self.r.restore(restore_cursor)
 			return Parser.MetaLine("COMMENT", Parser.MetaKind.COMMENT, self.r.read_remaining())  # TODO: model comment so we don't have an arbitrary value for `name`
 
-	def p_metric(self):
+	def p_dataline(self):
 		"""Parse a metric line"""
 		name = self.r.read_name()
 		if name is None:
@@ -236,12 +244,14 @@ class Parser:
 		return Parser.DataLine(name, labels, value, timestamp)
 
 	def p_label(self):
+		"""Parse a label"""
 		name = self.r.read_name()
 		if not self.r.consume_for("="):
 			self.r.err("Expected `=` after label name")
 		if not self.r.consume_for('"'):
 			self.r.err('Expected `"` after `=`')
-		value = self.r.read_label_value()
+		reader = self.r
+		value = reader.read_escaped('"')
 		return name, value
 
 
@@ -254,6 +264,7 @@ class Collector:
 
 	@staticmethod
 	def basename(name: str) -> tuple[str, str | None]:
+		"""Extract the base name from a submetric. For example, a histogram my_metric has submetrics like my_metric_bucket, my_metric_sum, my_metric_count"""
 		maybe_base = name.rsplit("_", 1)
 		if len(maybe_base) == 2:
 			base, terminal = maybe_base
@@ -286,7 +297,7 @@ class Collector:
 		return metrics
 
 	def build_metric(self, base_name, meta: list[Parser.MetaLine], data: list[Parser.DataLine]) -> list[Metric]:
-		"""Subparser for an actual metric."""
+		"""Collect lines into Metric objects"""
 
 		help = ""
 		type = ""
