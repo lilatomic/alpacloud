@@ -12,7 +12,7 @@ python_test_utils(
 python_distribution(
 	name="alpacloud.lens",
 	repositories=["@alpacloud.lens"],
-	dependencies=[":lens"],
+	dependencies=[":lens", ":py.typed"],
 	long_description_path="alpacloud/lens/readme.md",
 	provides=python_artifact(
 		name="alpacloud.lens",
@@ -32,3 +32,5 @@ python_distribution(
 		long_description_content_type="text/markdown",
 	),
 )
+
+resource(name="py.typed", source="py.typed")

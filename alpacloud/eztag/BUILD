@@ -5,14 +5,14 @@ python_tests(
 	# dependencies=["./test_resources:k8s_objs"],
 )
 
-python_test_utils(
-	name="test_utils",
-)
+# python_test_utils(
+# 	name="test_utils",
+# )
 
 python_distribution(
 	name="alpacloud.eztag",
 	repositories=["@alpacloud.eztag"],
-	dependencies=[":eztag"],
+	dependencies=[":eztag", ":py.typed"],
 	long_description_path="alpacloud/eztag/readme.md",
 	provides=python_artifact(
 		name="alpacloud_eztag",
@@ -33,3 +33,5 @@ python_distribution(
 		long_description_content_type="text/markdown",
 	),
 )
+
+resource(name="py.typed", source="py.typed")

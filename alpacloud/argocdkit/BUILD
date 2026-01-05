@@ -22,7 +22,7 @@ pex_binary(
 python_distribution(
 	name="alpacloud.argocdkit",
 	repositories=["@alpacloud.argocdkit"],
-	dependencies=[":argocdkit"],
+	dependencies=[":argocdkit", ":py.typed"],
 	long_description_path="alpacloud/argocdkit/readme.md",
 	provides=python_artifact(
 		name="alpacloud.argocdkit",
@@ -42,3 +42,5 @@ python_distribution(
 		long_description_content_type="text/markdown",
 	),
 )
+
+resource(name="py.typed", source="py.typed")
