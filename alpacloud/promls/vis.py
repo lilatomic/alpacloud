@@ -152,7 +152,7 @@ class PromlsVisApp(App):
 
 	def _add_node(self, parent_node, m: TreeT | Metric):
 		if isinstance(m, Metric):
-			new_node = parent_node.add(m.name)
+			new_node = parent_node.add_leaf(m.name)
 			new_node.data = m
 		else:
 			for k, v in m.items():
