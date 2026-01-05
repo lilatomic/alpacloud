@@ -163,7 +163,7 @@ class Parser:
 		self.r = r
 
 	@classmethod
-	def parse_all(cls, text: list[str]) -> tuple[list[Metric], list[ParseError]]:
+	def parse_all(cls, text: list[str]) -> tuple[list[Parser.DataLine | Parser.MetaLine | None], list[ParseError]]:
 		o = []
 		errs = []
 		for i, line in enumerate(text):
@@ -174,38 +174,7 @@ class Parser:
 			except ParseError as e:
 				errs.append(e)
 
-		r = Parser.assemble(o)
-		return r, errs
-
-	@staticmethod
-	def basename(name: str) -> tuple[str, str | None]:
-		maybe_base = name.rsplit("_", 1)
-		if len(maybe_base) == 2:
-			base, terminal = maybe_base
-			if terminal in {"bucket", "quantile", "sum", "count",}:
-				return base, terminal
-		return name, None
-
-
-	@staticmethod
-	def assemble(lines: list[Parser.DataLine | Parser.MetaLine]):
-		"""Assemble parsed lines into metrics"""
-		# TODO: gather comments
-		meta = defaultdict(list)
-		for line in lines:
-			if isinstance(line, Parser.MetaLine):
-				meta[Parser.basename(line.name)[0]].append(line)
-
-		data = defaultdict(list)
-		for line in lines:
-			if isinstance(line, Parser.DataLine):
-				data[Parser.basename(line.name)[0]].append(line)
-
-		metrics = []
-		for k, vs in data.items():
-			metrics.extend(Parser.build_metric(k, meta[k], vs))
-
-		return metrics
+		return o, errs
 
 	def p_anyline(self) -> Parser.DataLine | Parser.MetaLine | None:
 		if not self.r.line.strip():
@@ -275,6 +244,43 @@ class Parser:
 		value = self.r.read_label_value()
 		return name, value
 
+
+@dataclass
+class Collector:
+	"""Collect metric lines into Metrics"""
+
+	lines: list[Parser.DataLine| Parser.MetaLine| None]
+
+	@staticmethod
+	def basename(name: str) -> tuple[str, str | None]:
+		maybe_base = name.rsplit("_", 1)
+		if len(maybe_base) == 2:
+			base, terminal = maybe_base
+			if terminal in {"bucket", "quantile", "sum", "count",}:
+				return base, terminal
+		return name, None
+
+
+	def assemble(self):
+		"""Assemble parsed lines into metrics"""
+		# TODO: gather comments
+		meta = defaultdict(list)
+		for line in self.lines:
+			if isinstance(line, Parser.MetaLine):
+				meta[self.basename(line.name)[0]].append(line)
+
+		data = defaultdict(list)
+		for line in self.lines:
+			if isinstance(line, Parser.DataLine):
+				data[self.basename(line.name)[0]].append(line)
+
+		metrics = []
+		for k, vs in data.items():
+			metrics.extend(self.build_metric(k, meta[k], vs))
+
+		return metrics
+
+
 	@staticmethod
 	def build_metric(base_name, meta: list[Parser.MetaLine], data: list[Parser.DataLine], combine: bool = True) -> list[Metric]:
 		"""Subparser for an actual metric."""
@@ -290,7 +296,7 @@ class Parser:
 
 		label_sets = []
 		for line in data:
-			_, terminal = Parser.basename(line.name)
+			_, terminal = Collector.basename(line.name)
 			if combine and type in {"summary", "histogram",} and terminal in {"sum", "count",}:
 				# sum and count have no labels, so there's no need to collect them
 				continue

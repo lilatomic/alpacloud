@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from alpacloud.lens.conftest import ResourceLoader
-from alpacloud.promls.fetch import LineReader, Parser
+from alpacloud.promls.fetch import LineReader, Parser, Collector
 from alpacloud.promls.metrics import Metric
 
 
@@ -84,7 +84,8 @@ telemetry_requests_metrics_latency_microseconds{quantile="0.99"} 76656
 telemetry_requests_metrics_latency_microseconds_sum 1.7560473e+07
 telemetry_requests_metrics_latency_microseconds_count 2693
 		"""
-		r, _ = Parser.parse_all(l.split("\n"))
+		vs, _ = Parser.parse_all(l.split("\n"))
+		r = Collector(vs).assemble()
 		assert r == [
 			Metric(name="msdos_file_access_time_ms", help="", type="", labels=[{"path": "C:\\DIR\\FILE.TXT", "error": 'Cannot find file:\n"FILE.TXT"'}]),
 			Metric(
@@ -104,6 +105,8 @@ telemetry_requests_metrics_latency_microseconds_count 2693
 
 	def test_certmanager_sample(self):
 		l = ResourceLoader(Path(__file__).parent / "test_resources").load_raw("certmanager.prom")
-		r, _ = Parser.parse_all(l.split("\n"))
+		vs, _ = Parser.parse_all(l.split("\n"))
+		r = Collector(vs).assemble()
 
 		assert len(r) == 46
+

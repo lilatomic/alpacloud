@@ -7,7 +7,7 @@ import re
 
 import click
 
-from alpacloud.promls.fetch import FetcherURL, Parser, ParseError
+from alpacloud.promls.fetch import FetcherURL, Parser, ParseError, Collector
 from alpacloud.promls.filter import MetricsTree, filter_any, filter_name, filter_path
 from alpacloud.promls.metrics import Metric
 from alpacloud.promls.util import paths_to_tree
@@ -57,7 +57,8 @@ def common_args():
 
 def do_fetch(url: str):
 	"""Do the fetch and parse."""
-	values, errors = Parser.parse_all(FetcherURL(url).fetch())
+	lines, errors = Parser.parse_all(FetcherURL(url).fetch())
+	values = Collector(lines).assemble()
 
 	return MetricsTree({e.name: e for e in values}), errors
 
