@@ -249,17 +249,22 @@ class Parser:
 class Collector:
 	"""Collect metric lines into Metrics"""
 
-	lines: list[Parser.DataLine| Parser.MetaLine| None]
+	lines: list[Parser.DataLine | Parser.MetaLine | None]
+	combine_submetrics: bool = True
 
 	@staticmethod
 	def basename(name: str) -> tuple[str, str | None]:
 		maybe_base = name.rsplit("_", 1)
 		if len(maybe_base) == 2:
 			base, terminal = maybe_base
-			if terminal in {"bucket", "quantile", "sum", "count",}:
+			if terminal in {
+				"bucket",
+				"quantile",
+				"sum",
+				"count",
+			}:
 				return base, terminal
 		return name, None
-
 
 	def assemble(self):
 		"""Assemble parsed lines into metrics"""
@@ -280,11 +285,8 @@ class Collector:
 
 		return metrics
 
-
-	@staticmethod
-	def build_metric(base_name, meta: list[Parser.MetaLine], data: list[Parser.DataLine], combine: bool = True) -> list[Metric]:
+	def build_metric(self, base_name, meta: list[Parser.MetaLine], data: list[Parser.DataLine]) -> list[Metric]:
 		"""Subparser for an actual metric."""
-		# TODO: sample values
 
 		help = ""
 		type = ""
@@ -297,13 +299,28 @@ class Collector:
 		label_sets = []
 		for line in data:
 			_, terminal = Collector.basename(line.name)
-			if combine and type in {"summary", "histogram",} and terminal in {"sum", "count",}:
+			if (
+				self.combine_submetrics
+				and type
+				in {
+					"summary",
+					"histogram",
+				}
+				and terminal
+				in {
+					"sum",
+					"count",
+				}
+			):
 				# sum and count have no labels, so there's no need to collect them
 				continue
 
 			label_sets.append(line.labels)
 
-		if combine and type in {"summary", "histogram",}:
+		if self.combine_submetrics and type in {
+			"summary",
+			"histogram",
+		}:
 			return [Metric(base_name, help, type, label_sets)]
 		else:
 			names = set()

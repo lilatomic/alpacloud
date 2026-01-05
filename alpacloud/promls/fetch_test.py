@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from alpacloud.lens.conftest import ResourceLoader
-from alpacloud.promls.fetch import LineReader, Parser, Collector
+from alpacloud.promls.fetch import Collector, LineReader, Parser
 from alpacloud.promls.metrics import Metric
 
 
@@ -109,4 +109,3 @@ telemetry_requests_metrics_latency_microseconds_count 2693
 		r = Collector(vs).assemble()
 
 		assert len(r) == 46
-

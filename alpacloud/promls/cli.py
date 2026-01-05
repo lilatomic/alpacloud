@@ -7,7 +7,7 @@ import re
 
 import click
 
-from alpacloud.promls.fetch import FetcherURL, Parser, ParseError, Collector
+from alpacloud.promls.fetch import Collector, FetcherURL, ParseError, Parser
 from alpacloud.promls.filter import MetricsTree, filter_any, filter_name, filter_path
 from alpacloud.promls.metrics import Metric
 from alpacloud.promls.util import paths_to_tree

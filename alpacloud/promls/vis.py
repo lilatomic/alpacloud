@@ -2,7 +2,7 @@ import re
 
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.containers import Container, Horizontal, Vertical, VerticalScroll
+from textual.containers import Container, Horizontal, Vertical
 from textual.reactive import Reactive, reactive
 from textual.screen import Screen
 from textual.widget import Widget
@@ -49,7 +49,7 @@ class ErrorsModal(Screen):
 	def action_dismiss(self):
 		"""Dismiss the modal."""
 		self.dismiss()
-	
+
 
 class MetricInfoBox(Widget):
 	"""A widget to display information about the selected Metric."""
@@ -107,7 +107,6 @@ class PromlsVisApp(App):
 		yield Footer()
 		if self.errors:
 			self.notify(f"Warning: {len(self.errors)} parse errors. use `ctrl+e` to show errors", severity="warning")
-
 
 	def on_mount(self) -> None:
 		self.load_metrics()
