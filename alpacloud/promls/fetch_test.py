@@ -109,3 +109,10 @@ telemetry_requests_metrics_latency_microseconds_count 2693
 		r = Collector(vs).assemble()
 
 		assert len(r) == 46
+
+	def test_coredns_sample(self):
+		l = ResourceLoader(Path(__file__).parent / "test_resources").load_raw("coredns.prom")
+		vs, _ = Parser.parse_all(l.split("\n"))
+		r = Collector(vs).assemble()
+
+		assert len(r) == 61
