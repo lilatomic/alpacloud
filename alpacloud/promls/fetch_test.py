@@ -100,12 +100,10 @@ telemetry_requests_metrics_latency_microseconds_count 2693
 				type="summary",
 				labels=[{"quantile": "0.01"}, {"quantile": "0.05"}, {"quantile": "0.5"}, {"quantile": "0.9"}, {"quantile": "0.99"}],
 			),
-			Metric(name="telemetry_requests_metrics_latency_microseconds_sum", help="", type="", labels=[{}]),
-			Metric(name="telemetry_requests_metrics_latency_microseconds_count", help="", type="", labels=[{}]),
 		]
 
 	def test_certmanager_sample(self):
 		l = ResourceLoader(Path(__file__).parent / "test_resources").load_raw("certmanager.prom")
 		r, _ = Parser.parse_all(l.split("\n"))
 
-		assert len(r) == 48
+		assert len(r) == 46

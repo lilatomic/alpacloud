@@ -178,22 +178,32 @@ class Parser:
 		return r, errs
 
 	@staticmethod
+	def basename(name: str) -> tuple[str, str | None]:
+		maybe_base = name.rsplit("_", 1)
+		if len(maybe_base) == 2:
+			base, terminal = maybe_base
+			if terminal in {"bucket", "quantile", "sum", "count",}:
+				return base, terminal
+		return name, None
+
+
+	@staticmethod
 	def assemble(lines: list[Parser.DataLine | Parser.MetaLine]):
 		"""Assemble parsed lines into metrics"""
 		# TODO: gather comments
 		meta = defaultdict(list)
 		for line in lines:
 			if isinstance(line, Parser.MetaLine):
-				meta[line.name].append(line)
+				meta[Parser.basename(line.name)[0]].append(line)
 
 		data = defaultdict(list)
 		for line in lines:
 			if isinstance(line, Parser.DataLine):
-				data[line.name].append(line)
+				data[Parser.basename(line.name)[0]].append(line)
 
 		metrics = []
 		for k, vs in data.items():
-			metrics.append(Parser.build_metric(k, meta[k], vs))
+			metrics.extend(Parser.build_metric(k, meta[k], vs))
 
 		return metrics
 
@@ -266,8 +276,8 @@ class Parser:
 		return name, value
 
 	@staticmethod
-	def build_metric(name, meta: list[Parser.MetaLine], data: list[Parser.DataLine]) -> Metric:
-		"""Subpaarser for an actual metric."""
+	def build_metric(base_name, meta: list[Parser.MetaLine], data: list[Parser.DataLine], combine: bool = True) -> list[Metric]:
+		"""Subparser for an actual metric."""
 		# TODO: sample values
 
 		help = ""
@@ -280,6 +290,20 @@ class Parser:
 
 		label_sets = []
 		for line in data:
+			_, terminal = Parser.basename(line.name)
+			if combine and type in {"summary", "histogram",} and terminal in {"sum", "count",}:
+				# sum and count have no labels, so there's no need to collect them
+				continue
+
 			label_sets.append(line.labels)
 
-		return Metric(name, help, type, label_sets)
+		if combine and type in {"summary", "histogram",}:
+			return [Metric(base_name, help, type, label_sets)]
+		else:
+			names = set()
+			for line in data:
+				names.add(line.name)
+			metrics = []
+			for name in names:
+				metrics.append(Metric(name, help, type, label_sets))
+			return metrics
