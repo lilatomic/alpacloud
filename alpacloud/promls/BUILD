@@ -10,7 +10,7 @@ python_tests(
 python_distribution(
 	name="alpacloud.promls",
 	repositories=["@alpacloud.promls"],
-	dependencies=[":promls"],
+	dependencies=[":promls", ":py.typed"],
 	long_description_path="alpacloud/promls/readme.md",
 	provides=python_artifact(
 		name="alpacloud_promls",
@@ -31,3 +31,5 @@ python_distribution(
 		long_description_content_type="text/markdown",
 	),
 )
+
+resource(name="py.typed", source="py.typed")

@@ -8,7 +8,7 @@ python_tests(
 python_distribution(
 	name="alpacloud.crdvis",
 	repositories=["@alpacloud.crdvis"],
-	dependencies=[":crdvis"],
+	dependencies=[":crdvis", ":py.typed"],
 	long_description_path="alpacloud/crdvis/readme.md",
 	provides=python_artifact(
 		name="alpacloud.crdvis",
@@ -29,3 +29,5 @@ python_distribution(
 		long_description_content_type="text/markdown",
 	),
 )
+
+resource(name="py.typed", source="py.typed")

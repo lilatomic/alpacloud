@@ -34,6 +34,8 @@ You can bind the mapping function to easily apply the same transformation multip
 # note how we can re-use `replicas` from above
 add_replica = replicas @ (lambda n: n + 1)
 add_replica.map(my_deployment)
+# or as a Callable
+add_replica(my_deployment)
 ```
 
 You can combine several bound lenses to create pipelines

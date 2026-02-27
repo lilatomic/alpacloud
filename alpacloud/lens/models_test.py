@@ -198,6 +198,7 @@ class TestBoundLens:
 
 		combined = l0 % l1
 		assert combined.map(v) == [9, 8]
+		assert combined(v) == [9, 8], "Callable syntax didn't work"
 
 	def test_combined_coalesce(self):
 		"""Test that a CombinedBoundLens will be extended when combined with single items"""
