@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 import requests
 import yaml
 from pydantic import ValidationError
+from requests import RequestException
 
 from alpacloud.crdvis.models import CustomResourceDefinition
 
@@ -32,10 +33,13 @@ def read_path(path: str) -> CustomResourceDefinition:
 		if url.netloc == "github.com":
 			req.params["raw"] = "true"
 
-		response = requests.Session().send(req.prepare(), timeout=30)
+		try:
+			response = requests.Session().send(req.prepare(), timeout=30)
+			if not response.ok:
+				raise CRDReadError(f"Failed to fetch CRD from {path}: {response.status_code}")
+		except RequestException as e:
+			raise CRDReadError(f"Failed to fetch CRD from {path}: {e}")
 
-		if not response.ok:
-			raise CRDReadError(f"Failed to fetch CRD from {path}: {response.status_code}")
 		content = response.text
 	elif path.startswith("file://") or os.path.exists(path):
 		disk_path = path.rsplit("://", 1)[-1]
