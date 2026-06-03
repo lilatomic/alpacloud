@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import enum
 import os
+import sys
 from textwrap import dedent
 from typing import Any, Callable
 
@@ -225,6 +226,11 @@ class CRDVisApp(App):
 	search_mode = SearchMode.find
 	crd: CustomResourceDefinition | None = None
 
+	def __init__(self, crd_path: str | None = None) -> None:
+		"""Initialize the app."""
+		super().__init__()
+		self.crd_path = crd_path
+
 	def compose(self) -> ComposeResult:
 		"""Create child widgets for the app."""
 		yield Header()
@@ -270,11 +276,12 @@ class CRDVisApp(App):
 
 	def on_mount(self) -> None:
 		"""Load the CRD and populate the tree when the app starts."""
-		# Get the path to the sample CRD file
-		current_dir = os.getcwd()
-		sample_crd_path = os.path.join(current_dir, "alpacloud", "crdvis", "test_resources", "podmonitor.yaml")
+		if not self.crd_path:
+			# Get the path to the sample CRD file
+			current_dir = os.getcwd()
+			self.crd_path = "file://" + os.path.join(current_dir, "alpacloud", "crdvis", "test_resources", "podmonitor.yaml")
 
-		self.try_read_crd("file://" + sample_crd_path)
+		self.try_read_crd(self.crd_path)
 
 	def load_crd(self, crd: CustomResourceDefinition) -> None:
 		"""Load the CRD into the app."""
@@ -526,7 +533,11 @@ def match_any(node: TreeNode[OpenAPIV3], s: str) -> bool:
 
 def main():
 	"""Run the CRD Visualizer app."""
-	CRDVisApp().run()
+	if len(sys.argv) > 1:
+		crd_path = sys.argv[1]
+		CRDVisApp(crd_path).run()
+	else:
+		CRDVisApp().run()
 
 
 if __name__ == "__main__":

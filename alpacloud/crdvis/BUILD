@@ -12,7 +12,7 @@ python_distribution(
 	long_description_path="alpacloud/crdvis/readme.md",
 	provides=python_artifact(
 		name="alpacloud.crdvis",
-		version="0.1.0",
+		version="0.1.1",
 		description="A visualiser for Kubernetes CRDs",
 		author="Daniel Goldman",
 		entry_points={"console_scripts": ["crdvis=alpacloud.crdvis:run_crdvis"]},
